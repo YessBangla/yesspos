@@ -126,7 +126,7 @@ function PosPage() {
   const [coupon, setCoupon] = useState<Coupon | null>(null);
   const [taxPct, setTaxPct] = useState("0");
   const [paid, setPaid] = useState("");
-  const [method, setMethod] = useState("cash");
+  const [method, setMethod] = useState("");
   const [customer, setCustomer] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
