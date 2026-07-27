@@ -43,6 +43,7 @@ import { money, num, useI18n, type TKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { logAudit } from "@/lib/audit";
 import { getPrinterSize, printHtml, setPrinterSize, type PrinterSize } from "@/lib/print";
+import { QuickAddCustomer, QuickAddProduct } from "@/components/QuickAddDialogs";
 
 export const Route = createFileRoute("/_authenticated/pos")({
   head: () => ({
