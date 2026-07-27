@@ -605,8 +605,8 @@ function PosPage() {
         </section>
 
         {/* Checkout */}
-        <aside className="flex min-h-0 flex-col border-t border-border bg-card lg:overflow-y-auto lg:border-l lg:border-t-0">
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border px-3 py-2.5 sm:px-4">
+        <aside className="flex min-h-0 flex-col overflow-hidden border-t border-border bg-card lg:border-l lg:border-t-0">
+          <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border px-3 py-2.5 sm:px-4">
             <div className="flex min-w-0 items-center gap-2">
               <ShoppingCart className="size-4 shrink-0 text-primary" />
               <span className="truncate text-base font-bold">{t("cart")}</span>
