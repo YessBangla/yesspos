@@ -217,7 +217,6 @@ const dict = {
   quickPayment: { bn: "দ্রুত পেমেন্ট", en: "Quick payment" },
   notifications: { bn: "নোটিফিকেশন", en: "Notifications" },
   noNotifications: { bn: "কোনো নোটিফিকেশন নেই", en: "No notifications" },
-  outOfStock: { bn: "স্টক শেষ", en: "Out of stock" },
 } as const;
 
 
