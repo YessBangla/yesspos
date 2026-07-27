@@ -24,10 +24,16 @@ export const Route = createFileRoute("/auth")({
 });
 
 const schema = z.object({
-  email: z.string().trim().email().max(255),
-  password: z.string().min(8).max(72),
+  email: z.string().trim().min(3).max(255),
+  password: z.string().min(6).max(72),
   fullName: z.string().trim().max(80).optional(),
 });
+
+// Users can sign in with a plain username (mapped to an internal email) or a real email.
+function toEmail(value: string) {
+  return value.includes("@") ? value.toLowerCase() : `${value.toLowerCase()}@sherapos.local`;
+}
+
 
 function AuthPage() {
   const { t } = useI18n();
@@ -55,18 +61,21 @@ function AuthPage() {
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
-          email: parsed.data.email,
+          email: toEmail(parsed.data.email),
           password: parsed.data.password,
           options: {
             emailRedirectTo: window.location.origin,
-            data: { full_name: parsed.data.fullName || "" },
+            data: {
+              full_name: parsed.data.fullName || "",
+              username: parsed.data.email.split("@")[0].toLowerCase(),
+            },
           },
         });
         if (error) throw error;
         toast.success("Account created");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
-          email: parsed.data.email,
+          email: toEmail(parsed.data.email),
           password: parsed.data.password,
         });
         if (error) throw error;
@@ -119,11 +128,11 @@ function AuthPage() {
               </div>
             )}
             <div className="space-y-1.5">
-              <Label htmlFor="email">{t("email")}</Label>
+              <Label htmlFor="email">{t("usernameOrEmail")}</Label>
               <Input
                 id="email"
-                type="email"
-                autoComplete="email"
+                type="text"
+                autoComplete="username"
                 required
                 maxLength={255}
                 value={email}
@@ -137,7 +146,7 @@ function AuthPage() {
                 type="password"
                 autoComplete={mode === "signin" ? "current-password" : "new-password"}
                 required
-                minLength={8}
+                minLength={6}
                 maxLength={72}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

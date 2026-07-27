@@ -7,6 +7,7 @@ import {
   PieChart,
   ReceiptText,
   Settings as SettingsIcon,
+  ShieldCheck,
   ShoppingCart,
   Truck,
   Users,
@@ -34,6 +35,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/expenses", label: t("expenses"), icon: Wallet },
     { to: "/reports", label: t("reports"), icon: PieChart },
     { to: "/dashboard", label: t("dashboard"), icon: BarChart3 },
+    { to: "/users", label: t("usersRoles"), icon: ShieldCheck },
     { to: "/settings", label: t("settings"), icon: SettingsIcon },
   ] as const;
 
