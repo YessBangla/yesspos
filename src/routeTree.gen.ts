@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
+import { Route as AuthenticatedStockAdjustmentsRouteImport } from './routes/_authenticated/stock-adjustments'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
@@ -24,6 +25,7 @@ import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
+import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -49,6 +51,12 @@ const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStockAdjustmentsRoute =
+  AuthenticatedStockAdjustmentsRouteImport.update({
+    id: '/stock-adjustments',
+    path: '/stock-adjustments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -99,11 +107,17 @@ const AuthenticatedContactsRoute = AuthenticatedContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCatalogRoute = AuthenticatedCatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/catalog': typeof AuthenticatedCatalogRoute
   '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
@@ -114,12 +128,14 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AuthenticatedReportsRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
   '/users': typeof AuthenticatedUsersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/catalog': typeof AuthenticatedCatalogRoute
   '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
@@ -130,6 +146,7 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthenticatedReportsRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
   '/users': typeof AuthenticatedUsersRoute
 }
 export interface FileRoutesById {
@@ -138,6 +155,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
@@ -148,6 +166,7 @@ export interface FileRoutesById {
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
 }
 export interface FileRouteTypes {
@@ -156,6 +175,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/catalog'
     | '/contacts'
     | '/dashboard'
     | '/expenses'
@@ -166,12 +186,14 @@ export interface FileRouteTypes {
     | '/reports'
     | '/sales'
     | '/settings'
+    | '/stock-adjustments'
     | '/users'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/catalog'
     | '/contacts'
     | '/dashboard'
     | '/expenses'
@@ -182,6 +204,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/sales'
     | '/settings'
+    | '/stock-adjustments'
     | '/users'
   id:
     | '__root__'
@@ -189,6 +212,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/sitemap.xml'
+    | '/_authenticated/catalog'
     | '/_authenticated/contacts'
     | '/_authenticated/dashboard'
     | '/_authenticated/expenses'
@@ -199,6 +223,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports'
     | '/_authenticated/sales'
     | '/_authenticated/settings'
+    | '/_authenticated/stock-adjustments'
     | '/_authenticated/users'
   fileRoutesById: FileRoutesById
 }
@@ -244,6 +269,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/users'
       preLoaderRoute: typeof AuthenticatedUsersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/stock-adjustments': {
+      id: '/_authenticated/stock-adjustments'
+      path: '/stock-adjustments'
+      fullPath: '/stock-adjustments'
+      preLoaderRoute: typeof AuthenticatedStockAdjustmentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -316,10 +348,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContactsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/catalog': {
+      id: '/_authenticated/catalog'
+      path: '/catalog'
+      fullPath: '/catalog'
+      preLoaderRoute: typeof AuthenticatedCatalogRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
@@ -330,10 +370,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedStockAdjustmentsRoute: typeof AuthenticatedStockAdjustmentsRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
@@ -344,6 +386,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedStockAdjustmentsRoute: AuthenticatedStockAdjustmentsRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
 }
 
