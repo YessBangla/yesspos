@@ -514,6 +514,7 @@ function PosPage() {
                   className="h-12 w-full rounded-xl bg-primary/5 pl-10 text-base"
                 />
               </div>
+              <QuickAddProduct />
               <ShortcutHelp />
             </div>
           </div>
