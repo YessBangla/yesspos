@@ -180,6 +180,32 @@ function PosPage() {
     staleTime: 60_000,
   });
 
+  const me = useMyRole();
+
+  const todayTotal = useQuery({
+    queryKey: ["pos-today-total"],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const from = new Date();
+      from.setHours(0, 0, 0, 0);
+      const { data, error } = await supabase
+        .from("sales")
+        .select("total")
+        .eq("status", "final")
+        .gte("created_at", from.toISOString());
+      if (error) throw error;
+      return (data ?? []).reduce((s, r) => s + Number(r.total ?? 0), 0);
+    },
+  });
+
+  const categoryName = useMemo(
+    () =>
+      new Map<string, string>(
+        (categories.data ?? []).map((c) => [c.id, lang === "bn" ? c.name_bn : c.name_en]),
+      ),
+    [categories.data, lang],
+  );
+
   useEffect(() => {
     const pct = settings.data?.default_tax_pct;
     if (pct != null) setTaxPct(String(pct));
