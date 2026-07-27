@@ -292,7 +292,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Button variant="outline" size="icon" className="md:hidden" onClick={() => setMobileOpen(true)}>
             <Menu className="size-4" />
           </Button>
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-muted-foreground">
+            <Building2 className="size-3.5" />
+            {myBranch.data?.name ?? t("noBranch")}
+          </span>
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+
             <QuickActions />
             <LangToggle />
             <Button variant="ghost" size="sm" onClick={signOut} className="md:hidden">
