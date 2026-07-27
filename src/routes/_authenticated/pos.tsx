@@ -865,15 +865,40 @@ function PosPage() {
               </div>
             </div>
 
+            {method === "cash" && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 rounded-lg text-xs"
+                  onClick={() => setPaid(total.toFixed(2))}
+                >
+                  {t("exactAmount")}
+                </Button>
+                {[100, 200, 500, 1000, 2000].map((v) => (
+                  <Button
+                    key={v}
+                    size="sm"
+                    variant="outline"
+                    className="h-9 rounded-lg text-xs"
+                    onClick={() => setPaid(String((Number(paid) || 0) + v))}
+                  >
+                    +{num(v, lang)}
+                  </Button>
+                ))}
+              </div>
+            )}
+
             <div className="mt-3 flex items-end gap-4">
               <div className="flex-1 space-y-1">
                 <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {t("paid")}
+                  {method === "cash" ? t("cashReceived") : t("paid")}
                 </Label>
                 <Input
                   ref={paidRef}
                   inputMode="decimal"
                   value={paid}
+                  disabled={!method}
                   placeholder={total.toFixed(2)}
                   onChange={(e) => setPaid(e.target.value)}
                   className="h-12 rounded-xl bg-success/10 text-lg font-bold"
@@ -881,20 +906,32 @@ function PosPage() {
               </div>
               <div className="flex-1 text-right">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {changeVal >= 0 ? t("change") : t("due")}
+                  {changeVal >= 0 ? (method === "cash" ? t("changeReturn") : t("change")) : t("due")}
                 </p>
-                <p className="font-display text-xl font-bold">{money(Math.abs(changeVal), lang)}</p>
+                <p
+                  className={cn(
+                    "font-display text-xl font-bold",
+                    changeVal < 0 ? "text-destructive" : "text-success",
+                  )}
+                >
+                  {money(Math.abs(changeVal), lang)}
+                </p>
               </div>
             </div>
 
             <Button
               variant="accent"
               className="mt-3 h-16 w-full rounded-2xl font-display text-lg font-black"
-              disabled={!canCheckout}
+              disabled={!canPay}
               onClick={() => checkout.mutate("final")}
             >
               {t("checkout")} · {money(total, lang)}
             </Button>
+            {cart.length > 0 && !method && (
+              <p className="mt-1 text-center text-xs font-semibold text-destructive">
+                {t("selectPaymentFirst")}
+              </p>
+            )}
 
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Button
