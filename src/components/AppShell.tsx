@@ -152,7 +152,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       icon: SettingsIcon,
       items: [
         { to: "/settings", feature: "settings", label: t("settings"), icon: SettingsIcon },
-        { to: "/branches", feature: "branches", label: t("branches"), icon: Building2 },
         { to: "/api-hub", feature: "api-hub", label: t("apiHub"), icon: Plug },
       ],
 
