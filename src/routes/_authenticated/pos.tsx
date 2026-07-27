@@ -398,7 +398,35 @@ function PosPage() {
           ))}
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-4 space-y-1">
+          <Label className="text-xs">{t("selectCustomer")}</Label>
+          <Select
+            value={contactId}
+            onValueChange={(v) => {
+              setContactId(v);
+              const c = (customers.data ?? []).find((x) => x.id === v);
+              if (c) {
+                setCustomer(c.name);
+                setPhone(c.phone ?? "");
+              }
+            }}
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder={t("walkIn")} />
+            </SelectTrigger>
+            <SelectContent>
+              {(customers.data ?? [])
+                .filter((c) => c.type === "customer")
+                .map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="space-y-1">
             <Label className="text-xs">{t("discount")}</Label>
             <Input inputMode="decimal" value={discount} onChange={(e) => setDiscount(e.target.value)} className="h-9" />
@@ -416,6 +444,7 @@ function PosPage() {
             <Input value={phone} maxLength={20} onChange={(e) => setPhone(e.target.value)} className="h-9" />
           </div>
         </div>
+
 
         <div className="mt-4 space-y-1.5 border-t border-border pt-3 text-sm">
           <Row label={t("subtotal")} value={money(subtotal, lang)} />
