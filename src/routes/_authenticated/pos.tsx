@@ -445,10 +445,30 @@ function PosPage() {
         <Button
           className="mt-4 h-12 text-base"
           disabled={cart.length === 0 || checkout.isPending}
-          onClick={() => checkout.mutate()}
+          onClick={() => checkout.mutate("final")}
         >
           {t("checkout")} · {money(total, lang)}
         </Button>
+
+        <div className="mt-2 flex gap-2">
+          <Button
+            variant="outline"
+            className="flex-1"
+            disabled={cart.length === 0 || checkout.isPending}
+            onClick={() => checkout.mutate("draft")}
+          >
+            <PauseCircle className="mr-1 size-4" /> {t("holdSale")}
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1"
+            disabled={cart.length === 0 || checkout.isPending}
+            onClick={() => checkout.mutate("quotation")}
+          >
+            {t("saveQuotation")}
+          </Button>
+        </div>
+
       </aside>
 
       <ReceiptDialog receipt={receipt} onClose={() => setReceipt(null)} />
