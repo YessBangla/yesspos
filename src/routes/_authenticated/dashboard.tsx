@@ -358,7 +358,9 @@ function DashboardPage() {
             {([
               ["sale", t("sales")],
               ["purchase", t("purchases")],
+              ["quotation", t("quotation")],
               ["payment", t("paymentsLedger")],
+
             ] as const).map(([k, label]) => (
               <button
                 key={k}
