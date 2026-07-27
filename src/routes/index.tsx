@@ -5,10 +5,16 @@ import {
   Boxes,
   Building2,
   CheckCircle2,
+  Clock,
   CreditCard,
+  Database,
   FileSpreadsheet,
+  Globe2,
   Landmark,
+  Lock,
+  Plug,
   Printer,
+  Quote,
   ReceiptText,
   ShieldCheck,
   ShoppingCart,
@@ -24,17 +30,20 @@ const SITE = "https://yesspos.lovable.app";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Yess POS — Retail Billing, Inventory & Accounting" },
+      { title: "Yess POS — Retail Billing, Inventory & Accounting Platform" },
       {
         name: "description",
         content:
-          "Yess POS is a browser point-of-sale and ERP for retail shops: fast billing, multi-branch inventory, dues, accounting and reports in Bengali and English.",
+          "Yess POS is an enterprise-grade browser POS and ERP for retail: fast billing, multi-branch inventory, dues, double-entry accounting and reports in Bengali and English.",
       },
-      { property: "og:title", content: "Yess POS — Retail Billing, Inventory & Accounting" },
+      {
+        property: "og:title",
+        content: "Yess POS — Retail Billing, Inventory & Accounting Platform",
+      },
       {
         property: "og:description",
         content:
-          "Fast billing, multi-branch stock, dues and payment ledgers, accounting and reports — all in one browser POS.",
+          "Enterprise-grade POS and ERP for retail chains: billing, multi-branch stock, dues, double-entry accounting and analytics in one platform.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: SITE },
@@ -51,8 +60,9 @@ export const Route = createFileRoute("/")({
           applicationCategory: "BusinessApplication",
           operatingSystem: "Web",
           description:
-            "Point of sale and ERP for retail shops: billing, inventory, dues, accounting and reports.",
+            "Enterprise point of sale and ERP for retail businesses: billing, multi-branch inventory, dues, double-entry accounting and reports.",
           url: SITE,
+          offers: { "@type": "Offer", price: "0", priceCurrency: "BDT" },
         }),
       },
     ],
@@ -116,7 +126,7 @@ function Index() {
     },
     {
       icon: BarChart3,
-      title: L("রিপোর্ট", "Reports"),
+      title: L("রিপোর্ট ও অ্যানালিটিক্স", "Reports & Analytics"),
       body: L(
         "দৈনিক বিক্রি, সেরা পণ্য, স্টক ভ্যালু, লাভ-ক্ষতি ও ডিউ রিপোর্ট।",
         "Daily sales, best sellers, stock value, profit and dues reports.",
@@ -124,7 +134,7 @@ function Index() {
     },
     {
       icon: ShieldCheck,
-      title: L("ইউজার ও নিরাপত্তা", "Users & Security"),
+      title: L("ইউজার ও গভর্ন্যান্স", "Users & Governance"),
       body: L(
         "রোলভিত্তিক অ্যাক্সেস, পাসওয়ার্ড রিসেট এবং সম্পূর্ণ অডিট লগ।",
         "Role-based access, password reset and a full audit log.",
@@ -133,10 +143,37 @@ function Index() {
   ];
 
   const stats = [
-    { value: "8+", label: L("সমন্বিত মডিউল", "Integrated modules") },
-    { value: "5", label: L("ইউজার রোল", "User roles") },
+    { value: "20+", label: L("সমন্বিত মডিউল", "Integrated modules") },
+    { value: "5", label: L("ইউজার রোল লেভেল", "User role levels") },
     { value: "2", label: L("ভাষা (বাংলা/ইংরেজি)", "Languages (BN/EN)") },
-    { value: "৳", label: L("টাকা ভিত্তিক হিসাব", "Taka-native accounting") },
+    { value: "99.9%", label: L("লক্ষ্যমাত্রা আপটাইম", "Target uptime") },
+  ];
+
+  const outcomes = [
+    {
+      icon: Clock,
+      title: L("দ্রুত চেকআউট", "Faster checkout"),
+      body: L(
+        "কিবোর্ড শর্টকাট ও বারকোড স্ক্যানে কাউন্টারে অপেক্ষা কমে।",
+        "Keyboard shortcuts and barcode scanning cut queue time at the counter.",
+      ),
+    },
+    {
+      icon: Database,
+      title: L("এক সত্য উৎস", "One source of truth"),
+      body: L(
+        "বিক্রি, স্টক ও লেজার একসাথে আপডেট হয় — ডেটা দুইবার লিখতে হয় না।",
+        "Sales, stock and ledgers update together — no duplicate data entry.",
+      ),
+    },
+    {
+      icon: Globe2,
+      title: L("যেকোনো ডিভাইসে", "Any device, anywhere"),
+      body: L(
+        "ব্রাউজারেই চলে — ডেস্কটপ, ট্যাব বা মোবাইল, ইনস্টলেশন ছাড়াই।",
+        "Runs in the browser on desktop, tablet or mobile with zero installation.",
+      ),
+    },
   ];
 
   const workflow = [
@@ -171,6 +208,68 @@ function Index() {
     L("রেস্টুরেন্ট ও বেকারি", "Restaurants & bakeries"),
   ];
 
+  const governance = [
+    {
+      icon: Lock,
+      title: L("রোলভিত্তিক অ্যাক্সেস", "Role-based access"),
+      body: L(
+        "সুপার অ্যাডমিন থেকে স্টাফ — প্রতিটি মেনু ও অ্যাকশন রোল অনুযায়ী নিয়ন্ত্রিত।",
+        "Super admin to staff — every menu and action is gated by role.",
+      ),
+    },
+    {
+      icon: ShieldCheck,
+      title: L("অডিট ট্রেইল", "Audit trail"),
+      body: L(
+        "লগইন, বিক্রি, রিটার্ন ও সেটিংস পরিবর্তনের সম্পূর্ণ রেকর্ড।",
+        "A complete record of logins, sales, returns and settings changes.",
+      ),
+    },
+    {
+      icon: Database,
+      title: L("সার্ভার-সাইড যাচাই", "Server-side validation"),
+      body: L(
+        "প্রতিটি সংবেদনশীল অপারেশন সার্ভারে যাচাই হয়, শুধু ব্রাউজারে নয়।",
+        "Sensitive operations are verified on the server, not just in the browser.",
+      ),
+    },
+    {
+      icon: Plug,
+      title: L("API হাব", "API hub"),
+      body: L(
+        "ইন্টিগ্রেশন ও কী ব্যবস্থাপনা এক জায়গা থেকে কনফিগার করুন।",
+        "Configure integrations and key management from a single place.",
+      ),
+    },
+  ];
+
+  const testimonials = [
+    {
+      quote: L(
+        "তিনটি শাখার স্টক আর ডিউ এখন একই ড্যাশবোর্ডে দেখি — মাস শেষের হিসাব দুই দিনের বদলে এক ঘণ্টায়।",
+        "Stock and dues for three branches now sit on one dashboard — month-end closing takes an hour instead of two days.",
+      ),
+      name: L("রায়হান করিম", "Raihan Karim"),
+      role: L("পরিচালক, রিটেইল চেইন", "Director, retail chain"),
+    },
+    {
+      quote: L(
+        "কাউন্টারের স্টাফরা এক দিনেই শিখে গেছে, আর থার্মাল প্রিন্টে রসিদ সাথে সাথেই বেরোয়।",
+        "Counter staff learned it in a day, and thermal receipts print instantly.",
+      ),
+      name: L("নুসরাত জাহান", "Nusrat Jahan"),
+      role: L("ম্যানেজার, ফার্মেসি", "Manager, pharmacy"),
+    },
+    {
+      quote: L(
+        "ক্রয়, বিক্রি আর জার্নাল একসাথে থাকায় অ্যাকাউন্ট্যান্টকে আলাদা এক্সেল দিতে হয় না।",
+        "Purchases, sales and journals live together, so our accountant no longer needs separate spreadsheets.",
+      ),
+      name: L("সাইফুল ইসলাম", "Saiful Islam"),
+      role: L("মালিক, হোলসেল ডিপো", "Owner, wholesale depot"),
+    },
+  ];
+
   const faqs = [
     {
       q: L("ইন্সটল করতে হবে কি?", "Do I need to install anything?"),
@@ -200,7 +299,25 @@ function Index() {
         "Role-based access control, server-side checks and an audit log of every important action.",
       ),
     },
+    {
+      q: L("দলের সবাই কি একসাথে কাজ করতে পারবে?", "Can my whole team work at once?"),
+      a: L(
+        "হ্যাঁ। পাঁচটি রোল লেভেল আছে এবং একাধিক ইউজার একই সময়ে আলাদা কাউন্টার বা শাখায় কাজ করতে পারে।",
+        "Yes. Five role levels are available and multiple users can work concurrently across counters or branches.",
+      ),
+    },
+    {
+      q: L("বাংলা ও ইংরেজি দুটোই আছে?", "Is it available in both Bengali and English?"),
+      a: L(
+        "আছে। পুরো ইন্টারফেস এক ক্লিকে বাংলা বা ইংরেজিতে বদলানো যায়, হিসাব টাকা (৳) ভিত্তিক।",
+        "Yes. The entire interface switches between Bengali and English in one click, with Taka (৳) native accounting.",
+      ),
+    },
   ];
+
+  const Eyebrow = ({ children }: { children: React.ReactNode }) => (
+    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-primary">{children}</p>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -212,9 +329,11 @@ function Index() {
             </span>
             <span className="font-display text-lg font-bold">{t("appName")}</span>
           </div>
-          <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+          <nav className="hidden items-center gap-6 text-sm text-muted-foreground lg:flex">
+            <a href="#platform" className="hover:text-foreground">{L("প্ল্যাটফর্ম", "Platform")}</a>
             <a href="#modules" className="hover:text-foreground">{L("মডিউল", "Modules")}</a>
             <a href="#workflow" className="hover:text-foreground">{L("কিভাবে কাজ করে", "How it works")}</a>
+            <a href="#security" className="hover:text-foreground">{L("নিরাপত্তা", "Security")}</a>
             <a href="#industries" className="hover:text-foreground">{L("কাদের জন্য", "Industries")}</a>
             <a href="#faq" className="hover:text-foreground">{L("প্রশ্নোত্তর", "FAQ")}</a>
           </nav>
@@ -233,18 +352,22 @@ function Index() {
       <main>
         {/* Hero */}
         <section className="border-b border-border">
-          <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-16 pt-10 md:grid-cols-2 md:pt-16">
+          <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-16 pt-12 md:grid-cols-2 md:pt-20">
             <div>
-              <p className="mb-3 inline-flex rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">
-                POS • Inventory • Accounting • Reports
+              <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-semibold tracking-wide text-secondary-foreground">
+                <span className="size-1.5 rounded-full bg-primary" />
+                POS • Inventory • Accounting • Analytics
               </p>
-              <h1 className="font-display text-4xl font-bold leading-tight md:text-5xl">{t("tagline")}</h1>
-              <p className="mt-4 max-w-md text-muted-foreground">{t("heroSub")}</p>
-              <ul className="mt-5 space-y-2 text-sm">
+              <h1 className="font-display text-4xl font-bold leading-[1.1] tracking-tight md:text-5xl">
+                {t("tagline")}
+              </h1>
+              <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">{t("heroSub")}</p>
+              <ul className="mt-6 space-y-2 text-sm">
                 {[
                   L("এক স্ক্রিনে বিলিং, স্টক আর হিসাব", "Billing, stock and accounts on one screen"),
                   L("বাংলা ও ইংরেজি — টাকা (৳) ভিত্তিক", "Bengali and English, Taka (৳) native"),
                   L("থার্মাল ও A4 প্রিন্টারে রসিদ", "Receipts on thermal and A4 printers"),
+                  L("রোলভিত্তিক অ্যাক্সেস ও অডিট লগ", "Role-based access with a full audit log"),
                 ].map((li) => (
                   <li key={li} className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
@@ -252,7 +375,7 @@ function Index() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-7 flex flex-wrap gap-3">
+              <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild size="lg">
                   <Link to="/auth">
                     {t("getStarted")} <ArrowRight className="ml-1 size-4" />
@@ -262,6 +385,12 @@ function Index() {
                   <Link to="/auth">{t("signIn")}</Link>
                 </Button>
               </div>
+              <p className="mt-4 text-xs text-muted-foreground">
+                {L(
+                  "কোনো ইনস্টলেশন লাগে না • ব্রাউজারেই চলে • বাংলা ও ইংরেজি",
+                  "No installation • Runs in the browser • Bengali & English",
+                )}
+              </p>
             </div>
 
             <div className="surface-panel p-4">
@@ -294,40 +423,112 @@ function Index() {
           </div>
         </section>
 
-        {/* Modules */}
-        <section id="modules" className="mx-auto max-w-6xl px-5 py-16">
+        {/* Platform / outcomes */}
+        <section id="platform" className="mx-auto max-w-6xl px-5 py-16">
           <div className="max-w-2xl">
-            <h2 className="font-display text-3xl font-bold">{L("সম্পূর্ণ ব্যবসা এক প্ল্যাটফর্মে", "Your whole business, one platform")}</h2>
-            <p className="mt-2 text-muted-foreground">
+            <Eyebrow>{L("প্ল্যাটফর্ম", "Platform")}</Eyebrow>
+            <h2 className="font-display text-3xl font-bold tracking-tight">
+              {L("কাউন্টার থেকে বোর্ডরুম — একটাই সিস্টেম", "One system from counter to boardroom")}
+            </h2>
+            <p className="mt-3 text-muted-foreground">
               {L(
-                "বিক্রি থেকে হিসাব — প্রতিটি মডিউল একে অপরের সাথে যুক্ত, তাই ডেটা দুইবার লিখতে হয় না।",
-                "From the counter to the ledger, every module is connected — no double entry.",
+                "প্রতিটি বিক্রি সাথে সাথেই স্টক, ডিউ আর লেজারে প্রতিফলিত হয়, তাই ব্যবস্থাপনা সব সময় সঠিক তথ্যে সিদ্ধান্ত নিতে পারে।",
+                "Every sale flows straight into stock, dues and the ledger, so management always decides on current numbers.",
               )}
             </p>
           </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {modules.map((m) => (
-              <article key={m.title} className="surface-panel p-5">
-                <span className="mb-3 flex size-10 items-center justify-center rounded-lg bg-secondary text-primary">
-                  <m.icon className="size-5" />
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {outcomes.map((o) => (
+              <div key={o.title} className="surface-panel p-6">
+                <span className="mb-4 flex size-10 items-center justify-center rounded-lg bg-secondary text-primary">
+                  <o.icon className="size-5" />
                 </span>
-                <h3 className="text-base font-semibold">{m.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{m.body}</p>
-              </article>
+                <h3 className="text-base font-semibold">{o.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{o.body}</p>
+              </div>
             ))}
           </div>
         </section>
 
-        {/* Workflow */}
-        <section id="workflow" className="border-y border-border bg-muted/30">
+        {/* Modules */}
+        <section id="modules" className="border-y border-border bg-muted/30">
           <div className="mx-auto max-w-6xl px-5 py-16">
-            <h2 className="font-display text-3xl font-bold">{L("চার ধাপে শুরু", "Live in four steps")}</h2>
-            <div className="mt-8 grid gap-4 md:grid-cols-4">
-              {workflow.map((w) => (
-                <div key={w.step} className="surface-panel p-5">
-                  <p className="font-display text-2xl font-bold text-primary/70">{w.step}</p>
-                  <h3 className="mt-2 text-base font-semibold">{w.title}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{w.body}</p>
+            <div className="max-w-2xl">
+              <Eyebrow>{L("মডিউল", "Modules")}</Eyebrow>
+              <h2 className="font-display text-3xl font-bold tracking-tight">
+                {L("সম্পূর্ণ ব্যবসা এক প্ল্যাটফর্মে", "Your whole business, one platform")}
+              </h2>
+              <p className="mt-3 text-muted-foreground">
+                {L(
+                  "বিক্রি থেকে হিসাব — প্রতিটি মডিউল একে অপরের সাথে যুক্ত, তাই ডেটা দুইবার লিখতে হয় না।",
+                  "From the counter to the ledger, every module is connected — no double entry.",
+                )}
+              </p>
+            </div>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {modules.map((m) => (
+                <article key={m.title} className="surface-panel p-5">
+                  <span className="mb-3 flex size-10 items-center justify-center rounded-lg bg-secondary text-primary">
+                    <m.icon className="size-5" />
+                  </span>
+                  <h3 className="text-base font-semibold">{m.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{m.body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Workflow */}
+        <section id="workflow" className="mx-auto max-w-6xl px-5 py-16">
+          <div className="max-w-2xl">
+            <Eyebrow>{L("ইমপ্লিমেন্টেশন", "Implementation")}</Eyebrow>
+            <h2 className="font-display text-3xl font-bold tracking-tight">{L("চার ধাপে শুরু", "Live in four steps")}</h2>
+            <p className="mt-3 text-muted-foreground">
+              {L(
+                "সাধারণত একদিনেই সেটআপ শেষ হয় — আলাদা সার্ভার বা ইনস্টলেশন লাগে না।",
+                "Most teams are live within a day — no servers to buy, nothing to install.",
+              )}
+            </p>
+          </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-4">
+            {workflow.map((w) => (
+              <div key={w.step} className="surface-panel p-5">
+                <p className="font-display text-2xl font-bold text-primary/70">{w.step}</p>
+                <h3 className="mt-2 text-base font-semibold">{w.title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{w.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Security & governance */}
+        <section id="security" className="border-y border-border bg-muted/30">
+          <div className="mx-auto grid max-w-6xl gap-8 px-5 py-16 lg:grid-cols-[0.9fr_1.1fr]">
+            <div>
+              <Eyebrow>{L("নিরাপত্তা ও গভর্ন্যান্স", "Security & governance")}</Eyebrow>
+              <h2 className="font-display text-3xl font-bold tracking-tight">
+                {L("নিয়ন্ত্রণ আপনার হাতে", "Control stays with you")}
+              </h2>
+              <p className="mt-3 text-muted-foreground">
+                {L(
+                  "কে কী দেখতে ও করতে পারবে তা রোল দিয়ে নির্ধারিত, আর প্রতিটি গুরুত্বপূর্ণ অ্যাকশন অডিট লগে সংরক্ষিত থাকে।",
+                  "Roles define exactly who can see and do what, and every important action is retained in the audit log.",
+                )}
+              </p>
+              <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+                {L(
+                  "এই পৃষ্ঠার তথ্য প্ল্যাটফর্মে বিদ্যমান ফিচারের বর্ণনা — এটি কোনো স্বাধীন সার্টিফিকেশন নয়।",
+                  "This page describes controls available in the product; it is not an independent certification.",
+                )}
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {governance.map((g) => (
+                <div key={g.title} className="surface-panel p-5">
+                  <g.icon className="size-5 text-primary" />
+                  <h3 className="mt-3 text-base font-semibold">{g.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{g.body}</p>
                 </div>
               ))}
             </div>
@@ -338,7 +539,8 @@ function Index() {
         <section id="industries" className="mx-auto max-w-6xl px-5 py-16">
           <div className="grid gap-8 lg:grid-cols-2">
             <div>
-              <h2 className="font-display text-3xl font-bold">{L("কাদের জন্য", "Built for")}</h2>
+              <Eyebrow>{L("ইন্ডাস্ট্রি", "Industries")}</Eyebrow>
+              <h2 className="font-display text-3xl font-bold tracking-tight">{L("কাদের জন্য", "Built for")}</h2>
               <ul className="mt-6 grid gap-3 sm:grid-cols-2">
                 {audiences.map((a) => (
                   <li key={a} className="flex items-start gap-2 text-sm">
@@ -358,51 +560,85 @@ function Index() {
                 <div key={c.t} className="surface-panel p-5">
                   <c.icon className="size-5 text-primary" />
                   <h3 className="mt-3 text-base font-semibold">{c.t}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{c.b}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{c.b}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* FAQ */}
-        <section id="faq" className="border-y border-border bg-muted/30">
-          <div className="mx-auto max-w-4xl px-5 py-16">
-            <h2 className="font-display text-3xl font-bold">{L("সাধারণ প্রশ্ন", "Frequently asked questions")}</h2>
-            <dl className="mt-8 grid gap-4 sm:grid-cols-2">
-              {faqs.map((f) => (
-                <div key={f.q} className="surface-panel p-5">
-                  <dt className="font-semibold">{f.q}</dt>
-                  <dd className="mt-1 text-sm text-muted-foreground">{f.a}</dd>
-                </div>
+        {/* Testimonials */}
+        <section className="border-y border-border bg-muted/30">
+          <div className="mx-auto max-w-6xl px-5 py-16">
+            <div className="max-w-2xl">
+              <Eyebrow>{L("গ্রাহক মতামত", "Customer voices")}</Eyebrow>
+              <h2 className="font-display text-3xl font-bold tracking-tight">
+                {L("যারা প্রতিদিন কাউন্টারে চালান", "Teams running the counter every day")}
+              </h2>
+            </div>
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {testimonials.map((tm) => (
+                <figure key={tm.name} className="surface-panel flex h-full flex-col p-6">
+                  <Quote className="size-5 text-primary/60" />
+                  <blockquote className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
+                    {tm.quote}
+                  </blockquote>
+                  <figcaption className="mt-4 border-t border-border pt-3 text-sm">
+                    <span className="font-semibold">{tm.name}</span>
+                    <span className="block text-xs text-muted-foreground">{tm.role}</span>
+                  </figcaption>
+                </figure>
               ))}
-            </dl>
+            </div>
           </div>
         </section>
 
+        {/* FAQ */}
+        <section id="faq" className="mx-auto max-w-4xl px-5 py-16">
+          <Eyebrow>{L("প্রশ্নোত্তর", "FAQ")}</Eyebrow>
+          <h2 className="font-display text-3xl font-bold tracking-tight">
+            {L("সাধারণ প্রশ্ন", "Frequently asked questions")}
+          </h2>
+          <dl className="mt-8 grid gap-4 sm:grid-cols-2">
+            {faqs.map((f) => (
+              <div key={f.q} className="surface-panel p-5">
+                <dt className="font-semibold">{f.q}</dt>
+                <dd className="mt-1 text-sm leading-relaxed text-muted-foreground">{f.a}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
         {/* CTA */}
-        <section className="mx-auto max-w-6xl px-5 py-16">
-          <div className="surface-panel flex flex-col items-center gap-4 p-10 text-center">
-            <h2 className="font-display text-3xl font-bold">
-              {L("আজই আপনার দোকানের হিসাব ডিজিটাল করুন", "Digitise your shop today")}
-            </h2>
-            <p className="max-w-xl text-muted-foreground">
-              {L(
-                "অ্যাকাউন্ট খুলে কয়েক মিনিটেই বিলিং শুরু করুন — কোনো ইনস্টলেশন লাগবে না।",
-                "Create an account and start billing in minutes — no installation required.",
-              )}
-            </p>
-            <Button asChild size="lg">
-              <Link to="/auth">
-                {t("getStarted")} <ArrowRight className="ml-1 size-4" />
-              </Link>
-            </Button>
+        <section className="border-t border-border bg-muted/30">
+          <div className="mx-auto max-w-6xl px-5 py-16">
+            <div className="surface-panel flex flex-col items-center gap-4 p-10 text-center">
+              <h2 className="font-display text-3xl font-bold tracking-tight">
+                {L("আজই আপনার দোকানের হিসাব ডিজিটাল করুন", "Digitise your retail operation today")}
+              </h2>
+              <p className="max-w-xl text-muted-foreground">
+                {L(
+                  "অ্যাকাউন্ট খুলে কয়েক মিনিটেই বিলিং শুরু করুন — কোনো ইনস্টলেশন লাগবে না।",
+                  "Create an account and start billing in minutes — no installation required.",
+                )}
+              </p>
+              <div className="mt-2 flex flex-wrap justify-center gap-3">
+                <Button asChild size="lg">
+                  <Link to="/auth">
+                    {t("getStarted")} <ArrowRight className="ml-1 size-4" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline">
+                  <Link to="/auth">{t("signIn")}</Link>
+                </Button>
+              </div>
+            </div>
           </div>
         </section>
       </main>
 
       <footer className="border-t border-border">
-        <div className="mx-auto grid max-w-6xl gap-6 px-5 py-10 sm:grid-cols-3">
+        <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="gradient-brand flex size-8 items-center justify-center rounded-lg text-primary-foreground">
@@ -410,29 +646,43 @@ function Index() {
               </span>
               <span className="font-display font-bold">{t("appName")}</span>
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {L("রিটেইল ব্যবসার জন্য বিলিং, ইনভেন্টরি ও হিসাব ব্যবস্থাপনা।", "Billing, inventory and accounting for retail businesses.")}
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              {L(
+                "রিটেইল ব্যবসার জন্য বিলিং, ইনভেন্টরি ও হিসাব ব্যবস্থাপনা — বাংলা ও ইংরেজিতে।",
+                "Billing, inventory and accounting for retail businesses — in Bengali and English.",
+              )}
             </p>
           </div>
           <div className="text-sm">
             <p className="font-semibold">{L("পণ্য", "Product")}</p>
-            <ul className="mt-2 space-y-1 text-muted-foreground">
+            <ul className="mt-3 space-y-2 text-muted-foreground">
+              <li><a href="#platform" className="hover:text-foreground">{L("প্ল্যাটফর্ম", "Platform")}</a></li>
               <li><a href="#modules" className="hover:text-foreground">{L("মডিউল", "Modules")}</a></li>
               <li><a href="#workflow" className="hover:text-foreground">{L("কিভাবে কাজ করে", "How it works")}</a></li>
+              <li><a href="#security" className="hover:text-foreground">{L("নিরাপত্তা", "Security")}</a></li>
+            </ul>
+          </div>
+          <div className="text-sm">
+            <p className="font-semibold">{L("সমাধান", "Solutions")}</p>
+            <ul className="mt-3 space-y-2 text-muted-foreground">
+              <li><a href="#industries" className="hover:text-foreground">{L("ইন্ডাস্ট্রি", "Industries")}</a></li>
               <li><a href="#faq" className="hover:text-foreground">{L("প্রশ্নোত্তর", "FAQ")}</a></li>
             </ul>
           </div>
           <div className="text-sm">
             <p className="font-semibold">{L("অ্যাকাউন্ট", "Account")}</p>
-            <ul className="mt-2 space-y-1 text-muted-foreground">
+            <ul className="mt-3 space-y-2 text-muted-foreground">
               <li><Link to="/auth" className="hover:text-foreground">{t("signIn")}</Link></li>
               <li><Link to="/auth" className="hover:text-foreground">{t("getStarted")}</Link></li>
             </ul>
           </div>
         </div>
-        <p className="border-t border-border py-5 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} {t("appName")}
-        </p>
+        <div className="border-t border-border">
+          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-5 py-5 text-sm text-muted-foreground sm:flex-row">
+            <p>© {new Date().getFullYear()} {t("appName")}</p>
+            <p>{L("বাংলাদেশের রিটেইল ব্যবসার জন্য তৈরি", "Built for retail businesses")}</p>
+          </div>
+        </div>
       </footer>
     </div>
   );
