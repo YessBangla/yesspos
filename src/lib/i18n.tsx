@@ -404,6 +404,20 @@ const dict = {
   transferItems: { bn: "পণ্য তালিকা", en: "Items" },
   sameBranchError: { bn: "দুই ব্রাঞ্চ আলাদা হতে হবে", en: "Branches must be different" },
   noItems: { bn: "অন্তত একটি পণ্য যোগ করুন", en: "Add at least one product" },
+  multiBranch: { bn: "মাল্টি ব্রাঞ্চ", en: "Multi branch" },
+  newCustomer: { bn: "নতুন কাস্টমার", en: "New customer" },
+  newProduct: { bn: "নতুন পণ্য", en: "New product" },
+  cashReceived: { bn: "নগদ গ্রহণ", en: "Cash received" },
+  changeReturn: { bn: "ফেরত দিতে হবে", en: "Change to return" },
+  selectPaymentFirst: { bn: "আগে পেমেন্ট মাধ্যম সিলেক্ট করুন", en: "Select a payment method first" },
+  confirmReceiveTitle: { bn: "টাকা রিসিভ করেছেন?", en: "Payment received?" },
+  confirmReceiveHint: {
+    bn: "প্রিন্ট করার আগে নিশ্চিত করুন কাস্টমারের কাছ থেকে টাকা বুঝে পেয়েছেন।",
+    en: "Confirm you have received the money from the customer before printing.",
+  },
+  yesReceived: { bn: "হ্যাঁ, রিসিভ করেছি — প্রিন্ট", en: "Yes, received — print" },
+  notYet: { bn: "না, এখন নয়", en: "Not yet" },
+  exactAmount: { bn: "সমপরিমাণ", en: "Exact" },
 } as const;
 
 
