@@ -250,7 +250,9 @@ function UsersPage() {
               <th className="px-4 py-3 font-medium">{t("username")}</th>
               <th className="px-4 py-3 font-medium">{t("fullName")}</th>
               <th className="px-4 py-3 font-medium">{t("role")}</th>
+              <th className="px-4 py-3 font-medium">{t("branch")}</th>
               <th className="px-4 py-3 text-right font-medium">{t("actions")}</th>
+
             </tr>
           </thead>
           <tbody>
