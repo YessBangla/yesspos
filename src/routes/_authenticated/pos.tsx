@@ -640,7 +640,7 @@ function PosPage() {
                   }
                 }}
               >
-                <SelectTrigger className="h-11 flex-1 rounded-xl bg-muted/50">
+                <SelectTrigger className="h-11 min-w-0 flex-1 rounded-xl bg-muted/50">
                   <SelectValue placeholder={t("walkIn")} />
                 </SelectTrigger>
                 <SelectContent>

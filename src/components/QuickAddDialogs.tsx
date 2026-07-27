@@ -57,10 +57,11 @@ export function QuickAddCustomer({ onCreated }: { onCreated?: (c: { id: string; 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="accent" className="h-11 shrink-0 gap-1.5 rounded-xl px-3" aria-label={t("newCustomer")}>
-          <Plus className="size-4" />
-          <span className="text-xs font-semibold">{t("newCustomer")}</span>
+        <Button variant="accent" className="h-11 shrink-0 gap-1.5 whitespace-nowrap rounded-xl px-3" aria-label={t("newCustomer")}>
+          <Plus className="size-4 shrink-0" />
+          <span className="hidden text-xs font-semibold sm:inline">{t("newCustomer")}</span>
         </Button>
+
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -177,7 +178,7 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (id: string) => voi
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="accent" className="h-12 shrink-0 gap-1.5 rounded-xl px-3" aria-label={t("newProduct")}>
+        <Button variant="accent" className="h-12 shrink-0 gap-1.5 whitespace-nowrap rounded-xl px-3" aria-label={t("newProduct")}>
           <Plus className="size-4" />
           <span className="hidden text-xs font-semibold sm:inline">{t("newProduct")}</span>
         </Button>
