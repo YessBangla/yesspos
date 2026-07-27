@@ -100,14 +100,17 @@ function ProductsPage() {
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (products.data ?? []).filter(
-      (p) =>
-        !q ||
-        p.name_en.toLowerCase().includes(q) ||
-        p.name_bn.includes(query.trim()) ||
-        p.sku.toLowerCase().includes(q),
-    );
-  }, [products.data, query]);
+    const stockMap = branchStock.data;
+    return (products.data ?? [])
+      .map((p) => ({ ...p, branch_stock: stockMap ? (stockMap.get(p.id) ?? 0) : p.stock }))
+      .filter(
+        (p) =>
+          !q ||
+          p.name_en.toLowerCase().includes(q) ||
+          p.name_bn.includes(query.trim()) ||
+          p.sku.toLowerCase().includes(q),
+      );
+  }, [products.data, branchStock.data, query]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -119,15 +122,34 @@ function ProductsPage() {
         low_stock_at: Number(form.low_stock_at),
       });
       if (!parsed.success) throw new Error(parsed.error.issues[0].message);
-      const payload = { ...parsed.data, category_id: form.category_id || null };
+      const branchId = myBranch.data?.id ?? null;
+      const { stock, ...rest } = parsed.data;
+      const payload = { ...rest, category_id: form.category_id || null };
+      let productId = editing?.id ?? null;
       if (editing) {
         const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("products").insert(payload);
+        const { data, error } = await supabase
+          .from("products")
+          .insert({ ...payload, stock: branchId ? 0 : stock })
+          .select("id")
+          .single();
+        if (error) throw error;
+        productId = data.id;
+      }
+      // Per-branch stock is the source of truth when the user belongs to a branch.
+      if (branchId && productId) {
+        const { error } = await supabase
+          .from("product_stock")
+          .upsert({ product_id: productId, branch_id: branchId, stock }, { onConflict: "product_id,branch_id" });
+        if (error) throw error;
+      } else if (editing) {
+        const { error } = await supabase.from("products").update({ stock }).eq("id", editing.id);
         if (error) throw error;
       }
     },
+
     onSuccess: () => {
       setOpen(false);
       setEditing(null);
