@@ -3,7 +3,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
   Barcode,
+  BookOpenCheck,
   Boxes,
+  CalendarDays,
+  FileSpreadsheet,
+  Landmark,
+  ListTree,
+  Scale,
   ChevronDown,
   FileText,
   HandCoins,
