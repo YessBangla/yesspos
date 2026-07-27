@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useI18n } from "@/lib/i18n";
+import { logAudit } from "@/lib/audit";
 import { LangToggle } from "@/components/LangToggle";
 
 export const Route = createFileRoute("/auth")({
@@ -81,7 +82,10 @@ function AuthPage() {
         if (error) throw error;
       }
       const { data } = await supabase.auth.getSession();
-      if (data.session) navigate({ to: "/pos", replace: true });
+      if (data.session) {
+        await logAudit("login", { details: mode === "signup" ? "signup" : "password" });
+        navigate({ to: "/pos", replace: true });
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
     } finally {
@@ -100,6 +104,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
+    await logAudit("login", { details: "google" });
     navigate({ to: "/pos", replace: true });
   }
 

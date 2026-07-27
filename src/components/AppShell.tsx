@@ -5,6 +5,7 @@ import {
   Barcode,
   Boxes,
   HandCoins,
+  History,
   SlidersHorizontal,
   Tags,
 
@@ -24,38 +25,45 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { LangToggle } from "@/components/LangToggle";
 import { cn } from "@/lib/utils";
+import { useMyRole } from "@/lib/use-my-role";
+import { canAccess, type Feature } from "@/lib/permissions";
+import { logAudit } from "@/lib/audit";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const me = useMyRole();
 
-  const nav = [
-    { to: "/pos", label: t("pos"), icon: ShoppingCart },
-    { to: "/sales", label: t("sales"), icon: ReceiptText },
-    { to: "/products", label: t("products"), icon: Boxes },
-    { to: "/stock-adjustments", label: t("stockAdjust"), icon: SlidersHorizontal },
-    { to: "/labels", label: t("labels"), icon: Barcode },
-    { to: "/purchases", label: t("purchases"), icon: Truck },
-    { to: "/contacts", label: t("contacts"), icon: Users },
-    { to: "/payments", label: t("paymentsLedger"), icon: HandCoins },
-    { to: "/expenses", label: t("expenses"), icon: Wallet },
-    { to: "/catalog", label: t("catalog"), icon: Tags },
-    { to: "/reports", label: t("reports"), icon: PieChart },
-    { to: "/dashboard", label: t("dashboard"), icon: BarChart3 },
-    { to: "/users", label: t("usersRoles"), icon: ShieldCheck },
-    { to: "/settings", label: t("settings"), icon: SettingsIcon },
-  ] as const;
+  const allNav = [
+    { to: "/pos", feature: "pos", label: t("pos"), icon: ShoppingCart },
+    { to: "/sales", feature: "sales", label: t("sales"), icon: ReceiptText },
+    { to: "/products", feature: "products", label: t("products"), icon: Boxes },
+    { to: "/stock-adjustments", feature: "stock-adjustments", label: t("stockAdjust"), icon: SlidersHorizontal },
+    { to: "/labels", feature: "labels", label: t("labels"), icon: Barcode },
+    { to: "/purchases", feature: "purchases", label: t("purchases"), icon: Truck },
+    { to: "/contacts", feature: "contacts", label: t("contacts"), icon: Users },
+    { to: "/payments", feature: "payments", label: t("paymentsLedger"), icon: HandCoins },
+    { to: "/expenses", feature: "expenses", label: t("expenses"), icon: Wallet },
+    { to: "/catalog", feature: "catalog", label: t("catalog"), icon: Tags },
+    { to: "/reports", feature: "reports", label: t("reports"), icon: PieChart },
+    { to: "/dashboard", feature: "dashboard", label: t("dashboard"), icon: BarChart3 },
+    { to: "/users", feature: "users", label: t("usersRoles"), icon: ShieldCheck },
+    { to: "/audit-logs", feature: "audit-logs", label: t("auditLog"), icon: History },
+    { to: "/settings", feature: "settings", label: t("settings"), icon: SettingsIcon },
+  ] as const satisfies readonly { to: string; feature: Feature; label: string; icon: unknown }[];
 
-
+  const nav = allNav.filter((item) => canAccess(me.data?.role, item.feature));
 
   async function signOut() {
+    await logAudit("logout");
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
+
 
   return (
     <div className="flex min-h-screen flex-col bg-background md:flex-row">
@@ -105,7 +113,24 @@ export function AppShell({ children }: { children: ReactNode }) {
             <LogOut className="size-4" />
           </Button>
         </header>
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1">
+          {(() => {
+            const current = allNav.find((n) => pathname.startsWith(n.to));
+            if (me.isLoading) return <div className="p-6 text-sm text-muted-foreground">…</div>;
+            if (current && !canAccess(me.data?.role, current.feature)) {
+              return (
+                <div className="p-6">
+                  <div className="surface-panel mx-auto max-w-md p-6 text-center">
+                    <ShieldCheck className="mx-auto size-8 text-muted-foreground" />
+                    <p className="mt-3 text-sm text-muted-foreground">{t("noAccess")}</p>
+                  </div>
+                </div>
+              );
+            }
+            return children;
+          })()}
+        </main>
+
       </div>
     </div>
   );

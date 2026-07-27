@@ -17,6 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { logAudit } from "@/lib/audit";
 
 
 export const Route = createFileRoute("/_authenticated/pos")({
@@ -255,7 +256,9 @@ function PosPage() {
       };
     },
     onSuccess: ({ status, receipt: r }) => {
+      void logAudit("sale", { entity: "sale", details: `${status} · ${r?.invoice ?? ""}` });
       if (status === "final") setReceipt(r);
+
       else toast.success(status === "draft" ? t("holdSale") : t("saveQuotation"));
       resetSale();
       queryClient.invalidateQueries({ queryKey: ["products"] });

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { KeyRound, Plus, Search, ShieldCheck, Trash2 } from "lucide-react";
+import { Download, KeyRound, Plus, Search, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
+import { downloadCsv, logAudit } from "@/lib/audit";
 import { APP_ROLES, createAppUser, deleteAppUser, setUserPassword, type AppRole } from "@/lib/users.functions";
 
 export const Route = createFileRoute("/_authenticated/users")({
@@ -113,6 +114,7 @@ function UsersPage() {
     mutationFn: async () => createFn({ data: form }),
     onSuccess: () => {
       toast.success(t("userCreated"));
+      void logAudit("user_create", { entity: "user", details: `${form.username} (${form.role})` });
       setOpen(false);
       setForm({ ...emptyForm });
       refresh();
@@ -122,6 +124,7 @@ function UsersPage() {
 
   const changeRole = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
+      void logAudit("role_update", { entity: "user", entityId: userId, details: role });
       const del = await supabase.from("user_roles").delete().eq("user_id", userId);
       if (del.error) throw del.error;
       const ins = await supabase.from("user_roles").insert({ user_id: userId, role });
@@ -138,6 +141,7 @@ function UsersPage() {
     mutationFn: async () => passwordFn({ data: { userId: pwFor!, password: newPw } }),
     onSuccess: () => {
       toast.success(t("passwordUpdated"));
+      void logAudit("password_reset", { entity: "user", entityId: pwFor ?? undefined });
       setPwFor(null);
       setNewPw("");
     },
@@ -145,7 +149,11 @@ function UsersPage() {
   });
 
   const removeUser = useMutation({
-    mutationFn: async (userId: string) => deleteFn({ data: { userId } }),
+    mutationFn: async (userId: string) => {
+      const r = await deleteFn({ data: { userId } });
+      void logAudit("user_delete", { entity: "user", entityId: userId });
+      return r;
+    },
     onSuccess: () => {
       toast.success(t("userDeleted"));
       refresh();
@@ -176,9 +184,28 @@ function UsersPage() {
           <h1 className="font-display text-2xl font-bold">{t("usersRoles")}</h1>
           <p className="text-sm text-muted-foreground">{t("usersRolesHint")}</p>
         </div>
-        <Button onClick={() => setOpen(true)}>
-          <Plus className="mr-2 size-4" /> {t("addUser")}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() =>
+              downloadCsv(
+                `users-roles-${new Date().toISOString().slice(0, 10)}.csv`,
+                ["Username", "Full name", "Role", "Created at"],
+                rows.map((u) => [
+                  u.username ?? "",
+                  u.full_name ?? "",
+                  u.role,
+                  new Date(u.created_at).toLocaleString(),
+                ]),
+              )
+            }
+          >
+            <Download className="mr-2 size-4" /> {t("exportCsv")}
+          </Button>
+          <Button onClick={() => setOpen(true)}>
+            <Plus className="mr-2 size-4" /> {t("addUser")}
+          </Button>
+        </div>
       </div>
 
       <div className="relative max-w-sm">

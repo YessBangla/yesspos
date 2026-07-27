@@ -184,8 +184,35 @@ const dict = {
   printLabels: { bn: "লেবেল প্রিন্ট", en: "Print labels" },
   noBarcode: { bn: "বারকোড নেই", en: "No barcode" },
   selectProduct: { bn: "পণ্য বাছুন", en: "Select product" },
-
+  auditLog: { bn: "অডিট লগ", en: "Audit log" },
+  auditLogHint: {
+    bn: "লগইন ও গুরুত্বপূর্ণ কাজের রেকর্ড",
+    en: "Record of logins and important actions",
+  },
+  exportCsv: { bn: "CSV এক্সপোর্ট", en: "Export CSV" },
+  time: { bn: "সময়", en: "Time" },
+  user: { bn: "ইউজার", en: "User" },
+  action: { bn: "কাজ", en: "Action" },
+  details: { bn: "বিবরণ", en: "Details" },
+  noAccess: { bn: "এই পাতা দেখার অনুমতি নেই", en: "You do not have access to this page" },
+  actLogin: { bn: "লগইন", en: "Login" },
+  actLogout: { bn: "লগ আউট", en: "Logout" },
+  actSale: { bn: "বিক্রয়", en: "Sale" },
+  actSaleReturn: { bn: "বিক্রয় ফেরত", en: "Sale return" },
+  actProductCreate: { bn: "পণ্য যোগ", en: "Product added" },
+  actProductUpdate: { bn: "পণ্য সম্পাদনা", en: "Product updated" },
+  actProductDelete: { bn: "পণ্য মুছে ফেলা", en: "Product deleted" },
+  actUserCreate: { bn: "ইউজার তৈরি", en: "User created" },
+  actUserDelete: { bn: "ইউজার মুছে ফেলা", en: "User deleted" },
+  actRoleUpdate: { bn: "রোল পরিবর্তন", en: "Role changed" },
+  actPasswordReset: { bn: "পাসওয়ার্ড রিসেট", en: "Password reset" },
+  actPayment: { bn: "পেমেন্ট", en: "Payment" },
+  actStockAdjust: { bn: "স্টক সমন্বয়", en: "Stock adjustment" },
+  actPurchase: { bn: "ক্রয়", en: "Purchase" },
+  actExpense: { bn: "খরচ", en: "Expense" },
+  actSettings: { bn: "সেটিংস পরিবর্তন", en: "Settings updated" },
 } as const;
+
 
 
 

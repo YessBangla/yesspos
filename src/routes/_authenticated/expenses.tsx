@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useI18n } from "@/lib/i18n";
+import { logAudit } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/expenses")({
   head: () => ({
@@ -83,6 +84,7 @@ function ExpensesPage() {
       if (error) throw error;
     },
     onSuccess: () => {
+      void logAudit("expense", { entity: "expense" });
       setOpen(false);
       setForm({ ...emptyForm });
       queryClient.invalidateQueries({ queryKey: ["expenses"] });

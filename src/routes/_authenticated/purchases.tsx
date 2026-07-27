@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { money, num, useI18n } from "@/lib/i18n";
+import { logAudit } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/purchases")({
   head: () => ({
@@ -119,6 +120,7 @@ function PurchasesPage() {
       }
     },
     onSuccess: () => {
+      void logAudit("purchase", { entity: "purchase" });
       setOpen(false);
       setLines([]);
       setPaid("0");

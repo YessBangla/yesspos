@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { num, useI18n } from "@/lib/i18n";
+import { logAudit } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/stock-adjustments")({
   head: () => ({
@@ -80,6 +81,7 @@ function StockAdjustPage() {
       if (error) throw error;
     },
     onSuccess: () => {
+      void logAudit("stock_adjust", { entity: "stock_adjustment" });
       setOpen(false);
       setForm({ ...emptyForm });
       queryClient.invalidateQueries({ queryKey: ["stock-adjustments"] });

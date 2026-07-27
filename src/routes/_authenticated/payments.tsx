@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useI18n } from "@/lib/i18n";
+import { logAudit } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/payments")({
   head: () => ({
@@ -135,6 +136,7 @@ function PaymentsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
+      void logAudit("payment", { entity: "payment" });
       setOpen(false);
       setForm({ ...emptyForm });
       queryClient.invalidateQueries({ queryKey: ["payments"] });
