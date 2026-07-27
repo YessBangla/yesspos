@@ -78,7 +78,7 @@ function DashboardPage() {
             .gte("created_at", fromIso)
             .order("created_at", { ascending: false }),
           supabase.from("products").select("id,name_en,name_bn,stock,low_stock_at,unit,cost"),
-          supabase.from("sale_items").select("sale_id,name_snapshot,quantity,line_total"),
+          supabase.from("sale_items").select("sale_id,product_id,name_snapshot,quantity,line_total"),
           supabase
             .from("purchases")
             .select("id,ref_no,total,paid,purchased_on,created_at")
@@ -136,14 +136,11 @@ function DashboardPage() {
   const costById = new Map(products.map((p) => [p.id, Number(p.cost ?? 0)]));
   const finalIds = new Set(finalSales.map((s) => s.id));
   const rangeItems = items.filter((it) => finalIds.has(it.sale_id as string));
-  const cogs = rangeItems.reduce((s, it) => {
-    const line = Number(it.line_total);
-    return s + line;
-  }, 0);
-  const soldQtyCost = rangeItems.reduce((s) => s, 0);
-  void costById;
-  void soldQtyCost;
-  const profit = saleTotal - returnTotal - expenseTotal - (cogs - saleTotal >= 0 ? 0 : 0);
+  const cogs = rangeItems.reduce(
+    (s, it) => s + Number(costById.get(it.product_id as string) ?? 0) * Number(it.quantity),
+    0,
+  );
+  const profit = saleTotal - returnTotal - cogs - expenseTotal;
 
   const customers = contacts.filter((c) => c.type === "customer").length;
   const suppliers = contacts.filter((c) => c.type === "supplier").length;
@@ -160,7 +157,7 @@ function DashboardPage() {
     { icon: RotateCcw, label: t("saleReturn"), value: money(returnTotal, lang), tone: "text-destructive" },
     { icon: ShoppingCart, label: t("totalPurchase"), value: money(purchaseTotal, lang), tone: "text-chart-3" },
     { icon: Receipt, label: t("todayOrders"), value: num(finalSales.length, lang), tone: "text-chart-4" },
-    { icon: Banknote, label: t("totalPaid"), value: money(salePaid, lang), tone: "text-chart-2" },
+    { icon: Banknote, label: t("paid"), value: money(salePaid, lang), tone: "text-chart-2" },
     { icon: HandCoins, label: t("totalDueAmount"), value: money(saleDue, lang), tone: "text-destructive" },
     { icon: ArrowDownLeft, label: t("totalReceived"), value: money(dueReceived, lang), tone: "text-chart-1" },
     { icon: ArrowUpRight, label: t("totalPurchasePaid"), value: money(purchasePaid, lang), tone: "text-chart-3" },
