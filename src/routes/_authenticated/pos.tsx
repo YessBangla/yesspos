@@ -299,7 +299,7 @@ function PosPage() {
     setPhone("");
     setEmail("");
     setContactId("");
-    setMethod("cash");
+    setMethod("");
   }, [settings.data?.default_tax_pct]);
 
   const applyCoupon = useMutation({
