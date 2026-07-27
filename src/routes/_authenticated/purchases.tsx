@@ -235,6 +235,7 @@ function PurchasesPage() {
               <th className="px-4 py-3 text-right">{t("total")}</th>
               <th className="px-4 py-3 text-right">{t("paid")}</th>
               <th className="px-4 py-3 text-right">{t("due")}</th>
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
@@ -250,15 +251,29 @@ function PurchasesPage() {
                 <td className="px-4 py-3 text-right text-destructive">
                   {money(Math.max(Number(p.total) - Number(p.paid), 0), lang)}
                 </td>
+                <td className="px-4 py-3 text-right">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setReturning(p as PurchaseRow);
+                      setRetQtys({});
+                      setRetReason("");
+                    }}
+                  >
+                    <RotateCcw className="mr-1 size-4" /> {t("returnPurchase")}
+                  </Button>
+                </td>
               </tr>
             ))}
             {(purchases.data ?? []).length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={6}>
+                <td className="px-4 py-6 text-muted-foreground" colSpan={7}>
                   {purchases.isLoading ? t("loading") : t("noData")}
                 </td>
               </tr>
             )}
+
           </tbody>
         </table>
       </div>
