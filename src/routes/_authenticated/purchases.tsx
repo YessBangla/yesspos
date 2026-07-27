@@ -141,6 +141,7 @@ function PurchasesPage() {
       setSupplierId("");
       queryClient.invalidateQueries({ queryKey: ["purchases"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["branch-stock"] });
       queryClient.invalidateQueries({ queryKey: ["products-all"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
       toast.success(t("save"));
@@ -199,6 +200,7 @@ function PurchasesPage() {
       setRetQtys({});
       setRetReason("");
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["branch-stock"] });
       queryClient.invalidateQueries({ queryKey: ["products-all"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });

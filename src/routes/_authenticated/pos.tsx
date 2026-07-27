@@ -360,6 +360,7 @@ function PosPage() {
       } else toast.success(status === "draft" ? t("holdSale") : t("saveQuotation"));
       resetSale();
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["branch-stock"] });
       queryClient.invalidateQueries({ queryKey: ["sales"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
     },
