@@ -59,6 +59,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const me = useMyRole();
+  const myBranch = useMyBranch();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
