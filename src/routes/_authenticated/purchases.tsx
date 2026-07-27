@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Minus, Plus, Trash2, X } from "lucide-react";
+import { Minus, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,15 @@ export const Route = createFileRoute("/_authenticated/purchases")({
 
 type Product = { id: string; name_en: string; name_bn: string; sku: string; cost: number; unit: string };
 type Line = { product: Product; qty: number; cost: string };
+type PurchaseRow = {
+  id: string;
+  ref_no: number;
+  total: number;
+  paid: number;
+  purchased_on: string;
+  supplier_id: string | null;
+  note: string | null;
+};
 
 function PurchasesPage() {
   const { t, lang } = useI18n();
@@ -42,6 +51,10 @@ function PurchasesPage() {
   const [note, setNote] = useState("");
   const [pick, setPick] = useState("");
   const [lines, setLines] = useState<Line[]>([]);
+  const [returning, setReturning] = useState<PurchaseRow | null>(null);
+  const [retQtys, setRetQtys] = useState<Record<string, string>>({});
+  const [retReason, setRetReason] = useState("");
+
 
   const suppliers = useQuery({
     queryKey: ["contacts"],
@@ -135,6 +148,66 @@ function PurchasesPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
+  const retItems = useQuery({
+    queryKey: ["purchase-items", returning?.id],
+    enabled: !!returning,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("purchase_items")
+        .select("id,product_id,name_snapshot,unit_cost,quantity")
+        .eq("purchase_id", returning!.id);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const submitReturn = useMutation({
+    mutationFn: async () => {
+      const rows = (retItems.data ?? [])
+        .map((i) => ({ i, q: Math.min(Number(retQtys[i.id]) || 0, i.quantity) }))
+        .filter((r) => r.q > 0);
+      if (rows.length === 0) throw new Error(t("noData"));
+      const total = rows.reduce((s, r) => s + Number(r.i.unit_cost) * r.q, 0);
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: ret, error } = await supabase
+        .from("purchase_returns")
+        .insert({
+          purchase_id: returning!.id,
+          supplier_id: returning!.supplier_id,
+          user_id: userData.user?.id ?? null,
+          total,
+          reason: retReason.trim().slice(0, 200) || null,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      const { error: itemsError } = await supabase.from("purchase_return_items").insert(
+        rows.map((r) => ({
+          return_id: ret.id,
+          product_id: r.i.product_id,
+          name_snapshot: r.i.name_snapshot,
+          unit_cost: Number(r.i.unit_cost),
+          quantity: r.q,
+          line_total: Number(r.i.unit_cost) * r.q,
+        })),
+      );
+      if (itemsError) throw itemsError;
+    },
+    onSuccess: () => {
+      void logAudit("purchase", { entity: "purchase_return" });
+      setReturning(null);
+      setRetQtys({});
+      setRetReason("");
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products-all"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+      toast.success(t("purchaseReturn"));
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+
   const supplierList = useMemo(
     () => (suppliers.data ?? []).filter((c) => c.type === "supplier"),
     [suppliers.data],
@@ -162,6 +235,7 @@ function PurchasesPage() {
               <th className="px-4 py-3 text-right">{t("total")}</th>
               <th className="px-4 py-3 text-right">{t("paid")}</th>
               <th className="px-4 py-3 text-right">{t("due")}</th>
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
@@ -177,15 +251,29 @@ function PurchasesPage() {
                 <td className="px-4 py-3 text-right text-destructive">
                   {money(Math.max(Number(p.total) - Number(p.paid), 0), lang)}
                 </td>
+                <td className="px-4 py-3 text-right">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setReturning(p as PurchaseRow);
+                      setRetQtys({});
+                      setRetReason("");
+                    }}
+                  >
+                    <RotateCcw className="mr-1 size-4" /> {t("returnPurchase")}
+                  </Button>
+                </td>
               </tr>
             ))}
             {(purchases.data ?? []).length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={6}>
+                <td className="px-4 py-6 text-muted-foreground" colSpan={7}>
                   {purchases.isLoading ? t("loading") : t("noData")}
                 </td>
               </tr>
             )}
+
           </tbody>
         </table>
       </div>
@@ -316,6 +404,52 @@ function PurchasesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!returning} onOpenChange={(o) => !o && setReturning(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {t("returnPurchase")} · #{returning ? num(Number(returning.ref_no), lang) : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {retItems.isLoading && <p className="text-sm text-muted-foreground">{t("loading")}</p>}
+            {(retItems.data ?? []).map((i) => (
+              <div key={i.id} className="flex items-center gap-2 rounded-lg bg-muted/60 p-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{i.name_snapshot}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {money(Number(i.unit_cost), lang)} · {t("qty")} {num(i.quantity, lang)}
+                  </p>
+                </div>
+                <Input
+                  className="h-9 w-20"
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={retQtys[i.id] ?? ""}
+                  onChange={(e) => setRetQtys({ ...retQtys, [i.id]: e.target.value })}
+                />
+              </div>
+            ))}
+            {!retItems.isLoading && (retItems.data ?? []).length === 0 && (
+              <p className="text-sm text-muted-foreground">{t("noData")}</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label>{t("reason")}</Label>
+            <Input value={retReason} maxLength={200} onChange={(e) => setRetReason(e.target.value)} />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setReturning(null)}>
+              {t("cancel")}
+            </Button>
+            <Button onClick={() => submitReturn.mutate()} disabled={submitReturn.isPending}>
+              {t("save")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }

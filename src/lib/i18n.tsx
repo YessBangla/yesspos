@@ -277,7 +277,21 @@ const dict = {
   netCash: { bn: "নিট নগদ", en: "Net cash" },
   recentTransactions: { bn: "সাম্প্রতিক লেনদেন", en: "Recent transactions" },
   bestSeller: { bn: "সেরা বিক্রেতা পণ্য", en: "Best seller" },
+  purchaseReturn: { bn: "ক্রয় ফেরত", en: "Purchase return" },
+  returnPurchase: { bn: "ক্রয় ফেরত দিন", en: "Return to supplier" },
+  purchaseReturns: { bn: "ক্রয় ফেরত তালিকা", en: "Purchase returns" },
+  summary: { bn: "সারসংক্ষেপ", en: "Summary" },
+  dailySales: { bn: "দৈনিক বিক্রি", en: "Daily sales" },
+  stockReport: { bn: "স্টক রিপোর্ট", en: "Stock report" },
+  dueReport: { bn: "বাকির রিপোর্ট", en: "Due report" },
+  printReport: { bn: "প্রিন্ট", en: "Print" },
+  costValue: { bn: "ক্রয়মূল্য", en: "Cost value" },
+  saleValue: { bn: "বিক্রয়মূল্য", en: "Sale value" },
+  invoices: { bn: "ইনভয়েস", en: "Invoices" },
+  avgSale: { bn: "গড় বিক্রি", en: "Average sale" },
+  cogs: { bn: "বিক্রীত পণ্যের ব্যয়", en: "Cost of goods sold" },
 } as const;
+
 
 
 

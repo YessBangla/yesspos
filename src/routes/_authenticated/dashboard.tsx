@@ -13,6 +13,8 @@ import {
   ShoppingCart,
   Trophy,
   Truck,
+  Undo2,
+
   TrendingUp,
   Users,
   Wallet,
@@ -61,7 +63,7 @@ function DashboardPage() {
   const { t, lang } = useI18n();
   const me = useMyRole();
   const [range, setRange] = useState<RangeKey>("month");
-  const [tab, setTab] = useState<"sale" | "purchase" | "payment">("sale");
+  const [tab, setTab] = useState<"sale" | "purchase" | "payment" | "quotation">("sale");
 
   const from = rangeStart(range);
   const fromIso = from.toISOString();
@@ -70,8 +72,17 @@ function DashboardPage() {
   const stats = useQuery({
     queryKey: ["dashboard", range],
     queryFn: async () => {
-      const [salesRes, productsRes, itemsRes, purchasesRes, returnsRes, expensesRes, contactsRes, paymentsRes] =
-        await Promise.all([
+      const [
+        salesRes,
+        productsRes,
+        itemsRes,
+        purchasesRes,
+        returnsRes,
+        expensesRes,
+        contactsRes,
+        paymentsRes,
+        purchaseReturnsRes,
+      ] = await Promise.all([
           supabase
             .from("sales")
             .select("id,invoice_no,total,paid,status,created_at,customer_name,payment_method")
@@ -92,9 +103,20 @@ function DashboardPage() {
             .select("id,amount,direction,method,paid_on,note")
             .gte("paid_on", fromDate)
             .order("paid_on", { ascending: false }),
+          supabase.from("purchase_returns").select("id,total,created_at").gte("created_at", fromIso),
         ]);
 
-      for (const r of [salesRes, productsRes, itemsRes, purchasesRes, returnsRes, expensesRes, contactsRes, paymentsRes]) {
+      for (const r of [
+        salesRes,
+        productsRes,
+        itemsRes,
+        purchasesRes,
+        returnsRes,
+        expensesRes,
+        contactsRes,
+        paymentsRes,
+        purchaseReturnsRes,
+      ]) {
         if (r.error) throw r.error;
       }
 
@@ -107,9 +129,11 @@ function DashboardPage() {
         expenses: expensesRes.data ?? [],
         contacts: contactsRes.data ?? [],
         payments: paymentsRes.data ?? [],
+        purchaseReturns: purchaseReturnsRes.data ?? [],
       };
     },
   });
+
 
   const d = stats.data;
   const sales = d?.sales ?? [];
@@ -120,12 +144,17 @@ function DashboardPage() {
   const expenses = d?.expenses ?? [];
   const contacts = d?.contacts ?? [];
   const payments = d?.payments ?? [];
+  const purchaseReturns = d?.purchaseReturns ?? [];
+  const quotations = sales.filter((s) => s.status === "quotation");
+
 
   const finalSales = sales.filter((s) => s.status === "final");
   const saleTotal = finalSales.reduce((s, r) => s + Number(r.total), 0);
   const salePaid = finalSales.reduce((s, r) => s + Number(r.paid), 0);
   const saleDue = Math.max(saleTotal - salePaid, 0);
   const returnTotal = returns.reduce((s, r) => s + Number(r.total), 0);
+  const purchaseReturnTotal = purchaseReturns.reduce((s, r) => s + Number(r.total), 0);
+
   const purchaseTotal = purchases.reduce((s, r) => s + Number(r.total), 0);
   const purchasePaid = purchases.reduce((s, r) => s + Number(r.paid), 0);
   const purchaseDue = Math.max(purchaseTotal - purchasePaid, 0);
@@ -156,7 +185,9 @@ function DashboardPage() {
     { icon: TrendingUp, label: t("totalSales"), value: money(saleTotal, lang), tone: "text-primary" },
     { icon: RotateCcw, label: t("saleReturn"), value: money(returnTotal, lang), tone: "text-destructive" },
     { icon: ShoppingCart, label: t("totalPurchase"), value: money(purchaseTotal, lang), tone: "text-chart-3" },
+    { icon: Undo2, label: t("purchaseReturn"), value: money(purchaseReturnTotal, lang), tone: "text-warning" },
     { icon: Receipt, label: t("todayOrders"), value: num(finalSales.length, lang), tone: "text-chart-4" },
+
     { icon: Banknote, label: t("paid"), value: money(salePaid, lang), tone: "text-chart-2" },
     { icon: HandCoins, label: t("totalDueAmount"), value: money(saleDue, lang), tone: "text-destructive" },
     { icon: ArrowDownLeft, label: t("totalReceived"), value: money(dueReceived, lang), tone: "text-chart-1" },
@@ -327,7 +358,9 @@ function DashboardPage() {
             {([
               ["sale", t("sales")],
               ["purchase", t("purchases")],
+              ["quotation", t("quotation")],
               ["payment", t("paymentsLedger")],
+
             ] as const).map(([k, label]) => (
               <button
                 key={k}
@@ -361,6 +394,15 @@ function DashboardPage() {
                       <td className="px-4 py-2 text-right font-semibold">{money(Number(p.total), lang)}</td>
                     </tr>
                   ))}
+                {tab === "quotation" &&
+                  quotations.slice(0, 6).map((s) => (
+                    <tr key={s.id} className="border-b border-border last:border-0">
+                      <td className="px-4 py-2 font-medium">#{num(Number(s.invoice_no), lang)}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{s.customer_name ?? "—"}</td>
+                      <td className="px-4 py-2 text-right font-semibold">{money(Number(s.total), lang)}</td>
+                    </tr>
+                  ))}
                 {tab === "payment" &&
                   payments.slice(0, 6).map((p) => (
                     <tr key={p.id} className="border-b border-border last:border-0">
@@ -371,7 +413,9 @@ function DashboardPage() {
                   ))}
                 {((tab === "sale" && sales.length === 0) ||
                   (tab === "purchase" && purchases.length === 0) ||
+                  (tab === "quotation" && quotations.length === 0) ||
                   (tab === "payment" && payments.length === 0)) && (
+
                   <tr>
                     <td className="px-4 py-6 text-muted-foreground" colSpan={4}>
                       {t("noData")}
