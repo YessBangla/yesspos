@@ -1191,15 +1191,60 @@ function ReceiptDialog({ receipt, onClose }: { receipt: Receipt | null; onClose:
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" className="h-12 flex-1" onClick={() => printHtml(buildPrintHtml(), size)}>
+          <Button
+            variant="outline"
+            className="h-12 flex-1"
+            disabled={!receipt.method}
+            title={receipt.method ? undefined : t("selectPaymentFirst")}
+            onClick={() => setConfirmPrint(true)}
+          >
             <Printer className="mr-1 size-4" /> {t("print")}
           </Button>
           <Button className="h-12 flex-1" onClick={onClose}>
             {t("newSale")}
           </Button>
         </div>
+        {!receipt.method && (
+          <p className="text-center text-xs font-semibold text-destructive">{t("selectPaymentFirst")}</p>
+        )}
+
+        <Dialog open={confirmPrint} onOpenChange={setConfirmPrint}>
+          <DialogContent className="max-w-xs">
+            <DialogHeader>
+              <DialogTitle>{t("confirmReceiveTitle")}</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">{t("confirmReceiveHint")}</p>
+            <div className="space-y-1 rounded-xl border border-border bg-muted/40 p-3 text-sm">
+              <Row label={`${t("paymentMethod")}`} value={t(methodLabel)} />
+              <Row label={t("total")} value={money(receipt.total, lang)} />
+              <Row
+                label={receipt.method === "cash" ? t("cashReceived") : t("paid")}
+                value={money(receipt.paid, lang)}
+              />
+              <Row
+                label={receipt.paid >= receipt.total ? t("changeReturn") : t("due")}
+                value={money(Math.abs(receipt.paid - receipt.total), lang)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setConfirmPrint(false)}>
+                {t("notYet")}
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  setConfirmPrint(false);
+                  printHtml(buildPrintHtml(), size);
+                }}
+              >
+                {t("yesReceived")}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
+
   );
 }
 
