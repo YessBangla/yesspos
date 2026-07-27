@@ -18,6 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { downloadCsv, logAudit } from "@/lib/audit";
+import { useBranches } from "@/lib/use-branch";
 import { APP_ROLES, createAppUser, deleteAppUser, setUserPassword, type AppRole } from "@/lib/users.functions";
 
 export const Route = createFileRoute("/_authenticated/users")({
@@ -53,6 +54,7 @@ function UsersPage() {
   const [pwFor, setPwFor] = useState<string | null>(null);
   const [newPw, setNewPw] = useState("");
 
+  const branches = useBranches();
   const createFn = useServerFn(createAppUser);
   const passwordFn = useServerFn(setUserPassword);
   const deleteFn = useServerFn(deleteAppUser);
@@ -316,7 +318,7 @@ function UsersPage() {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                   —
                 </td>
               </tr>
