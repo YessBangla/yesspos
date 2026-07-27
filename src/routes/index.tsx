@@ -7,16 +7,16 @@ import { LangToggle } from "@/components/LangToggle";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "SheraPOS — Shop Billing, Stock & Reports" },
+      { title: "Yess POS — Shop Billing, Stock & Reports" },
       {
         name: "description",
         content:
           "SheraPOS is a browser point-of-sale for retail shops: fast billing, automatic stock updates, daily sales reports. Bengali and English.",
       },
-      { property: "og:title", content: "SheraPOS — Shop Billing, Stock & Reports" },
+      { property: "og:title", content: "Yess POS — Shop Billing, Stock & Reports" },
       {
         property: "og:description",
-        content: "Fast billing, automatic stock and daily reports for your shop.",
+        content: "SheraPOS is a browser point-of-sale for retail shops: fast billing, automatic stock updates, daily sales reports. Bengali and English.",
       },
     ],
   }),
