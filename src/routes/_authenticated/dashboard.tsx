@@ -13,6 +13,8 @@ import {
   ShoppingCart,
   Trophy,
   Truck,
+  Undo2,
+
   TrendingUp,
   Users,
   Wallet,
