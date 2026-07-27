@@ -79,11 +79,34 @@ function UsersPage() {
   const profiles = useQuery({
     queryKey: ["profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id, full_name, username, created_at");
+      const { data, error } = await supabase.from("profiles").select("id, full_name, username, created_at, branch_id");
       if (error) throw error;
-      return data as { id: string; full_name: string | null; username: string | null; created_at: string }[];
+      return data as {
+        id: string;
+        full_name: string | null;
+        username: string | null;
+        created_at: string;
+        branch_id: string | null;
+      }[];
     },
   });
+
+  const changeBranch = useMutation({
+    mutationFn: async ({ userId, branchId }: { userId: string; branchId: string }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ branch_id: branchId === "none" ? null : branchId })
+        .eq("id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["my-branch"] });
+      toast.success(t("saved"));
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
