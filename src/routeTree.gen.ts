@@ -26,6 +26,7 @@ import { Route as AuthenticatedLabelsRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
+import { Route as AuthenticatedChartOfAccountsRouteImport } from './routes/_authenticated/chart-of-accounts'
 import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
 import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authenticated/audit-logs'
 import { Route as AuthenticatedApiHubRouteImport } from './routes/_authenticated/api-hub'
@@ -116,6 +117,12 @@ const AuthenticatedContactsRoute = AuthenticatedContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedChartOfAccountsRoute =
+  AuthenticatedChartOfAccountsRouteImport.update({
+    id: '/chart-of-accounts',
+    path: '/chart-of-accounts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCatalogRoute = AuthenticatedCatalogRouteImport.update({
   id: '/catalog',
   path: '/catalog',
@@ -145,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/api-hub': typeof AuthenticatedApiHubRoute
   '/audit-logs': typeof AuthenticatedAuditLogsRoute
   '/catalog': typeof AuthenticatedCatalogRoute
+  '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
@@ -167,6 +175,7 @@ export interface FileRoutesByTo {
   '/api-hub': typeof AuthenticatedApiHubRoute
   '/audit-logs': typeof AuthenticatedAuditLogsRoute
   '/catalog': typeof AuthenticatedCatalogRoute
+  '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
@@ -191,6 +200,7 @@ export interface FileRoutesById {
   '/_authenticated/api-hub': typeof AuthenticatedApiHubRoute
   '/_authenticated/audit-logs': typeof AuthenticatedAuditLogsRoute
   '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
+  '/_authenticated/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/api-hub'
     | '/audit-logs'
     | '/catalog'
+    | '/chart-of-accounts'
     | '/contacts'
     | '/dashboard'
     | '/expenses'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/api-hub'
     | '/audit-logs'
     | '/catalog'
+    | '/chart-of-accounts'
     | '/contacts'
     | '/dashboard'
     | '/expenses'
@@ -260,6 +272,7 @@ export interface FileRouteTypes {
     | '/_authenticated/api-hub'
     | '/_authenticated/audit-logs'
     | '/_authenticated/catalog'
+    | '/_authenticated/chart-of-accounts'
     | '/_authenticated/contacts'
     | '/_authenticated/dashboard'
     | '/_authenticated/expenses'
@@ -403,6 +416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContactsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/chart-of-accounts': {
+      id: '/_authenticated/chart-of-accounts'
+      path: '/chart-of-accounts'
+      fullPath: '/chart-of-accounts'
+      preLoaderRoute: typeof AuthenticatedChartOfAccountsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/catalog': {
       id: '/_authenticated/catalog'
       path: '/catalog'
@@ -439,6 +459,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedApiHubRoute: typeof AuthenticatedApiHubRoute
   AuthenticatedAuditLogsRoute: typeof AuthenticatedAuditLogsRoute
   AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
+  AuthenticatedChartOfAccountsRoute: typeof AuthenticatedChartOfAccountsRoute
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
@@ -459,6 +480,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedApiHubRoute: AuthenticatedApiHubRoute,
   AuthenticatedAuditLogsRoute: AuthenticatedAuditLogsRoute,
   AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
+  AuthenticatedChartOfAccountsRoute: AuthenticatedChartOfAccountsRoute,
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
