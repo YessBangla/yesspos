@@ -113,7 +113,24 @@ export function AppShell({ children }: { children: ReactNode }) {
             <LogOut className="size-4" />
           </Button>
         </header>
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1">
+          {(() => {
+            const current = allNav.find((n) => pathname.startsWith(n.to));
+            if (me.isLoading) return <div className="p-6 text-sm text-muted-foreground">…</div>;
+            if (current && !canAccess(me.data?.role, current.feature)) {
+              return (
+                <div className="p-6">
+                  <div className="surface-panel mx-auto max-w-md p-6 text-center">
+                    <ShieldCheck className="mx-auto size-8 text-muted-foreground" />
+                    <p className="mt-3 text-sm text-muted-foreground">{t("noAccess")}</p>
+                  </div>
+                </div>
+              );
+            }
+            return children;
+          })()}
+        </main>
+
       </div>
     </div>
   );
