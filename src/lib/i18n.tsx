@@ -254,7 +254,33 @@ const dict = {
   scClear: { bn: "কার্ট খালি", en: "Clear cart" },
   saleDone: { bn: "বিক্রয় সম্পন্ন হয়েছে", en: "Sale completed" },
   voided: { bn: "আইটেম বাদ দেওয়া হয়েছে", en: "Item voided" },
+  welcome: { bn: "স্বাগতম", en: "Welcome" },
+  rangeToday: { bn: "আজ", en: "Today" },
+  rangeWeek: { bn: "গত ৭ দিন", en: "Last 7 days" },
+  rangeMonth: { bn: "এই মাস", en: "This month" },
+  rangeYear: { bn: "এই বছর", en: "This year" },
+  totalCustomer: { bn: "মোট কাস্টমার", en: "Total customer" },
+  totalSupplier: { bn: "মোট সাপ্লায়ার", en: "Total supplier" },
+  saleReturn: { bn: "বিক্রয় ফেরত", en: "Sale return" },
+  totalReceived: { bn: "মোট আদায়", en: "Total received" },
+  totalDueAmount: { bn: "মোট বাকি", en: "Total due" },
+  totalPurchasePaid: { bn: "ক্রয়ে পরিশোধ", en: "Purchase paid" },
+  totalPurchaseDue: { bn: "ক্রয়ে বাকি", en: "Purchase due" },
+  profit: { bn: "লাভ", en: "Profit" },
+  assets: { bn: "সম্পদ", en: "Assets" },
+  liabilities: { bn: "দায়", en: "Liabilities" },
+  cashInOut: { bn: "নগদ আয়-ব্যয়", en: "Cash in / out" },
+  receivableDue: { bn: "কাস্টমারের কাছে পাওনা", en: "Receivable customer due" },
+  stockValue: { bn: "স্টকের মূল্য", en: "Stock value" },
+  supplierDue: { bn: "সাপ্লায়ার পাওনা", en: "Supplier due" },
+  cashIn: { bn: "মোট নগদ আয়", en: "Total cash in" },
+  cashOut: { bn: "মোট নগদ ব্যয়", en: "Total cash out" },
+  netCash: { bn: "নিট নগদ", en: "Net cash" },
+  recentTransactions: { bn: "সাম্প্রতিক লেনদেন", en: "Recent transactions" },
+  bestSeller: { bn: "সেরা বিক্রেতা পণ্য", en: "Best seller" },
+  qty: { bn: "পরিমাণ", en: "Qty" },
 } as const;
+
 
 
 
