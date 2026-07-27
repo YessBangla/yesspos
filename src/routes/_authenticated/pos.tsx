@@ -1024,6 +1024,7 @@ function ShortcutHelp() {
 function ReceiptDialog({ receipt, onClose }: { receipt: Receipt | null; onClose: () => void }) {
   const { t, lang } = useI18n();
   const [size, setSize] = useState<PrinterSize>("80mm");
+  const [confirmPrint, setConfirmPrint] = useState(false);
 
   useEffect(() => {
     setSize(getPrinterSize());
