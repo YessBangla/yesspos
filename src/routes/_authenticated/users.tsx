@@ -278,6 +278,25 @@ function UsersPage() {
                   </Select>
                 </td>
                 <td className="px-4 py-3">
+                  <Select
+                    value={u.branch_id ?? "none"}
+                    onValueChange={(branchId) => changeBranch.mutate({ userId: u.id, branchId })}
+                  >
+                    <SelectTrigger className="w-44">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{t("noBranch")}</SelectItem>
+                      {(branches.data ?? []).map((b) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </td>
+                <td className="px-4 py-3">
+
                   <div className="flex justify-end gap-1">
                     <Button variant="ghost" size="icon" onClick={() => setPwFor(u.id)} title={t("resetPassword")}>
                       <KeyRound className="size-4" />
