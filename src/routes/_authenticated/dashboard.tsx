@@ -394,6 +394,15 @@ function DashboardPage() {
                       <td className="px-4 py-2 text-right font-semibold">{money(Number(p.total), lang)}</td>
                     </tr>
                   ))}
+                {tab === "quotation" &&
+                  quotations.slice(0, 6).map((s) => (
+                    <tr key={s.id} className="border-b border-border last:border-0">
+                      <td className="px-4 py-2 font-medium">#{num(Number(s.invoice_no), lang)}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{s.customer_name ?? "—"}</td>
+                      <td className="px-4 py-2 text-right font-semibold">{money(Number(s.total), lang)}</td>
+                    </tr>
+                  ))}
                 {tab === "payment" &&
                   payments.slice(0, 6).map((p) => (
                     <tr key={p.id} className="border-b border-border last:border-0">
@@ -404,7 +413,9 @@ function DashboardPage() {
                   ))}
                 {((tab === "sale" && sales.length === 0) ||
                   (tab === "purchase" && purchases.length === 0) ||
+                  (tab === "quotation" && quotations.length === 0) ||
                   (tab === "payment" && payments.length === 0)) && (
+
                   <tr>
                     <td className="px-4 py-6 text-muted-foreground" colSpan={4}>
                       {t("noData")}
