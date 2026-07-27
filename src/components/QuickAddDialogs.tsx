@@ -44,7 +44,7 @@ export function QuickAddCustomer({ onCreated }: { onCreated?: (c: { id: string; 
       return data;
     },
     onSuccess: (c) => {
-      void logAudit("product_create", { entity: "contact", entityId: c.id });
+      void logAudit("contact_create", { entity: "contact", entityId: c.id });
       qc.invalidateQueries({ queryKey: ["contacts"] });
       onCreated?.(c);
       setForm({ name: "", phone: "", email: "", address: "" });
