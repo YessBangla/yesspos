@@ -433,7 +433,8 @@ function PosPage() {
         });
       } else if (key === "F9" || (key === "Enter" && (e.ctrlKey || e.metaKey))) {
         e.preventDefault();
-        if (canCheckout) checkoutMutate("final");
+        if (canPay) checkoutMutate("final");
+        else if (canCheckout) toast.error(t("selectPaymentFirst"));
       } else if (key === "Escape" && !isTyping) {
         e.preventDefault();
         resetSale();
@@ -441,7 +442,7 @@ function PosPage() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [canCheckout, checkoutMutate, resetSale, t]);
+  }, [canCheckout, canPay, checkoutMutate, resetSale, t]);
 
   const cashierName = me.data?.username ?? "";
   const initials = (cashierName || "?").slice(0, 2).toUpperCase();
