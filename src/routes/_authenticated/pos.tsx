@@ -626,7 +626,7 @@ function PosPage() {
             )}
           </div>
 
-          <div className="space-y-2 border-b border-border p-3 sm:p-4">
+          <div className="shrink-0 space-y-2 border-b border-border p-3 sm:p-4">
             <div className="flex items-center gap-2">
               <Select
                 value={contactId}
