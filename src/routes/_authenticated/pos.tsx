@@ -270,251 +270,323 @@ function PosPage() {
 
 
   return (
-    <div className="grid gap-4 p-4 lg:grid-cols-[1fr_380px]">
-      {/* Catalog */}
-      <section className="min-w-0">
-        <div className="relative">
-          <Barcode className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            ref={scanRef}
-            value={scan}
-            onChange={(e) => setScan(e.target.value)}
-            onKeyDown={onScan}
-            placeholder={t("scanBarcode")}
-            maxLength={60}
-            className="mb-3 h-11 pl-9"
-          />
-        </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("search")}
-            maxLength={60}
-            className="h-11 pl-9"
-          />
-        </div>
+    <div className="p-4">
+      <div className="surface-panel grid overflow-hidden p-0 lg:h-[calc(100vh-6rem)] lg:grid-cols-[1fr_400px]">
+        {/* Catalog */}
+        <section className="flex min-w-0 flex-col overflow-hidden">
+          <div className="flex items-center gap-3 border-b border-border p-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("search")}
+                maxLength={60}
+                className="h-12 rounded-xl bg-muted/50 pl-10"
+              />
+            </div>
+            <div className="relative w-56">
+              <Barcode className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-primary" />
+              <Input
+                ref={scanRef}
+                value={scan}
+                onChange={(e) => setScan(e.target.value)}
+                onKeyDown={onScan}
+                placeholder={t("scanBarcode")}
+                maxLength={60}
+                className="h-12 rounded-xl bg-primary/5 pl-10"
+              />
+            </div>
+          </div>
 
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant={cat === "all" ? "default" : "outline"}
-            onClick={() => setCat("all")}
-          >
-            {t("all")}
-          </Button>
-          {(categories.data ?? []).map((c) => (
-            <Button
-              key={c.id}
-              size="sm"
-              variant={cat === c.id ? "default" : "outline"}
-              onClick={() => setCat(c.id)}
+          <div className="flex gap-2 overflow-x-auto border-b border-border px-4 py-3">
+            <button
+              type="button"
+              onClick={() => setCat("all")}
+              className={cn(
+                "whitespace-nowrap rounded-full px-5 py-2 text-sm font-medium transition",
+                cat === "all"
+                  ? "bg-primary text-primary-foreground shadow-[var(--shadow-lift)]"
+                  : "bg-muted text-muted-foreground hover:bg-muted/70",
+              )}
             >
-              {lang === "bn" ? c.name_bn : c.name_en}
-            </Button>
-          ))}
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-          {products.isLoading && <p className="text-sm text-muted-foreground">{t("loading")}</p>}
-          {visible.map((p) => {
-            const out = p.stock <= 0;
-            return (
+              {t("all")}
+            </button>
+            {(categories.data ?? []).map((c) => (
               <button
-                key={p.id}
+                key={c.id}
                 type="button"
-                disabled={out}
-                onClick={() => add(p)}
+                onClick={() => setCat(c.id)}
                 className={cn(
-                  "surface-panel group flex flex-col items-start p-3 text-left transition hover:shadow-[var(--shadow-lift)] disabled:opacity-50",
+                  "whitespace-nowrap rounded-full px-5 py-2 text-sm font-medium transition",
+                  cat === c.id
+                    ? "bg-primary text-primary-foreground shadow-[var(--shadow-lift)]"
+                    : "bg-muted text-muted-foreground hover:bg-muted/70",
                 )}
               >
-                <span className="mb-2 flex h-16 w-full items-center justify-center rounded-lg bg-secondary font-display text-xl font-bold text-secondary-foreground">
-                  {(lang === "bn" ? p.name_bn : p.name_en).slice(0, 2)}
-                </span>
-                <span className="line-clamp-2 text-sm font-semibold leading-snug">
-                  {lang === "bn" ? p.name_bn : p.name_en}
-                </span>
-                <span className="mt-0.5 text-xs text-muted-foreground">{p.sku}</span>
-                <span className="mt-2 flex w-full items-center justify-between">
-                  <span className="font-display font-bold text-primary">{money(Number(p.price), lang)}</span>
+                {lang === "bn" ? c.name_bn : c.name_en}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid flex-1 grid-cols-2 content-start gap-4 overflow-y-auto bg-muted/30 p-4 sm:grid-cols-3 xl:grid-cols-4">
+            {products.isLoading && <p className="text-sm text-muted-foreground">{t("loading")}</p>}
+            {visible.map((p) => {
+              const out = p.stock <= 0;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  disabled={out}
+                  onClick={() => add(p)}
+                  className="group flex flex-col rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] disabled:pointer-events-none disabled:opacity-50"
+                >
+                  <span className="mb-3 flex aspect-square w-full items-center justify-center rounded-xl bg-primary/10 font-display text-2xl font-bold text-primary/70 transition-colors group-hover:bg-primary/20">
+                    {(lang === "bn" ? p.name_bn : p.name_en).slice(0, 2)}
+                  </span>
+                  <span className="line-clamp-1 text-sm font-semibold">
+                    {lang === "bn" ? p.name_bn : p.name_en}
+                  </span>
                   <span
                     className={cn(
-                      "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                      "mt-1 text-xs",
                       out
-                        ? "bg-destructive/10 text-destructive"
+                        ? "text-destructive"
                         : p.stock <= 5
-                          ? "bg-warning/20 text-warning-foreground"
-                          : "bg-muted text-muted-foreground",
+                          ? "text-warning-foreground"
+                          : "text-muted-foreground",
                     )}
                   >
                     {out ? t("outOfStock") : `${num(p.stock, lang)} ${p.unit}`}
                   </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
+                  <span className="mt-3 flex items-center justify-between">
+                    <span className="font-display text-sm font-bold text-primary">
+                      {money(Number(p.price), lang)}
+                    </span>
+                    <span className="flex size-6 items-center justify-center rounded-full bg-muted text-muted-foreground transition-all group-hover:bg-primary group-hover:text-primary-foreground">
+                      <Plus className="size-3.5" />
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
-      {/* Cart */}
-      <aside className="surface-panel flex h-fit flex-col p-4 lg:sticky lg:top-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold">{t("cart")}</h2>
-          {cart.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={resetSale}>
-              <Trash2 className="mr-1 size-4" /> {t("clear")}
-            </Button>
-          )}
-        </div>
-
-        <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
-          {cart.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">{t("emptyCart")}</p>}
-          {cart.map((l) => (
-            <div key={l.product.id} className="flex items-center gap-2 rounded-lg bg-muted/60 p-2">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
-                  {lang === "bn" ? l.product.name_bn : l.product.name_en}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {money(Number(l.product.price), lang)} × {num(l.qty, lang)}
-                </p>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button size="icon" variant="outline" className="size-7" onClick={() => setQty(l.product.id, l.qty - 1)}>
-                  <Minus className="size-3" />
+        {/* Cart */}
+        <aside className="flex min-h-0 flex-col border-t border-border bg-muted/40 lg:border-l lg:border-t-0">
+          <div className="space-y-2 p-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                {t("selectCustomer")}
+              </Label>
+              {cart.length > 0 && (
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={resetSale}>
+                  <Trash2 className="mr-1 size-3" /> {t("clear")}
                 </Button>
-                <span className="w-6 text-center text-sm font-semibold">{num(l.qty, lang)}</span>
-                <Button size="icon" variant="outline" className="size-7" onClick={() => setQty(l.product.id, l.qty + 1)}>
-                  <Plus className="size-3" />
-                </Button>
-                <Button size="icon" variant="ghost" className="size-7" onClick={() => setQty(l.product.id, 0)}>
-                  <X className="size-3" />
-                </Button>
-              </div>
-              <span className="w-16 text-right text-sm font-semibold">
-                {money(Number(l.product.price) * l.qty, lang)}
-              </span>
+              )}
             </div>
-          ))}
-        </div>
-
-        <div className="mt-4 space-y-1">
-          <Label className="text-xs">{t("selectCustomer")}</Label>
-          <Select
-            value={contactId}
-            onValueChange={(v) => {
-              setContactId(v);
-              const c = (customers.data ?? []).find((x) => x.id === v);
-              if (c) {
-                setCustomer(c.name);
-                setPhone(c.phone ?? "");
-              }
-            }}
-          >
-            <SelectTrigger className="h-9">
-              <SelectValue placeholder={t("walkIn")} />
-            </SelectTrigger>
-            <SelectContent>
-              {(customers.data ?? [])
-                .filter((c) => c.type === "customer")
-                .map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="space-y-1">
-            <Label className="text-xs">{t("discount")}</Label>
-            <Input inputMode="decimal" value={discount} onChange={(e) => setDiscount(e.target.value)} className="h-9" />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">{t("tax")} %</Label>
-            <Input inputMode="decimal" value={taxPct} onChange={(e) => setTaxPct(e.target.value)} className="h-9" />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">{t("customer")}</Label>
-            <Input value={customer} maxLength={80} onChange={(e) => setCustomer(e.target.value)} className="h-9" />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">{t("phone")}</Label>
-            <Input value={phone} maxLength={20} onChange={(e) => setPhone(e.target.value)} className="h-9" />
-          </div>
-        </div>
-
-
-        <div className="mt-4 space-y-1.5 border-t border-border pt-3 text-sm">
-          <Row label={t("subtotal")} value={money(subtotal, lang)} />
-          <Row label={t("discount")} value={`− ${money(discountVal, lang)}`} />
-          <Row label={t("tax")} value={money(taxVal, lang)} />
-          <div className="flex items-center justify-between border-t border-border pt-2 font-display text-xl font-bold">
-            <span>{t("total")}</span>
-            <span className="text-primary">{money(total, lang)}</span>
-          </div>
-        </div>
-
-        <div className="mt-3 flex gap-2">
-          {(["cash", "card", "mobile"] as const).map((m) => (
-            <Button
-              key={m}
-              size="sm"
-              className="flex-1"
-              variant={method === m ? "default" : "outline"}
-              onClick={() => setMethod(m)}
+            <Select
+              value={contactId}
+              onValueChange={(v) => {
+                setContactId(v);
+                const c = (customers.data ?? []).find((x) => x.id === v);
+                if (c) {
+                  setCustomer(c.name);
+                  setPhone(c.phone ?? "");
+                }
+              }}
             >
-              {t(m)}
+              <SelectTrigger className="h-11 rounded-xl bg-card">
+                <SelectValue placeholder={t("walkIn")} />
+              </SelectTrigger>
+              <SelectContent>
+                {(customers.data ?? [])
+                  .filter((c) => c.type === "customer")
+                  .map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                value={customer}
+                maxLength={80}
+                placeholder={t("customer")}
+                onChange={(e) => setCustomer(e.target.value)}
+                className="h-9 rounded-xl bg-card"
+              />
+              <Input
+                value={phone}
+                maxLength={20}
+                placeholder={t("phone")}
+                onChange={(e) => setPhone(e.target.value)}
+                className="h-9 rounded-xl bg-card"
+              />
+            </div>
+          </div>
+
+          <div className="min-h-24 flex-1 space-y-2 overflow-y-auto px-4 pb-2">
+            {cart.length === 0 && (
+              <p className="py-8 text-center text-sm text-muted-foreground">{t("emptyCart")}</p>
+            )}
+            {cart.map((l) => (
+              <div
+                key={l.product.id}
+                className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-sm"
+              >
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
+                  {(lang === "bn" ? l.product.name_bn : l.product.name_en).slice(0, 2)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">
+                    {lang === "bn" ? l.product.name_bn : l.product.name_en}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {money(Number(l.product.price), lang)} × {num(l.qty, lang)} ={" "}
+                    <span className="font-semibold text-foreground">
+                      {money(Number(l.product.price) * l.qty, lang)}
+                    </span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="size-7 rounded-lg"
+                    onClick={() => setQty(l.product.id, l.qty - 1)}
+                  >
+                    <Minus className="size-3" />
+                  </Button>
+                  <span className="w-5 text-center text-sm font-semibold">{num(l.qty, lang)}</span>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="size-7 rounded-lg"
+                    onClick={() => setQty(l.product.id, l.qty + 1)}
+                  >
+                    <Plus className="size-3" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="size-7 text-muted-foreground hover:text-destructive"
+                    onClick={() => setQty(l.product.id, 0)}
+                  >
+                    <X className="size-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-border bg-card p-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("discount")}
+                </Label>
+                <Input
+                  inputMode="decimal"
+                  value={discount}
+                  onChange={(e) => setDiscount(e.target.value)}
+                  className="h-9 rounded-lg bg-muted/50"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("tax")} %
+                </Label>
+                <Input
+                  inputMode="decimal"
+                  value={taxPct}
+                  onChange={(e) => setTaxPct(e.target.value)}
+                  className="h-9 rounded-lg bg-muted/50"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-1.5 text-sm">
+              <Row label={t("subtotal")} value={money(subtotal, lang)} />
+              <Row label={t("discount")} value={`− ${money(discountVal, lang)}`} />
+              <Row label={t("tax")} value={money(taxVal, lang)} />
+              <div className="flex items-center justify-between border-t border-border pt-2">
+                <span className="font-display text-lg font-bold">{t("total")}</span>
+                <span className="font-display text-2xl font-bold text-primary">{money(total, lang)}</span>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {(["cash", "card", "mobile"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMethod(m)}
+                  className={cn(
+                    "rounded-xl border-2 py-2 text-xs font-bold uppercase tracking-wide transition",
+                    method === m
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-card text-muted-foreground hover:border-muted-foreground/40",
+                  )}
+                >
+                  {t(m)}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-4 flex items-end gap-4">
+              <div className="flex-1 space-y-1">
+                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("paid")}
+                </Label>
+                <Input
+                  inputMode="decimal"
+                  value={paid}
+                  placeholder={total.toFixed(2)}
+                  onChange={(e) => setPaid(e.target.value)}
+                  className="h-12 rounded-xl bg-success/10 text-lg font-bold"
+                />
+              </div>
+              <div className="flex-1 text-right">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {changeVal >= 0 ? t("change") : t("due")}
+                </p>
+                <p className="font-display text-xl font-bold">{money(Math.abs(changeVal), lang)}</p>
+              </div>
+            </div>
+
+            <Button
+              className="mt-4 h-14 w-full rounded-2xl text-base font-bold shadow-[var(--shadow-lift)] active:scale-[0.98]"
+              disabled={cart.length === 0 || checkout.isPending}
+              onClick={() => checkout.mutate("final")}
+            >
+              {t("checkout")} · {money(total, lang)}
             </Button>
-          ))}
-        </div>
 
-        <div className="mt-3 space-y-1">
-          <Label className="text-xs">{t("paid")}</Label>
-          <Input
-            inputMode="decimal"
-            value={paid}
-            placeholder={total.toFixed(2)}
-            onChange={(e) => setPaid(e.target.value)}
-            className="h-10"
-          />
-          <p className="text-xs text-muted-foreground">
-            {changeVal >= 0 ? t("change") : t("due")}: {money(Math.abs(changeVal), lang)}
-          </p>
-        </div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <Button
+                variant="secondary"
+                className="rounded-xl text-xs font-semibold"
+                disabled={cart.length === 0 || checkout.isPending}
+                onClick={() => checkout.mutate("draft")}
+              >
+                <PauseCircle className="mr-1 size-4" /> {t("holdSale")}
+              </Button>
+              <Button
+                variant="secondary"
+                className="rounded-xl text-xs font-semibold"
+                disabled={cart.length === 0 || checkout.isPending}
+                onClick={() => checkout.mutate("quotation")}
+              >
+                {t("saveQuotation")}
+              </Button>
+            </div>
+          </div>
+        </aside>
+      </div>
 
-        <Button
-          className="mt-4 h-12 text-base"
-          disabled={cart.length === 0 || checkout.isPending}
-          onClick={() => checkout.mutate("final")}
-        >
-          {t("checkout")} · {money(total, lang)}
-        </Button>
-
-        <div className="mt-2 flex gap-2">
-          <Button
-            variant="outline"
-            className="flex-1"
-            disabled={cart.length === 0 || checkout.isPending}
-            onClick={() => checkout.mutate("draft")}
-          >
-            <PauseCircle className="mr-1 size-4" /> {t("holdSale")}
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1"
-            disabled={cart.length === 0 || checkout.isPending}
-            onClick={() => checkout.mutate("quotation")}
-          >
-            {t("saveQuotation")}
-          </Button>
-        </div>
-
-      </aside>
 
       <ReceiptDialog receipt={receipt} onClose={() => setReceipt(null)} />
     </div>
