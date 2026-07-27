@@ -6,6 +6,7 @@ import {
   Barcode,
   BookOpenCheck,
   Boxes,
+  Building2,
   CalendarDays,
   FileSpreadsheet,
   Landmark,
