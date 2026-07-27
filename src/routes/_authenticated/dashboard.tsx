@@ -61,7 +61,7 @@ function DashboardPage() {
   const { t, lang } = useI18n();
   const me = useMyRole();
   const [range, setRange] = useState<RangeKey>("month");
-  const [tab, setTab] = useState<"sale" | "purchase" | "payment">("sale");
+  const [tab, setTab] = useState<"sale" | "purchase" | "payment" | "quotation">("sale");
 
   const from = rangeStart(range);
   const fromIso = from.toISOString();
