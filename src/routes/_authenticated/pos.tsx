@@ -682,7 +682,7 @@ function PosPage() {
             </div>
           </div>
 
-          <div className="min-h-24 flex-none space-y-2.5 p-3 sm:p-4">
+          <div className="min-h-24 flex-1 space-y-2.5 overflow-y-auto p-3 sm:p-4">
             {cart.length === 0 && (
               <div className="flex flex-col items-center gap-2 py-10 text-center">
                 <ShoppingCart className="size-8 text-muted-foreground/40" />
