@@ -923,11 +923,13 @@ function PosPage() {
 }
 
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value, tone }: { label: string; value: string; tone?: "success" }) {
   return (
     <div className="flex items-center justify-between gap-2 text-muted-foreground">
-      <span className="min-w-0 truncate">{label}</span>
-      <span className="font-medium text-foreground">{value}</span>
+      <span className={cn("min-w-0 truncate", tone === "success" && "text-success")}>{label}</span>
+      <span className={cn("font-medium text-foreground", tone === "success" && "text-success")}>
+        {value}
+      </span>
     </div>
   );
 }
