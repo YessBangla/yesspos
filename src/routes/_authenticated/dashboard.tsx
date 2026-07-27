@@ -70,8 +70,17 @@ function DashboardPage() {
   const stats = useQuery({
     queryKey: ["dashboard", range],
     queryFn: async () => {
-      const [salesRes, productsRes, itemsRes, purchasesRes, returnsRes, expensesRes, contactsRes, paymentsRes] =
-        await Promise.all([
+      const [
+        salesRes,
+        productsRes,
+        itemsRes,
+        purchasesRes,
+        returnsRes,
+        expensesRes,
+        contactsRes,
+        paymentsRes,
+        purchaseReturnsRes,
+      ] = await Promise.all([
           supabase
             .from("sales")
             .select("id,invoice_no,total,paid,status,created_at,customer_name,payment_method")
@@ -92,9 +101,20 @@ function DashboardPage() {
             .select("id,amount,direction,method,paid_on,note")
             .gte("paid_on", fromDate)
             .order("paid_on", { ascending: false }),
+          supabase.from("purchase_returns").select("id,total,created_at").gte("created_at", fromIso),
         ]);
 
-      for (const r of [salesRes, productsRes, itemsRes, purchasesRes, returnsRes, expensesRes, contactsRes, paymentsRes]) {
+      for (const r of [
+        salesRes,
+        productsRes,
+        itemsRes,
+        purchasesRes,
+        returnsRes,
+        expensesRes,
+        contactsRes,
+        paymentsRes,
+        purchaseReturnsRes,
+      ]) {
         if (r.error) throw r.error;
       }
 
@@ -107,9 +127,11 @@ function DashboardPage() {
         expenses: expensesRes.data ?? [],
         contacts: contactsRes.data ?? [],
         payments: paymentsRes.data ?? [],
+        purchaseReturns: purchaseReturnsRes.data ?? [],
       };
     },
   });
+
 
   const d = stats.data;
   const sales = d?.sales ?? [];
