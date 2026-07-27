@@ -148,6 +148,66 @@ function PurchasesPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
+  const retItems = useQuery({
+    queryKey: ["purchase-items", returning?.id],
+    enabled: !!returning,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("purchase_items")
+        .select("id,product_id,name_snapshot,unit_cost,quantity")
+        .eq("purchase_id", returning!.id);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const submitReturn = useMutation({
+    mutationFn: async () => {
+      const rows = (retItems.data ?? [])
+        .map((i) => ({ i, q: Math.min(Number(retQtys[i.id]) || 0, i.quantity) }))
+        .filter((r) => r.q > 0);
+      if (rows.length === 0) throw new Error(t("noData"));
+      const total = rows.reduce((s, r) => s + Number(r.i.unit_cost) * r.q, 0);
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: ret, error } = await supabase
+        .from("purchase_returns")
+        .insert({
+          purchase_id: returning!.id,
+          supplier_id: returning!.supplier_id,
+          user_id: userData.user?.id ?? null,
+          total,
+          reason: retReason.trim().slice(0, 200) || null,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      const { error: itemsError } = await supabase.from("purchase_return_items").insert(
+        rows.map((r) => ({
+          return_id: ret.id,
+          product_id: r.i.product_id,
+          name_snapshot: r.i.name_snapshot,
+          unit_cost: Number(r.i.unit_cost),
+          quantity: r.q,
+          line_total: Number(r.i.unit_cost) * r.q,
+        })),
+      );
+      if (itemsError) throw itemsError;
+    },
+    onSuccess: () => {
+      void logAudit("purchase", { entity: "purchase_return" });
+      setReturning(null);
+      setRetQtys({});
+      setRetReason("");
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products-all"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+      toast.success(t("purchaseReturn"));
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+
   const supplierList = useMemo(
     () => (suppliers.data ?? []).filter((c) => c.type === "supplier"),
     [suppliers.data],
