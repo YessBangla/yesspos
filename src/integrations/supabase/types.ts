@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      brands: {
+        Row: {
+          created_at: string
+          id: string
+          name_bn: string
+          name_en: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name_bn: string
+          name_en: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name_bn?: string
+          name_en?: string
+        }
+        Relationships: []
+      }
       business_settings: {
         Row: {
           address: string | null
@@ -168,6 +189,73 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          contact_id: string | null
+          created_at: string
+          direction: string
+          id: string
+          method: string
+          note: string | null
+          paid_on: string
+          purchase_id: string | null
+          sale_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number
+          contact_id?: string | null
+          created_at?: string
+          direction?: string
+          id?: string
+          method?: string
+          note?: string | null
+          paid_on?: string
+          purchase_id?: string | null
+          sale_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          contact_id?: string | null
+          created_at?: string
+          direction?: string
+          id?: string
+          method?: string
+          note?: string | null
+          paid_on?: string
+          purchase_id?: string | null
+          sale_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
             referencedColumns: ["id"]
           },
         ]
@@ -533,6 +621,68 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      stock_adjustments: {
+        Row: {
+          adjusted_on: string
+          created_at: string
+          id: string
+          product_id: string | null
+          quantity: number
+          reason: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          adjusted_on?: string
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          quantity?: number
+          reason?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Update: {
+          adjusted_on?: string
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          quantity?: number
+          reason?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_adjustments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          created_at: string
+          id: string
+          name_bn: string
+          name_en: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name_bn: string
+          name_en: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name_bn?: string
+          name_en?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
