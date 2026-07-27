@@ -53,6 +53,7 @@ export function QuickActions() {
     { to: "/contacts", feature: "contacts" as Feature, label: t("contacts") },
     { to: "/expenses", feature: "expenses" as Feature, label: t("expenses") },
     { to: "/stock-adjustments", feature: "stock-adjustments" as Feature, label: t("stockAdjust") },
+    { to: "/branches", feature: "branches" as Feature, label: t("addBranch") },
   ].filter((l) => allow(l.feature));
 
   return (
