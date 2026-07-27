@@ -339,7 +339,6 @@ const dict = {
   transfer: { bn: "স্থানান্তর", en: "Transfer" },
   fromAccount: { bn: "যে অ্যাকাউন্ট থেকে", en: "From account" },
   toAccount: { bn: "যে অ্যাকাউন্টে", en: "To account" },
-  bank: { bn: "ব্যাংক", en: "Bank" },
   mobileBanking: { bn: "মোবাইল ব্যাংকিং", en: "Mobile banking" },
   chartOfAccounts: { bn: "হিসাব খাত", en: "Chart of accounts" },
   chartHint: { bn: "সম্পদ, দায়, আয়, ব্যয় ও মূলধন খাত", en: "Asset, liability, income, expense and equity heads" },
