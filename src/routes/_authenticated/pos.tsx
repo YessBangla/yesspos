@@ -2,17 +2,25 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Banknote,
   Barcode,
+  CreditCard,
   Keyboard,
+  Landmark,
   Mail,
   MessageSquare,
   Minus,
+  Package,
   PauseCircle,
   Plus,
   Printer,
+  ReceiptText,
   Search,
+  ShoppingCart,
+  Smartphone,
   Tag,
   Trash2,
+  Wallet,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -30,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useBranchStock, useMyBranch } from "@/lib/use-branch";
+import { useMyRole } from "@/lib/use-my-role";
 import { money, num, useI18n, type TKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { logAudit } from "@/lib/audit";
@@ -92,17 +101,17 @@ type Receipt = {
   footer: string;
 };
 
-const PAYMENT_METHODS: { id: string; key: TKey }[] = [
-  { id: "cash", key: "cash" },
-  { id: "bkash", key: "bkash" },
-  { id: "nagad", key: "nagad" },
-  { id: "rocket", key: "rocket" },
-  { id: "upay", key: "upay" },
-  { id: "card", key: "card" },
-  { id: "bank", key: "bank" },
-  { id: "cheque", key: "cheque" },
-  { id: "due", key: "creditDue" },
-  { id: "other", key: "other" },
+const PAYMENT_METHODS: { id: string; key: TKey; icon: typeof Banknote }[] = [
+  { id: "cash", key: "cash", icon: Banknote },
+  { id: "bkash", key: "bkash", icon: Smartphone },
+  { id: "nagad", key: "nagad", icon: Smartphone },
+  { id: "rocket", key: "rocket", icon: Smartphone },
+  { id: "upay", key: "upay", icon: Smartphone },
+  { id: "card", key: "card", icon: CreditCard },
+  { id: "bank", key: "bank", icon: Landmark },
+  { id: "cheque", key: "cheque", icon: ReceiptText },
+  { id: "due", key: "creditDue", icon: Wallet },
+  { id: "other", key: "other", icon: Wallet },
 ];
 
 function PosPage() {
@@ -171,6 +180,32 @@ function PosPage() {
     },
     staleTime: 60_000,
   });
+
+  const me = useMyRole();
+
+  const todayTotal = useQuery({
+    queryKey: ["pos-today-total"],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const from = new Date();
+      from.setHours(0, 0, 0, 0);
+      const { data, error } = await supabase
+        .from("sales")
+        .select("total")
+        .eq("status", "final")
+        .gte("created_at", from.toISOString());
+      if (error) throw error;
+      return (data ?? []).reduce((s, r) => s + Number(r.total ?? 0), 0);
+    },
+  });
+
+  const categoryName = useMemo(
+    () =>
+      new Map<string, string>(
+        (categories.data ?? []).map((c) => [c.id, lang === "bn" ? c.name_bn : c.name_en]),
+      ),
+    [categories.data, lang],
+  );
 
   useEffect(() => {
     const pct = settings.data?.default_tax_pct;
@@ -407,9 +442,43 @@ function PosPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [canCheckout, checkoutMutate, resetSale, t]);
 
+  const cashierName = me.data?.username ?? "";
+  const initials = (cashierName || "?").slice(0, 2).toUpperCase();
+
   return (
     <div className="p-2 sm:p-4">
-      <div className="surface-panel grid overflow-hidden p-0 lg:h-[calc(100vh-6rem)] lg:grid-cols-[1fr_420px]">
+      <div className="surface-panel flex flex-col overflow-hidden p-0 lg:h-[calc(100vh-6rem)]">
+        {/* Terminal summary bar */}
+        <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 gradient-brand px-3 py-2.5 text-primary-foreground sm:px-5">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-6">
+            <h1 className="hidden font-display text-lg font-bold tracking-tight sm:block">
+              {t("appName")}
+            </h1>
+            <div className="flex min-w-0 items-center gap-3 rounded-xl border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5">
+              <span className="truncate text-[11px] opacity-80">{t("todaySales")}</span>
+              <span className="font-display text-base font-bold">
+                {money(todayTotal.data ?? 0, lang)}
+              </span>
+            </div>
+            <div className="hidden items-center gap-3 rounded-xl border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 md:flex">
+              <span className="text-[11px] opacity-80">{t("items")}</span>
+              <span className="font-display text-base font-bold">{num(itemCount, lang)}</span>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-3">
+            <div className="hidden text-right sm:block">
+              <p className="text-[10px] uppercase tracking-wider opacity-70">
+                {myBranch.data?.name ?? t("branch")}
+              </p>
+              <p className="truncate text-sm font-semibold">{cashierName}</p>
+            </div>
+            <span className="grid size-9 place-items-center rounded-full border border-primary-foreground/25 bg-primary-foreground/20 text-xs font-bold">
+              {initials}
+            </span>
+          </div>
+        </header>
+
+        <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[1fr_420px]">
         {/* Catalog */}
         <section className="flex min-w-0 flex-col overflow-hidden">
           <div className="flex flex-col gap-2 border-b border-border p-3 sm:flex-row sm:items-center sm:gap-3 sm:p-4">
@@ -452,10 +521,10 @@ function PosPage() {
               type="button"
               onClick={() => setCat("all")}
               className={cn(
-                "min-h-10 whitespace-nowrap rounded-full px-5 py-2 text-sm font-medium transition",
+                "min-h-10 whitespace-nowrap rounded-full border px-5 py-2 text-sm font-medium transition",
                 cat === "all"
-                  ? "bg-primary text-primary-foreground shadow-[var(--shadow-lift)]"
-                  : "bg-muted text-muted-foreground hover:bg-muted/70",
+                  ? "border-primary bg-primary text-primary-foreground shadow-[var(--shadow-lift)]"
+                  : "border-border bg-card text-muted-foreground hover:border-primary/50",
               )}
             >
               {t("all")}
@@ -466,10 +535,10 @@ function PosPage() {
                 type="button"
                 onClick={() => setCat(c.id)}
                 className={cn(
-                  "min-h-10 whitespace-nowrap rounded-full px-5 py-2 text-sm font-medium transition",
+                  "min-h-10 whitespace-nowrap rounded-full border px-5 py-2 text-sm font-medium transition",
                   cat === c.id
-                    ? "bg-primary text-primary-foreground shadow-[var(--shadow-lift)]"
-                    : "bg-muted text-muted-foreground hover:bg-muted/70",
+                    ? "border-primary bg-primary text-primary-foreground shadow-[var(--shadow-lift)]"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/50",
                 )}
               >
                 {lang === "bn" ? c.name_bn : c.name_en}
@@ -477,42 +546,52 @@ function PosPage() {
             ))}
           </div>
 
-          <div className="grid flex-1 grid-cols-2 content-start gap-2.5 overflow-y-auto bg-muted/30 p-2.5 sm:grid-cols-3 sm:gap-4 sm:p-4 xl:grid-cols-4">
+          <div className="grid flex-1 grid-cols-2 content-start gap-3 overflow-y-auto bg-muted/30 p-3 sm:grid-cols-3 sm:gap-4 sm:p-4 xl:grid-cols-4 2xl:grid-cols-5">
             {products.isLoading && <p className="text-sm text-muted-foreground">{t("loading")}</p>}
             {visible.map((p) => {
               const out = p.stock <= 0;
+              const low = !out && p.stock <= 5;
+              const catName = categoryName.get(p.category_id ?? "") ?? "";
               return (
                 <button
                   key={p.id}
                   type="button"
                   disabled={out}
                   onClick={() => add(p)}
-                  className="group flex flex-col rounded-2xl border border-border bg-card p-2.5 text-left shadow-sm transition-all active:scale-[0.97] hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] disabled:pointer-events-none disabled:opacity-50 sm:p-4"
+                  className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-[var(--shadow-lift)] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
                 >
-                  <span className="mb-2 flex aspect-square w-full items-center justify-center rounded-xl bg-primary/10 font-display text-2xl font-bold text-primary/70 transition-colors group-hover:bg-primary/20 sm:mb-3">
-                    {(lang === "bn" ? p.name_bn : p.name_en).slice(0, 2)}
+                  <span className="relative flex aspect-square w-full items-center justify-center rounded-xl bg-muted transition-colors group-hover:bg-primary/5">
+                    <Package className="size-10 text-primary/20 transition-transform group-hover:scale-110" />
+                    <span
+                      className={cn(
+                        "absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold",
+                        out
+                          ? "bg-destructive/10 text-destructive"
+                          : low
+                            ? "bg-warning/20 text-warning-foreground"
+                            : "bg-success/10 text-success",
+                      )}
+                    >
+                      {out ? t("outOfStock") : `${num(p.stock, lang)} ${p.unit}`}
+                    </span>
                   </span>
-                  <span className="line-clamp-1 text-[13px] font-semibold sm:text-sm">
-                    {lang === "bn" ? p.name_bn : p.name_en}
-                  </span>
-                  <span
-                    className={cn(
-                      "mt-1 text-[11px] sm:text-xs",
-                      out
-                        ? "text-destructive"
-                        : p.stock <= 5
-                          ? "text-warning-foreground"
-                          : "text-muted-foreground",
+                  <span className="flex min-w-0 flex-col">
+                    {catName && (
+                      <span className="truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                        {catName}
+                      </span>
                     )}
-                  >
-                    {out ? t("outOfStock") : `${num(p.stock, lang)} ${p.unit}`}
+                    <span className="line-clamp-1 text-sm font-bold">
+                      {lang === "bn" ? p.name_bn : p.name_en}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">{p.sku}</span>
                   </span>
-                  <span className="mt-2 flex items-center justify-between sm:mt-3">
-                    <span className="font-display text-sm font-bold text-primary">
+                  <span className="mt-auto flex items-center justify-between pt-1">
+                    <span className="font-display text-base font-bold text-primary">
                       {money(Number(p.price), lang)}
                     </span>
-                    <span className="flex size-7 items-center justify-center rounded-full bg-muted text-muted-foreground transition-all group-hover:bg-primary group-hover:text-primary-foreground">
-                      <Plus className="size-3.5" />
+                    <span className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground shadow-md transition-transform group-hover:scale-110">
+                      <Plus className="size-4" />
                     </span>
                   </span>
                 </button>
@@ -522,18 +601,28 @@ function PosPage() {
         </section>
 
         {/* Checkout */}
-        <aside className="flex min-h-0 flex-col border-t border-border bg-muted/40 lg:border-l lg:border-t-0">
-          <div className="space-y-2 p-3 sm:p-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                {t("selectCustomer")}
-              </Label>
-              {cart.length > 0 && (
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={resetSale}>
-                  <Trash2 className="mr-1 size-3" /> {t("clear")}
-                </Button>
-              )}
+        <aside className="flex min-h-0 flex-col border-t border-border bg-card lg:border-l lg:border-t-0">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border px-3 py-2.5 sm:px-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <ShoppingCart className="size-4 shrink-0 text-primary" />
+              <span className="truncate text-base font-bold">{t("cart")}</span>
+              <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 font-display text-[11px] font-bold text-primary-foreground">
+                {String(cart.length).padStart(2, "0")}
+              </span>
             </div>
+            {cart.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={resetSale}
+              >
+                <Trash2 className="mr-1 size-3" /> {t("clear")}
+              </Button>
+            )}
+          </div>
+
+          <div className="space-y-2 border-b border-border p-3 sm:p-4">
             <Select
               value={contactId}
               onValueChange={(v) => {
@@ -546,7 +635,7 @@ function PosPage() {
                 }
               }}
             >
-              <SelectTrigger className="h-11 rounded-xl bg-card">
+              <SelectTrigger className="h-11 rounded-xl bg-muted/50">
                 <SelectValue placeholder={t("walkIn")} />
               </SelectTrigger>
               <SelectContent>
@@ -565,7 +654,7 @@ function PosPage() {
                 maxLength={80}
                 placeholder={t("customer")}
                 onChange={(e) => setCustomer(e.target.value)}
-                className="h-10 rounded-xl bg-card"
+                className="h-10 rounded-xl bg-muted/50"
               />
               <Input
                 value={phone}
@@ -573,66 +662,75 @@ function PosPage() {
                 inputMode="tel"
                 placeholder={t("phone")}
                 onChange={(e) => setPhone(e.target.value)}
-                className="h-10 rounded-xl bg-card"
+                className="h-10 rounded-xl bg-muted/50"
               />
             </div>
           </div>
 
-          <div className="min-h-24 flex-1 space-y-2 overflow-y-auto px-3 pb-2 sm:px-4">
+          <div className="min-h-24 flex-1 space-y-2.5 overflow-y-auto p-3 sm:p-4">
             {cart.length === 0 && (
-              <p className="py-8 text-center text-sm text-muted-foreground">{t("emptyCart")}</p>
+              <div className="flex flex-col items-center gap-2 py-10 text-center">
+                <ShoppingCart className="size-8 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">{t("emptyCart")}</p>
+              </div>
             )}
-            {cart.map((l) => (
+            {cart.map((l, i) => (
               <div
                 key={l.product.id}
-                className="flex items-center gap-2.5 rounded-xl border border-border bg-card p-2.5 shadow-sm sm:gap-3 sm:p-3"
+                className="flex gap-3 rounded-xl border border-border bg-muted/40 p-3"
               >
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
-                  {(lang === "bn" ? l.product.name_bn : l.product.name_en).slice(0, 2)}
+                <div className="grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card font-display text-sm font-bold text-primary">
+                  {num(i + 1, lang)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">
-                    {lang === "bn" ? l.product.name_bn : l.product.name_en}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {money(Number(l.product.price), lang)} × {num(l.qty, lang)} ={" "}
-                    <span className="font-semibold text-foreground">
-                      {money(Number(l.product.price) * l.qty, lang)}
-                    </span>
-                  </p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="size-9 rounded-lg sm:size-8"
-                    onClick={() => setQty(l.product.id, l.qty - 1)}
-                  >
-                    <Minus className="size-3.5" />
-                  </Button>
-                  <span className="w-6 text-center text-sm font-semibold">{num(l.qty, lang)}</span>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="size-9 rounded-lg sm:size-8"
-                    onClick={() => setQty(l.product.id, l.qty + 1)}
-                  >
-                    <Plus className="size-3.5" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="size-9 text-muted-foreground hover:text-destructive sm:size-8"
-                    onClick={() => setQty(l.product.id, 0)}
-                  >
-                    <X className="size-3.5" />
-                  </Button>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="truncate text-sm font-bold">
+                      {lang === "bn" ? l.product.name_bn : l.product.name_en}
+                    </p>
+                    <button
+                      type="button"
+                      aria-label={t("clear")}
+                      onClick={() => setQty(l.product.id, 0)}
+                      className="shrink-0 text-muted-foreground transition-colors hover:text-destructive"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1 rounded-lg border border-border bg-card px-1 py-0.5">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="size-7 rounded-md"
+                        onClick={() => setQty(l.product.id, l.qty - 1)}
+                      >
+                        <Minus className="size-3.5" />
+                      </Button>
+                      <span className="w-7 text-center text-sm font-bold">{num(l.qty, lang)}</span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="size-7 rounded-md"
+                        onClick={() => setQty(l.product.id, l.qty + 1)}
+                      >
+                        <Plus className="size-3.5" />
+                      </Button>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-display text-sm font-bold">
+                        {money(Number(l.product.price) * l.qty, lang)}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        @ {money(Number(l.product.price), lang)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="sticky bottom-0 z-10 border-t border-border bg-card p-3 shadow-[0_-8px_24px_-18px_rgba(0,0,0,0.5)] sm:p-4">
+          <div className="sticky bottom-0 z-10 border-t border-border bg-muted/40 p-3 shadow-[0_-8px_24px_-18px_rgba(0,0,0,0.5)] sm:p-4">
             {/* Coupon */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
@@ -646,7 +744,7 @@ function PosPage() {
                   maxLength={24}
                   placeholder={t("coupon")}
                   disabled={!!coupon}
-                  className="h-10 rounded-xl bg-muted/50 pl-9 uppercase"
+                  className="h-10 rounded-xl bg-card pl-9 uppercase"
                 />
               </div>
               {coupon ? (
@@ -701,7 +799,7 @@ function PosPage() {
                   inputMode="decimal"
                   value={discount}
                   onChange={(e) => setDiscount(e.target.value)}
-                  className="h-10 rounded-lg bg-muted/50"
+                  className="h-10 rounded-lg bg-card"
                 />
               </div>
               <div className="space-y-1">
@@ -712,24 +810,28 @@ function PosPage() {
                   inputMode="decimal"
                   value={taxPct}
                   onChange={(e) => setTaxPct(e.target.value)}
-                  className="mt-[7px] h-10 rounded-lg bg-muted/50"
+                  className="mt-[7px] h-10 rounded-lg bg-card"
                 />
               </div>
             </div>
 
             {/* Summary */}
-            <div className="mt-4 space-y-1.5 rounded-xl bg-muted/40 p-3 text-sm">
+            <div className="mt-4 space-y-1.5 rounded-xl border border-border bg-card p-3 text-sm">
               <Row label={`${t("subtotal")} · ${num(itemCount, lang)} ${t("items")}`} value={money(subtotal, lang)} />
               {manualDiscount > 0 && (
-                <Row label={t("discount")} value={`− ${money(manualDiscount, lang)}`} />
+                <Row label={t("discount")} value={`− ${money(manualDiscount, lang)}`} tone="success" />
               )}
               {coupon && (
-                <Row label={`${t("coupon")} · ${coupon.code}`} value={`− ${money(couponDiscount, lang)}`} />
+                <Row
+                  label={`${t("coupon")} · ${coupon.code}`}
+                  value={`− ${money(couponDiscount, lang)}`}
+                  tone="success"
+                />
               )}
               <Row label={`${t("tax")} ${num(Number(taxPct) || 0, lang)}%`} value={money(taxVal, lang)} />
-              <div className="flex items-center justify-between border-t border-border pt-2">
+              <div className="flex items-baseline justify-between border-t border-border pt-2">
                 <span className="font-display text-lg font-bold">{t("total")}</span>
-                <span className="font-display text-2xl font-bold text-primary">{money(total, lang)}</span>
+                <span className="font-display text-3xl font-bold text-primary">{money(total, lang)}</span>
               </div>
             </div>
 
@@ -739,21 +841,25 @@ function PosPage() {
                 {t("paymentMethod")}
               </Label>
               <div className="mt-1.5 grid grid-cols-3 gap-1.5 sm:grid-cols-5">
-                {PAYMENT_METHODS.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setMethod(m.id)}
-                    className={cn(
-                      "min-h-10 rounded-xl border-2 px-1 py-2 text-[11px] font-bold leading-tight transition",
-                      method === m.id
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-card text-muted-foreground hover:border-muted-foreground/40",
-                    )}
-                  >
-                    {t(m.key)}
-                  </button>
-                ))}
+                {PAYMENT_METHODS.map((m) => {
+                  const Icon = m.icon;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setMethod(m.id)}
+                      className={cn(
+                        "flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl border-2 px-1 py-2 text-[10px] font-bold leading-tight transition",
+                        method === m.id
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-card text-muted-foreground hover:border-primary/40",
+                      )}
+                    >
+                      <Icon className="size-4" />
+                      <span className="line-clamp-1">{t(m.key)}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -780,7 +886,8 @@ function PosPage() {
             </div>
 
             <Button
-              className="mt-3 h-14 w-full rounded-2xl text-base font-bold shadow-[var(--shadow-lift)] active:scale-[0.98]"
+              variant="accent"
+              className="mt-3 h-16 w-full rounded-2xl font-display text-lg font-black"
               disabled={!canCheckout}
               onClick={() => checkout.mutate("final")}
             >
@@ -807,6 +914,7 @@ function PosPage() {
             </div>
           </div>
         </aside>
+        </div>
       </div>
 
       <ReceiptDialog receipt={receipt} onClose={() => setReceipt(null)} />
@@ -814,11 +922,14 @@ function PosPage() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+
+function Row({ label, value, tone }: { label: string; value: string; tone?: "success" }) {
   return (
     <div className="flex items-center justify-between gap-2 text-muted-foreground">
-      <span className="min-w-0 truncate">{label}</span>
-      <span className="font-medium text-foreground">{value}</span>
+      <span className={cn("min-w-0 truncate", tone === "success" && "text-success")}>{label}</span>
+      <span className={cn("font-medium text-foreground", tone === "success" && "text-success")}>
+        {value}
+      </span>
     </div>
   );
 }
