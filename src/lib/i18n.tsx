@@ -290,7 +290,38 @@ const dict = {
   invoices: { bn: "ইনভয়েস", en: "Invoices" },
   avgSale: { bn: "গড় বিক্রি", en: "Average sale" },
   cogs: { bn: "বিক্রীত পণ্যের ব্যয়", en: "Cost of goods sold" },
+  apiHub: { bn: "API হাব", en: "API Hub" },
+  apiHubHint: {
+    bn: "SMS, ইমেইল, পেমেন্ট গেটওয়ে ও অন্যান্য সব API কনফিগার করুন",
+    en: "Configure SMS, email, payment gateway and all other API integrations",
+  },
+  apiKey: { bn: "API কী", en: "API key" },
+  apiSecret: { bn: "API সিক্রেট", en: "API secret" },
+  baseUrl: { bn: "বেস URL", en: "Base URL" },
+  senderId: { bn: "সেন্ডার আইডি", en: "Sender ID" },
+  extraJson: { bn: "অতিরিক্ত কনফিগ (JSON)", en: "Extra config (JSON)" },
+  notes: { bn: "নোট", en: "Notes" },
+  enabled: { bn: "চালু", en: "Enabled" },
+  disabled: { bn: "বন্ধ", en: "Disabled" },
+  testConnection: { bn: "কানেকশন টেস্ট", en: "Test connection" },
+  addApi: { bn: "নতুন API", en: "Add API" },
+  provider: { bn: "প্রোভাইডার", en: "Provider" },
+  messaging: { bn: "মেসেজিং", en: "Messaging" },
+  paymentGateway: { bn: "পেমেন্ট গেটওয়ে", en: "Payment gateway" },
+  grpSale: { bn: "বিক্রয়", en: "Sale" },
+  grpPurchase: { bn: "ক্রয়", en: "Purchase" },
+  grpProduct: { bn: "পণ্য", en: "Product" },
+  grpFinance: { bn: "হিসাব ও পেমেন্ট", en: "Finance" },
+  grpPeople: { bn: "পিপল", en: "People" },
+  grpReports: { bn: "রিপোর্ট", en: "Reports" },
+  grpSettings: { bn: "সেটিংস", en: "Settings" },
+  quotations: { bn: "কোটেশন", en: "Quotations" },
+  saleReturns: { bn: "বিক্রয় ফেরত", en: "Sale returns" },
+  collapseMenu: { bn: "মেনু ছোট করুন", en: "Collapse menu" },
+  menu: { bn: "মেনু", en: "Menu" },
+  saved: { bn: "সংরক্ষিত হয়েছে", en: "Saved" },
 } as const;
+
 
 
 

@@ -4,22 +4,28 @@ import {
   BarChart3,
   Barcode,
   Boxes,
+  ChevronDown,
+  FileText,
   HandCoins,
   History,
-  SlidersHorizontal,
-  Tags,
-
   LogOut,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   PieChart,
+  Plug,
   ReceiptText,
+  RotateCcw,
   Settings as SettingsIcon,
   ShieldCheck,
   ShoppingCart,
+  SlidersHorizontal,
+  Tags,
   Truck,
   Users,
   Wallet,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
@@ -30,32 +36,108 @@ import { useMyRole } from "@/lib/use-my-role";
 import { canAccess, type Feature } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
 
+type NavItem = {
+  to: string;
+  feature: Feature;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  search?: Record<string, string>;
+};
+type NavGroup = { id: string; label: string; icon: ComponentType<{ className?: string }>; items: NavItem[] };
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const me = useMyRole();
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [open, setOpen] = useState<Record<string, boolean>>({});
 
-  const allNav = [
-    { to: "/pos", feature: "pos", label: t("pos"), icon: ShoppingCart },
-    { to: "/sales", feature: "sales", label: t("sales"), icon: ReceiptText },
-    { to: "/products", feature: "products", label: t("products"), icon: Boxes },
-    { to: "/stock-adjustments", feature: "stock-adjustments", label: t("stockAdjust"), icon: SlidersHorizontal },
-    { to: "/labels", feature: "labels", label: t("labels"), icon: Barcode },
-    { to: "/purchases", feature: "purchases", label: t("purchases"), icon: Truck },
-    { to: "/contacts", feature: "contacts", label: t("contacts"), icon: Users },
-    { to: "/payments", feature: "payments", label: t("paymentsLedger"), icon: HandCoins },
-    { to: "/expenses", feature: "expenses", label: t("expenses"), icon: Wallet },
-    { to: "/catalog", feature: "catalog", label: t("catalog"), icon: Tags },
-    { to: "/reports", feature: "reports", label: t("reports"), icon: PieChart },
-    { to: "/dashboard", feature: "dashboard", label: t("dashboard"), icon: BarChart3 },
-    { to: "/users", feature: "users", label: t("usersRoles"), icon: ShieldCheck },
-    { to: "/audit-logs", feature: "audit-logs", label: t("auditLog"), icon: History },
-    { to: "/settings", feature: "settings", label: t("settings"), icon: SettingsIcon },
-  ] as const satisfies readonly { to: string; feature: Feature; label: string; icon: unknown }[];
+  const groups: NavGroup[] = [
+    {
+      id: "sale",
+      label: t("grpSale"),
+      icon: ShoppingCart,
+      items: [
+        { to: "/pos", feature: "pos", label: t("pos"), icon: ShoppingCart },
+        { to: "/sales", feature: "sales", label: t("sales"), icon: ReceiptText },
+        { to: "/sales", feature: "sales", label: t("quotations"), icon: FileText, search: { filter: "quotation" } },
+        { to: "/sales", feature: "sales", label: t("saleReturns"), icon: RotateCcw, search: { filter: "returns" } },
+      ],
+    },
+    {
+      id: "product",
+      label: t("grpProduct"),
+      icon: Boxes,
+      items: [
+        { to: "/products", feature: "products", label: t("products"), icon: Boxes },
+        { to: "/catalog", feature: "catalog", label: t("catalog"), icon: Tags },
+        { to: "/stock-adjustments", feature: "stock-adjustments", label: t("stockAdjust"), icon: SlidersHorizontal },
+        { to: "/labels", feature: "labels", label: t("labels"), icon: Barcode },
+      ],
+    },
+    {
+      id: "purchase",
+      label: t("grpPurchase"),
+      icon: Truck,
+      items: [{ to: "/purchases", feature: "purchases", label: t("purchases"), icon: Truck }],
+    },
+    {
+      id: "finance",
+      label: t("grpFinance"),
+      icon: HandCoins,
+      items: [
+        { to: "/payments", feature: "payments", label: t("paymentsLedger"), icon: HandCoins },
+        { to: "/expenses", feature: "expenses", label: t("expenses"), icon: Wallet },
+      ],
+    },
+    {
+      id: "people",
+      label: t("grpPeople"),
+      icon: Users,
+      items: [
+        { to: "/contacts", feature: "contacts", label: t("contacts"), icon: Users },
+        { to: "/users", feature: "users", label: t("usersRoles"), icon: ShieldCheck },
+      ],
+    },
+    {
+      id: "reports",
+      label: t("grpReports"),
+      icon: PieChart,
+      items: [
+        { to: "/dashboard", feature: "dashboard", label: t("dashboard"), icon: BarChart3 },
+        { to: "/reports", feature: "reports", label: t("reports"), icon: PieChart },
+        { to: "/audit-logs", feature: "audit-logs", label: t("auditLog"), icon: History },
+      ],
+    },
+    {
+      id: "settings",
+      label: t("grpSettings"),
+      icon: SettingsIcon,
+      items: [
+        { to: "/settings", feature: "settings", label: t("settings"), icon: SettingsIcon },
+        { to: "/api-hub", feature: "api-hub", label: t("apiHub"), icon: Plug },
+      ],
+    },
+  ];
 
-  const nav = allNav.filter((item) => canAccess(me.data?.role, item.feature));
+  const visibleGroups = groups
+    .map((g) => ({ ...g, items: g.items.filter((i) => canAccess(me.data?.role, i.feature)) }))
+    .filter((g) => g.items.length > 0);
+
+  const allItems = groups.flatMap((g) => g.items);
+
+  useEffect(() => {
+    const active = groups.find((g) => g.items.some((i) => pathname.startsWith(i.to)));
+    if (active) setOpen((s) => ({ ...s, [active.id]: true }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   async function signOut() {
     await logAudit("logout");
@@ -65,59 +147,137 @@ export function AppShell({ children }: { children: ReactNode }) {
     navigate({ to: "/auth", replace: true });
   }
 
+  const sidebar = (
+    <div className="flex h-full flex-col">
+      <div className={cn("flex items-center gap-2 px-4 py-4", collapsed && "justify-center px-2")}>
+        <span className="gradient-brand flex size-9 shrink-0 items-center justify-center rounded-lg text-primary-foreground">
+          <ReceiptText className="size-5" />
+        </span>
+        {!collapsed && <span className="font-display text-lg font-bold">{t("appName")}</span>}
+      </div>
+
+      <nav className="flex-1 space-y-1 overflow-y-auto px-2 pb-3">
+        {visibleGroups.map((g) => {
+          const groupActive = g.items.some((i) => pathname.startsWith(i.to));
+          const isOpen = collapsed ? false : (open[g.id] ?? groupActive);
+          return (
+            <div key={g.id}>
+              <button
+                type="button"
+                onClick={() =>
+                  collapsed ? setCollapsed(false) : setOpen((s) => ({ ...s, [g.id]: !(s[g.id] ?? groupActive) }))
+                }
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+                  groupActive
+                    ? "text-sidebar-primary"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                  collapsed && "justify-center px-0",
+                )}
+                title={g.label}
+              >
+                <g.icon className="size-4 shrink-0" />
+                {!collapsed && (
+                  <>
+                    <span className="flex-1 text-left">{g.label}</span>
+                    <ChevronDown className={cn("size-4 transition-transform", isOpen && "rotate-180")} />
+                  </>
+                )}
+              </button>
+
+              {isOpen && (
+                <div className="mt-0.5 space-y-0.5 pl-3">
+                  {g.items.map((item) => {
+                    const active =
+                      pathname.startsWith(item.to) &&
+                      (!item.search || typeof window === "undefined"
+                        ? !item.search
+                        : window.location.search.includes(`filter=${item.search.filter}`));
+                    return (
+                      <Link
+                        key={`${item.to}-${item.label}`}
+                        to={item.to}
+                        search={item.search as never}
+                        className={cn(
+                          "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          active
+                            ? "bg-sidebar-accent text-sidebar-primary"
+                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60",
+                        )}
+                      >
+                        <item.icon className="size-4 shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </nav>
+
+      <div className="space-y-1 p-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn("w-full text-sidebar-foreground/70", collapsed ? "justify-center" : "justify-start")}
+          onClick={() => setCollapsed((c) => !c)}
+        >
+          {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="mr-2 size-4" />}
+          {!collapsed && t("collapseMenu")}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn("w-full text-sidebar-foreground/80", collapsed ? "justify-center" : "justify-start")}
+          onClick={signOut}
+        >
+          {collapsed ? <LogOut className="size-4" /> : <LogOut className="mr-2 size-4" />}
+          {!collapsed && t("signOut")}
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="flex min-h-screen flex-col bg-background md:flex-row">
-      <aside className="flex shrink-0 flex-col bg-sidebar text-sidebar-foreground md:w-56">
-        <div className="flex items-center gap-2 px-4 py-4">
-          <span className="gradient-brand flex size-9 items-center justify-center rounded-lg text-primary-foreground">
-            <ReceiptText className="size-5" />
-          </span>
-          <span className="font-display text-lg font-bold">{t("appName")}</span>
-        </div>
-        <nav className="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:pb-0">
-          {nav.map((item) => {
-            const active = pathname.startsWith(item.to);
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-sidebar-accent text-sidebar-primary"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60",
-                )}
-              >
-                <item.icon className="size-4" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="mt-auto hidden p-3 md:block">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-sidebar-foreground/80"
-            onClick={signOut}
-          >
-            <LogOut className="mr-2 size-4" /> {t("signOut")}
-          </Button>
-        </div>
+    <div className="flex min-h-screen bg-background">
+      <aside
+        className={cn(
+          "sticky top-0 hidden h-screen shrink-0 bg-sidebar text-sidebar-foreground transition-all md:block",
+          collapsed ? "w-16" : "w-60",
+        )}
+      >
+        {sidebar}
       </aside>
 
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <button
+            aria-label="close menu"
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="absolute inset-y-0 left-0 w-64 bg-sidebar text-sidebar-foreground shadow-xl">{sidebar}</div>
+        </div>
+      )}
+
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-wrap items-center justify-end gap-2 border-b border-border bg-card px-4 py-2.5">
-          <QuickActions />
-          <LangToggle />
-          <Button variant="ghost" size="sm" onClick={signOut} className="md:hidden">
-            <LogOut className="size-4" />
+        <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-border bg-card px-3 py-2.5">
+          <Button variant="outline" size="icon" className="md:hidden" onClick={() => setMobileOpen(true)}>
+            <Menu className="size-4" />
           </Button>
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            <QuickActions />
+            <LangToggle />
+            <Button variant="ghost" size="sm" onClick={signOut} className="md:hidden">
+              <LogOut className="size-4" />
+            </Button>
+          </div>
         </header>
         <main className="min-w-0 flex-1">
           {(() => {
-            const current = allNav.find((n) => pathname.startsWith(n.to));
+            const current = allItems.find((n) => pathname.startsWith(n.to));
             if (me.isLoading) return <div className="p-6 text-sm text-muted-foreground">…</div>;
             if (current && !canAccess(me.data?.role, current.feature)) {
               return (
@@ -132,7 +292,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             return children;
           })()}
         </main>
-
       </div>
     </div>
   );

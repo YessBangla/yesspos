@@ -17,7 +17,9 @@ export const FEATURES = [
   "users",
   "audit-logs",
   "settings",
+  "api-hub",
 ] as const;
+
 
 export type Feature = (typeof FEATURES)[number];
 

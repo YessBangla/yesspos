@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_settings: {
+        Row: {
+          api_key: string | null
+          api_secret: string | null
+          base_url: string | null
+          category: string
+          created_at: string
+          enabled: boolean
+          extra: Json
+          id: string
+          label: string
+          notes: string | null
+          provider: string
+          sender_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          api_key?: string | null
+          api_secret?: string | null
+          base_url?: string | null
+          category?: string
+          created_at?: string
+          enabled?: boolean
+          extra?: Json
+          id?: string
+          label: string
+          notes?: string | null
+          provider: string
+          sender_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string | null
+          api_secret?: string | null
+          base_url?: string | null
+          category?: string
+          created_at?: string
+          enabled?: boolean
+          extra?: Json
+          id?: string
+          label?: string
+          notes?: string | null
+          provider?: string
+          sender_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
