@@ -100,17 +100,17 @@ type Receipt = {
   footer: string;
 };
 
-const PAYMENT_METHODS: { id: string; key: TKey }[] = [
-  { id: "cash", key: "cash" },
-  { id: "bkash", key: "bkash" },
-  { id: "nagad", key: "nagad" },
-  { id: "rocket", key: "rocket" },
-  { id: "upay", key: "upay" },
-  { id: "card", key: "card" },
-  { id: "bank", key: "bank" },
-  { id: "cheque", key: "cheque" },
-  { id: "due", key: "creditDue" },
-  { id: "other", key: "other" },
+const PAYMENT_METHODS: { id: string; key: TKey; icon: typeof Banknote }[] = [
+  { id: "cash", key: "cash", icon: Banknote },
+  { id: "bkash", key: "bkash", icon: Smartphone },
+  { id: "nagad", key: "nagad", icon: Smartphone },
+  { id: "rocket", key: "rocket", icon: Smartphone },
+  { id: "upay", key: "upay", icon: Smartphone },
+  { id: "card", key: "card", icon: CreditCard },
+  { id: "bank", key: "bank", icon: Landmark },
+  { id: "cheque", key: "cheque", icon: ReceiptText },
+  { id: "due", key: "creditDue", icon: Wallet },
+  { id: "other", key: "other", icon: Wallet },
 ];
 
 function PosPage() {
