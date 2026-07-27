@@ -39,6 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { LangToggle } from "@/components/LangToggle";
 import { QuickActions } from "@/components/QuickActions";
+import { useMyBranch } from "@/lib/use-branch";
 import { cn } from "@/lib/utils";
 import { useMyRole } from "@/lib/use-my-role";
 import { canAccess, type Feature } from "@/lib/permissions";
