@@ -366,7 +366,6 @@ const dict = {
   moneyInOut: { bn: "জমা/খরচ", en: "In / Out" },
   financials: { bn: "আর্থিক বিবরণী", en: "Financial statements" },
   trialBalance: { bn: "রেওয়ামিল", en: "Trial balance" },
-  profitLoss: { bn: "লাভ-ক্ষতি", en: "Profit & loss" },
   balanceSheet: { bn: "স্থিতিপত্র", en: "Balance sheet" },
   totalDebit: { bn: "মোট ডেবিট", en: "Total debit" },
   totalCredit: { bn: "মোট ক্রেডিট", en: "Total credit" },
