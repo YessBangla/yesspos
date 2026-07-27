@@ -18,6 +18,12 @@ export const FEATURES = [
   "audit-logs",
   "settings",
   "api-hub",
+  "accounts",
+  "chart-of-accounts",
+  "journal",
+  "day-book",
+  "financials",
+  "party-statement",
 ] as const;
 
 
