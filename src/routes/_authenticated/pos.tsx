@@ -450,7 +450,7 @@ function PosPage() {
 
   return (
     <div className="p-2 sm:p-4">
-      <div className="surface-panel flex flex-col overflow-hidden p-0 lg:h-[calc(100vh-6rem)]">
+      <div className="surface-panel flex flex-col overflow-hidden p-0 lg:h-[calc(100vh-4.5rem)]">
         {/* Terminal summary bar */}
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 gradient-brand px-3 py-2.5 text-primary-foreground sm:px-5">
           <div className="flex min-w-0 items-center gap-3 sm:gap-6">
@@ -682,7 +682,7 @@ function PosPage() {
             </div>
           </div>
 
-          <div className="min-h-24 flex-1 space-y-2.5 overflow-y-auto p-3 sm:p-4">
+          <div className="min-h-[18rem] flex-1 space-y-2.5 overflow-y-auto p-3 sm:min-h-[22rem] sm:p-4 lg:min-h-32">
             {cart.length === 0 && (
               <div className="flex flex-col items-center gap-2 py-10 text-center">
                 <ShoppingCart className="size-8 text-muted-foreground/40" />
@@ -745,7 +745,7 @@ function PosPage() {
             ))}
           </div>
 
-          <div className="max-h-[60vh] shrink-0 overflow-y-auto border-t border-border bg-card p-3 shadow-[0_-8px_24px_-18px_rgba(0,0,0,0.5)] sm:p-4">
+          <div className="max-h-[50vh] shrink-0 overflow-y-auto border-t border-border bg-card p-3 shadow-[0_-8px_24px_-18px_rgba(0,0,0,0.5)] sm:p-4">
             {/* Coupon */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
