@@ -44,7 +44,7 @@ export function QuickAddCustomer({ onCreated }: { onCreated?: (c: { id: string; 
       return data;
     },
     onSuccess: (c) => {
-      void logAudit("contact_create", { entity: "contact", entity_id: c.id });
+      void logAudit("product_create", { entity: "contact", entityId: c.id });
       qc.invalidateQueries({ queryKey: ["contacts"] });
       onCreated?.(c);
       setForm({ name: "", phone: "", email: "", address: "" });
@@ -162,7 +162,7 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (id: string) => voi
       return data.id as string;
     },
     onSuccess: (id) => {
-      void logAudit("product_create", { entity: "product", entity_id: id });
+      void logAudit("product_create", { entity: "product", entityId: id });
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["branch-stock"] });
       onCreated?.(id);
