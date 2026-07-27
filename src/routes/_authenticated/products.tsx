@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useBranchStock, useMyBranch } from "@/lib/use-branch";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -84,6 +85,9 @@ function ProductsPage() {
       return data;
     },
   });
+
+  const myBranch = useMyBranch();
+  const branchStock = useBranchStock(myBranch.data?.id);
 
   const products = useQuery({
     queryKey: ["products-all"],
