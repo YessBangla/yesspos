@@ -745,7 +745,7 @@ function PosPage() {
             ))}
           </div>
 
-          <div className="sticky bottom-0 z-10 shrink-0 border-t border-border bg-muted/40 p-3 shadow-[0_-8px_24px_-18px_rgba(0,0,0,0.5)] sm:p-4">
+          <div className="max-h-[60vh] shrink-0 overflow-y-auto border-t border-border bg-card p-3 shadow-[0_-8px_24px_-18px_rgba(0,0,0,0.5)] sm:p-4">
             {/* Coupon */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
