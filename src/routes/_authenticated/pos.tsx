@@ -2,17 +2,25 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Banknote,
   Barcode,
+  CreditCard,
   Keyboard,
+  Landmark,
   Mail,
   MessageSquare,
   Minus,
+  Package,
   PauseCircle,
   Plus,
   Printer,
+  ReceiptText,
   Search,
+  ShoppingCart,
+  Smartphone,
   Tag,
   Trash2,
+  Wallet,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
