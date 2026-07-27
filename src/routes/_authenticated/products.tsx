@@ -157,6 +157,7 @@ function ProductsPage() {
       queryClient.invalidateQueries({ queryKey: ["products-all"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
+      queryClient.invalidateQueries({ queryKey: ["branch-stock"] });
       toast.success(t("save"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
@@ -174,7 +175,7 @@ function ProductsPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
-  function startEdit(p: Row) {
+  function startEdit(p: Row & { branch_stock?: number }) {
     setEditing(p);
     setForm({
       name_en: p.name_en,
@@ -182,7 +183,7 @@ function ProductsPage() {
       sku: p.sku,
       price: String(p.price),
       cost: String(p.cost),
-      stock: String(p.stock),
+      stock: String(p.branch_stock ?? p.stock),
       low_stock_at: String(p.low_stock_at),
       unit: p.unit,
       category_id: p.category_id ?? "",
@@ -240,7 +241,7 @@ function ProductsPage() {
             )}
             {visible.map((p) => {
               const cat = categories.data?.find((c) => c.id === p.category_id);
-              const low = p.stock <= p.low_stock_at;
+              const low = p.branch_stock <= p.low_stock_at;
               return (
                 <tr key={p.id} className="border-b border-border last:border-0">
                   <td className="px-4 py-3 font-medium">{lang === "bn" ? p.name_bn : p.name_en}</td>
@@ -254,14 +255,14 @@ function ProductsPage() {
                     <span
                       className={cn(
                         "rounded-full px-2 py-0.5 text-xs font-semibold",
-                        p.stock <= 0
+                        p.branch_stock <= 0
                           ? "bg-destructive/10 text-destructive"
                           : low
                             ? "bg-warning/20 text-warning-foreground"
                             : "bg-muted text-muted-foreground",
                       )}
                     >
-                      {num(p.stock, lang)} {p.unit}
+                      {num(p.branch_stock, lang)} {p.unit}
                     </span>
                   </td>
                   <td className="px-4 py-3">
