@@ -183,7 +183,9 @@ function DashboardPage() {
     { icon: TrendingUp, label: t("totalSales"), value: money(saleTotal, lang), tone: "text-primary" },
     { icon: RotateCcw, label: t("saleReturn"), value: money(returnTotal, lang), tone: "text-destructive" },
     { icon: ShoppingCart, label: t("totalPurchase"), value: money(purchaseTotal, lang), tone: "text-chart-3" },
+    { icon: Undo2, label: t("purchaseReturn"), value: money(purchaseReturnTotal, lang), tone: "text-warning" },
     { icon: Receipt, label: t("todayOrders"), value: num(finalSales.length, lang), tone: "text-chart-4" },
+
     { icon: Banknote, label: t("paid"), value: money(salePaid, lang), tone: "text-chart-2" },
     { icon: HandCoins, label: t("totalDueAmount"), value: money(saleDue, lang), tone: "text-destructive" },
     { icon: ArrowDownLeft, label: t("totalReceived"), value: money(dueReceived, lang), tone: "text-chart-1" },
