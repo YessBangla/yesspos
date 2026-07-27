@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RotateCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -19,6 +19,9 @@ export const Route = createFileRoute("/_authenticated/sales")({
       { property: "og:title", content: "Sales & returns — SheraPOS" },
       { property: "og:description", content: "Browse invoices and record sale returns." },
     ],
+  }),
+  validateSearch: (search: Record<string, unknown>): { filter?: string } => ({
+    filter: typeof search.filter === "string" ? search.filter : undefined,
   }),
   component: SalesPage,
 });
@@ -45,7 +48,13 @@ type Item = {
 function SalesPage() {
   const { t, lang } = useI18n();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<"all" | "final" | "draft" | "quotation">("all");
+  const search = Route.useSearch();
+  const [filter, setFilter] = useState<"all" | "final" | "draft" | "quotation" | "returns">("all");
+
+  useEffect(() => {
+    const f = search.filter;
+    if (f === "quotation" || f === "returns" || f === "final" || f === "draft") setFilter(f);
+  }, [search.filter]);
   const [returning, setReturning] = useState<Sale | null>(null);
   const [qtys, setQtys] = useState<Record<string, string>>({});
   const [reason, setReason] = useState("");
@@ -120,6 +129,26 @@ function SalesPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
+  const returns = useQuery({
+    queryKey: ["returns"],
+    enabled: filter === "returns",
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sale_returns")
+        .select("id,total,reason,created_at,sales(invoice_no)")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return data as unknown as {
+        id: string;
+        total: number;
+        reason: string | null;
+        created_at: string;
+        sales: { invoice_no: number } | null;
+      }[];
+    },
+  });
+
   const visible = (sales.data ?? []).filter((s) => filter === "all" || s.status === filter);
 
   return (
@@ -127,13 +156,48 @@ function SalesPage() {
       <h1 className="font-display text-2xl font-bold">{t("sales")}</h1>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {(["all", "final", "draft", "quotation"] as const).map((k) => (
+        {(["all", "final", "draft", "quotation", "returns"] as const).map((k) => (
           <Button key={k} size="sm" variant={filter === k ? "default" : "outline"} onClick={() => setFilter(k)}>
-            {k === "all" ? t("all") : t(k)}
+            {k === "all" ? t("all") : k === "returns" ? t("saleReturns") : t(k)}
           </Button>
         ))}
       </div>
 
+      {filter === "returns" ? (
+        <div className="surface-panel mt-4 overflow-x-auto">
+          <table className="w-full min-w-[520px] text-sm">
+            <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3">{t("invoice")}</th>
+                <th className="px-4 py-3">{t("date")}</th>
+                <th className="px-4 py-3">{t("reason")}</th>
+                <th className="px-4 py-3 text-right">{t("total")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(returns.data ?? []).map((r) => (
+                <tr key={r.id} className="border-b border-border last:border-0">
+                  <td className="px-4 py-3 font-medium">
+                    #{r.sales ? num(Number(r.sales.invoice_no), lang) : "-"}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{r.reason ?? "-"}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-destructive">
+                    {money(Number(r.total), lang)}
+                  </td>
+                </tr>
+              ))}
+              {(returns.data ?? []).length === 0 && (
+                <tr>
+                  <td className="px-4 py-6 text-muted-foreground" colSpan={4}>
+                    {returns.isLoading ? t("loading") : t("noData")}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) : (
       <div className="surface-panel mt-4 overflow-x-auto">
         <table className="w-full min-w-[720px] text-sm">
           <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
@@ -194,6 +258,7 @@ function SalesPage() {
           </tbody>
         </table>
       </div>
+      )}
 
       <Dialog open={!!returning} onOpenChange={(o) => !o && setReturning(null)}>
         <DialogContent className="max-w-lg">
