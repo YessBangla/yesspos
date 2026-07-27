@@ -564,7 +564,7 @@ function ReceiptDialog({ receipt, onClose }: { receipt: Receipt | null; onClose:
           </div>
           <Row label={t("paid")} value={money(receipt.paid, lang)} />
           <Row label={t("change")} value={money(Math.max(receipt.paid - receipt.total, 0), lang)} />
-          <p className="mt-3 text-center text-xs text-muted-foreground">{t("thanks")}</p>
+          <p className="mt-3 text-center text-xs text-muted-foreground">{receipt.footer || t("thanks")}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="flex-1" onClick={() => window.print()}>
