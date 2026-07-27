@@ -159,6 +159,22 @@ function PosPage() {
     });
   }
 
+  function onScan(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== "Enter") return;
+    const code = scan.trim().toLowerCase();
+    if (!code) return;
+    const p = (products.data ?? []).find(
+      (x) => (x.barcode ?? "").toLowerCase() === code || x.sku.toLowerCase() === code,
+    );
+    if (!p) {
+      toast.error(t("noData"));
+    } else {
+      add(p);
+    }
+    setScan("");
+    scanRef.current?.focus();
+  }
+
   function setQty(id: string, qty: number) {
     setCart((prev) =>
       prev
@@ -170,15 +186,16 @@ function PosPage() {
   function resetSale() {
     setCart([]);
     setDiscount("0");
-    setTaxPct("0");
+    setTaxPct(String(settings.data?.default_tax_pct ?? 0));
     setPaid("");
     setCustomer("");
     setPhone("");
+    setContactId("");
     setMethod("cash");
   }
 
   const checkout = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (status: "final" | "draft" | "quotation" = "final") => {
       if (cart.length === 0) throw new Error(t("emptyCart"));
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
@@ -188,45 +205,58 @@ function PosPage() {
         .from("sales")
         .insert({
           cashier_id: uid,
+          contact_id: contactId || null,
+          status,
           customer_name: customer.trim().slice(0, 80) || null,
           customer_phone: phone.trim().slice(0, 20) || null,
           subtotal,
           discount: discountVal,
           tax: taxVal,
           total,
-          paid: paidVal,
+          paid: status === "final" ? paidVal : 0,
           payment_method: method,
         })
         .select("id,invoice_no,created_at")
         .single();
       if (error) throw error;
 
-      const items = cart.map((l) => ({
-        sale_id: sale.id,
-        product_id: l.product.id,
-        name_snapshot: lang === "bn" ? l.product.name_bn : l.product.name_en,
-        unit_price: Number(l.product.price),
-        quantity: l.qty,
-        line_total: Number(l.product.price) * l.qty,
-      }));
-      const { error: itemsError } = await supabase.from("sale_items").insert(items);
-      if (itemsError) throw itemsError;
+      if (status === "final") {
+        const items = cart.map((l) => ({
+          sale_id: sale.id,
+          product_id: l.product.id,
+          name_snapshot: lang === "bn" ? l.product.name_bn : l.product.name_en,
+          unit_price: Number(l.product.price),
+          quantity: l.qty,
+          line_total: Number(l.product.price) * l.qty,
+        }));
+        const { error: itemsError } = await supabase.from("sale_items").insert(items);
+        if (itemsError) throw itemsError;
+      }
 
+      const s = settings.data;
       return {
-        invoice: Number(sale.invoice_no),
-        lines: cart,
-        subtotal,
-        discount: discountVal,
-        tax: taxVal,
-        total,
-        paid: paidVal,
-        method,
-        customer,
-        at: sale.created_at as string,
-      } satisfies Receipt;
+        status,
+        receipt: {
+          invoice: Number(sale.invoice_no),
+          lines: cart,
+          subtotal,
+          discount: discountVal,
+          tax: taxVal,
+          total,
+          paid: paidVal,
+          method,
+          customer,
+          at: sale.created_at as string,
+          shopName: s?.shop_name ?? t("appName"),
+          shopAddress: s?.address ?? "",
+          shopPhone: s?.phone ?? "",
+          footer: s?.receipt_footer ?? t("thanks"),
+        } satisfies Receipt,
+      };
     },
-    onSuccess: (r) => {
-      setReceipt(r);
+    onSuccess: ({ status, receipt: r }) => {
+      if (status === "final") setReceipt(r);
+      else toast.success(status === "draft" ? t("holdSale") : t("saveQuotation"));
       resetSale();
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["sales"] });
@@ -234,6 +264,7 @@ function PosPage() {
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
+
 
   return (
     <div className="grid gap-4 p-4 lg:grid-cols-[1fr_380px]">
