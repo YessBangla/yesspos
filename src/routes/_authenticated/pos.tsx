@@ -36,6 +36,7 @@ type Product = {
   name_en: string;
   name_bn: string;
   sku: string;
+  barcode: string | null;
   price: number;
   stock: number;
   unit: string;
@@ -55,6 +56,10 @@ type Receipt = {
   method: string;
   customer: string;
   at: string;
+  shopName: string;
+  shopAddress: string;
+  shopPhone: string;
+  footer: string;
 };
 
 function PosPage() {
@@ -69,7 +74,10 @@ function PosPage() {
   const [method, setMethod] = useState("cash");
   const [customer, setCustomer] = useState("");
   const [phone, setPhone] = useState("");
+  const [contactId, setContactId] = useState("");
+  const [scan, setScan] = useState("");
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const scanRef = useRef<HTMLInputElement>(null);
 
   const categories = useQuery({
     queryKey: ["categories"],
@@ -80,18 +88,41 @@ function PosPage() {
     },
   });
 
+  const settings = useQuery({
+    queryKey: ["business-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("business_settings").select("*").limit(1).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const customers = useQuery({
+    queryKey: ["contacts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("contacts").select("*").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const products = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id,name_en,name_bn,sku,price,stock,unit,category_id")
+        .select("id,name_en,name_bn,sku,barcode,price,stock,unit,category_id")
         .eq("is_active", true)
         .order("name_en");
       if (error) throw error;
       return data as unknown as Product[];
     },
   });
+
+  useEffect(() => {
+    const pct = settings.data?.default_tax_pct;
+    if (pct != null) setTaxPct(String(pct));
+  }, [settings.data?.default_tax_pct]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -101,9 +132,11 @@ function PosPage() {
         (!q ||
           p.name_en.toLowerCase().includes(q) ||
           p.name_bn.includes(query.trim()) ||
-          p.sku.toLowerCase().includes(q)),
+          p.sku.toLowerCase().includes(q) ||
+          (p.barcode ?? "").toLowerCase().includes(q)),
     );
   }, [products.data, query, cat]);
+
 
   const subtotal = cart.reduce((s, l) => s + Number(l.product.price) * l.qty, 0);
   const discountVal = Math.min(Number(discount) || 0, subtotal);
