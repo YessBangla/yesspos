@@ -365,6 +365,23 @@ function UsersPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-1.5">
+              <Label>{t("branch")}</Label>
+              <Select value={form.branchId} onValueChange={(branchId) => setForm({ ...form, branchId })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t("noBranch")}</SelectItem>
+                  {(branches.data ?? []).map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button className="w-full" disabled={create.isPending} onClick={() => create.mutate()}>
               {t("save")}
             </Button>
