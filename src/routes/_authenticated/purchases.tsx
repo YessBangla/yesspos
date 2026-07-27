@@ -404,6 +404,52 @@ function PurchasesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!returning} onOpenChange={(o) => !o && setReturning(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {t("returnPurchase")} · #{returning ? num(Number(returning.ref_no), lang) : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {retItems.isLoading && <p className="text-sm text-muted-foreground">{t("loading")}</p>}
+            {(retItems.data ?? []).map((i) => (
+              <div key={i.id} className="flex items-center gap-2 rounded-lg bg-muted/60 p-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{i.name_snapshot}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {money(Number(i.unit_cost), lang)} · {t("qty")} {num(i.quantity, lang)}
+                  </p>
+                </div>
+                <Input
+                  className="h-9 w-20"
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={retQtys[i.id] ?? ""}
+                  onChange={(e) => setRetQtys({ ...retQtys, [i.id]: e.target.value })}
+                />
+              </div>
+            ))}
+            {!retItems.isLoading && (retItems.data ?? []).length === 0 && (
+              <p className="text-sm text-muted-foreground">{t("noData")}</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label>{t("reason")}</Label>
+            <Input value={retReason} maxLength={200} onChange={(e) => setRetReason(e.target.value)} />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setReturning(null)}>
+              {t("cancel")}
+            </Button>
+            <Button onClick={() => submitReturn.mutate()} disabled={submitReturn.isPending}>
+              {t("save")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
