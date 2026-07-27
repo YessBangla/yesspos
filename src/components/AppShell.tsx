@@ -86,9 +86,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         { to: "/catalog", feature: "catalog", label: t("catalog"), icon: Tags },
         { to: "/stock-adjustments", feature: "stock-adjustments", label: t("stockAdjust"), icon: SlidersHorizontal },
         { to: "/labels", feature: "labels", label: t("labels"), icon: Barcode },
+      ],
+    },
+    {
+      id: "branch",
+      label: t("multiBranch"),
+      icon: Building2,
+      items: [
+        { to: "/branches", feature: "branches", label: t("branches"), icon: Building2 },
         { to: "/stock-transfers", feature: "stock-transfers", label: t("stockTransfer"), icon: ArrowRightLeft },
       ],
     },
+
 
     {
       id: "purchase",
