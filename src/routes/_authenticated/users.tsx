@@ -134,7 +134,14 @@ function UsersPage() {
   }
 
   const create = useMutation({
-    mutationFn: async () => createFn({ data: form }),
+    mutationFn: async () => {
+      const { branchId, ...rest } = form;
+      await createFn({ data: rest });
+      if (branchId && branchId !== "none") {
+        await supabase.from("profiles").update({ branch_id: branchId }).eq("username", rest.username);
+      }
+    },
+
     onSuccess: () => {
       toast.success(t("userCreated"));
       void logAudit("user_create", { entity: "user", details: `${form.username} (${form.role})` });
