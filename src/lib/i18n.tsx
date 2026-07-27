@@ -184,7 +184,6 @@ const dict = {
   printLabels: { bn: "লেবেল প্রিন্ট", en: "Print labels" },
   noBarcode: { bn: "বারকোড নেই", en: "No barcode" },
   selectProduct: { bn: "পণ্য বাছুন", en: "Select product" },
-  noData: { bn: "কোনো তথ্য নেই", en: "No data yet" },
 
 } as const;
 
