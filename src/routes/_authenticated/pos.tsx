@@ -175,16 +175,20 @@ function PosPage() {
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (products.data ?? []).filter(
-      (p) =>
-        (cat === "all" || p.category_id === cat) &&
-        (!q ||
-          p.name_en.toLowerCase().includes(q) ||
-          p.name_bn.includes(query.trim()) ||
-          p.sku.toLowerCase().includes(q) ||
-          (p.barcode ?? "").toLowerCase().includes(q)),
-    );
-  }, [products.data, query, cat]);
+    const stockMap = branchStock.data;
+    return (products.data ?? [])
+      .map((p) => (stockMap ? { ...p, stock: stockMap.get(p.id) ?? 0 } : p))
+      .filter(
+        (p) =>
+          (cat === "all" || p.category_id === cat) &&
+          (!q ||
+            p.name_en.toLowerCase().includes(q) ||
+            p.name_bn.includes(query.trim()) ||
+            p.sku.toLowerCase().includes(q) ||
+            (p.barcode ?? "").toLowerCase().includes(q)),
+      );
+  }, [products.data, branchStock.data, query, cat]);
+
 
   const subtotal = cart.reduce((s, l) => s + Number(l.product.price) * l.qty, 0);
   const manualDiscount =
