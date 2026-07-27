@@ -42,7 +42,7 @@ const roleKey: Record<AppRole, "roleSuperAdmin" | "roleAdmin" | "roleManager" | 
   staff: "roleStaff",
 };
 
-const emptyForm = { username: "", password: "", fullName: "", role: "cashier" as AppRole };
+const emptyForm = { username: "", password: "", fullName: "", role: "cashier" as AppRole, branchId: "none" };
 
 function UsersPage() {
   const { t } = useI18n();
