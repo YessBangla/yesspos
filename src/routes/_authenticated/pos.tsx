@@ -605,7 +605,7 @@ function PosPage() {
         </section>
 
         {/* Checkout */}
-        <aside className="flex min-h-0 flex-col overflow-hidden border-t border-border bg-card lg:border-l lg:border-t-0">
+        <aside className="flex min-h-0 flex-col overflow-y-auto border-t border-border bg-card lg:border-l lg:border-t-0">
           <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border px-3 py-2.5 sm:px-4">
             <div className="flex min-w-0 items-center gap-2">
               <ShoppingCart className="size-4 shrink-0 text-primary" />
@@ -682,7 +682,7 @@ function PosPage() {
             </div>
           </div>
 
-          <div className="min-h-[18rem] flex-1 space-y-2.5 overflow-y-auto p-3 sm:min-h-[22rem] sm:p-4 lg:min-h-32">
+          <div className="flex-none space-y-2.5 p-3 sm:p-4">
             {cart.length === 0 && (
               <div className="flex flex-col items-center gap-2 py-10 text-center">
                 <ShoppingCart className="size-8 text-muted-foreground/40" />
@@ -745,7 +745,7 @@ function PosPage() {
             ))}
           </div>
 
-          <div className="max-h-[50vh] shrink-0 overflow-y-auto border-t border-border bg-card p-3 shadow-[0_-8px_24px_-18px_rgba(0,0,0,0.5)] sm:p-4">
+          <div className="mt-auto flex-none border-t border-border bg-card p-3 sm:p-4">
             {/* Coupon */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
