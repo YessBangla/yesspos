@@ -1,6 +1,17 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Boxes, LogOut, ReceiptText, ShoppingCart } from "lucide-react";
+import {
+  BarChart3,
+  Boxes,
+  LogOut,
+  PieChart,
+  ReceiptText,
+  Settings as SettingsIcon,
+  ShoppingCart,
+  Truck,
+  Users,
+  Wallet,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,9 +27,16 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const nav = [
     { to: "/pos", label: t("pos"), icon: ShoppingCart },
+    { to: "/sales", label: t("sales"), icon: ReceiptText },
     { to: "/products", label: t("products"), icon: Boxes },
+    { to: "/purchases", label: t("purchases"), icon: Truck },
+    { to: "/contacts", label: t("contacts"), icon: Users },
+    { to: "/expenses", label: t("expenses"), icon: Wallet },
+    { to: "/reports", label: t("reports"), icon: PieChart },
     { to: "/dashboard", label: t("dashboard"), icon: BarChart3 },
+    { to: "/settings", label: t("settings"), icon: SettingsIcon },
   ] as const;
+
 
   async function signOut() {
     await queryClient.cancelQueries();

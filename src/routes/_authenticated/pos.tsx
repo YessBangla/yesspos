@@ -1,15 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Minus, Plus, Printer, Search, Trash2, X } from "lucide-react";
+import { Barcode, Minus, PauseCircle, Plus, Printer, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/_authenticated/pos")({
   head: () => ({
@@ -28,6 +36,7 @@ type Product = {
   name_en: string;
   name_bn: string;
   sku: string;
+  barcode: string | null;
   price: number;
   stock: number;
   unit: string;
@@ -47,6 +56,10 @@ type Receipt = {
   method: string;
   customer: string;
   at: string;
+  shopName: string;
+  shopAddress: string;
+  shopPhone: string;
+  footer: string;
 };
 
 function PosPage() {
@@ -61,7 +74,10 @@ function PosPage() {
   const [method, setMethod] = useState("cash");
   const [customer, setCustomer] = useState("");
   const [phone, setPhone] = useState("");
+  const [contactId, setContactId] = useState("");
+  const [scan, setScan] = useState("");
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const scanRef = useRef<HTMLInputElement>(null);
 
   const categories = useQuery({
     queryKey: ["categories"],
@@ -72,18 +88,41 @@ function PosPage() {
     },
   });
 
+  const settings = useQuery({
+    queryKey: ["business-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("business_settings").select("*").limit(1).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const customers = useQuery({
+    queryKey: ["contacts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("contacts").select("*").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const products = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id,name_en,name_bn,sku,price,stock,unit,category_id")
+        .select("id,name_en,name_bn,sku,barcode,price,stock,unit,category_id")
         .eq("is_active", true)
         .order("name_en");
       if (error) throw error;
       return data as unknown as Product[];
     },
   });
+
+  useEffect(() => {
+    const pct = settings.data?.default_tax_pct;
+    if (pct != null) setTaxPct(String(pct));
+  }, [settings.data?.default_tax_pct]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -93,9 +132,11 @@ function PosPage() {
         (!q ||
           p.name_en.toLowerCase().includes(q) ||
           p.name_bn.includes(query.trim()) ||
-          p.sku.toLowerCase().includes(q)),
+          p.sku.toLowerCase().includes(q) ||
+          (p.barcode ?? "").toLowerCase().includes(q)),
     );
   }, [products.data, query, cat]);
+
 
   const subtotal = cart.reduce((s, l) => s + Number(l.product.price) * l.qty, 0);
   const discountVal = Math.min(Number(discount) || 0, subtotal);
@@ -118,6 +159,22 @@ function PosPage() {
     });
   }
 
+  function onScan(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== "Enter") return;
+    const code = scan.trim().toLowerCase();
+    if (!code) return;
+    const p = (products.data ?? []).find(
+      (x) => (x.barcode ?? "").toLowerCase() === code || x.sku.toLowerCase() === code,
+    );
+    if (!p) {
+      toast.error(t("noData"));
+    } else {
+      add(p);
+    }
+    setScan("");
+    scanRef.current?.focus();
+  }
+
   function setQty(id: string, qty: number) {
     setCart((prev) =>
       prev
@@ -129,15 +186,16 @@ function PosPage() {
   function resetSale() {
     setCart([]);
     setDiscount("0");
-    setTaxPct("0");
+    setTaxPct(String(settings.data?.default_tax_pct ?? 0));
     setPaid("");
     setCustomer("");
     setPhone("");
+    setContactId("");
     setMethod("cash");
   }
 
   const checkout = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (status: "final" | "draft" | "quotation" = "final") => {
       if (cart.length === 0) throw new Error(t("emptyCart"));
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
@@ -147,45 +205,58 @@ function PosPage() {
         .from("sales")
         .insert({
           cashier_id: uid,
+          contact_id: contactId || null,
+          status,
           customer_name: customer.trim().slice(0, 80) || null,
           customer_phone: phone.trim().slice(0, 20) || null,
           subtotal,
           discount: discountVal,
           tax: taxVal,
           total,
-          paid: paidVal,
+          paid: status === "final" ? paidVal : 0,
           payment_method: method,
         })
         .select("id,invoice_no,created_at")
         .single();
       if (error) throw error;
 
-      const items = cart.map((l) => ({
-        sale_id: sale.id,
-        product_id: l.product.id,
-        name_snapshot: lang === "bn" ? l.product.name_bn : l.product.name_en,
-        unit_price: Number(l.product.price),
-        quantity: l.qty,
-        line_total: Number(l.product.price) * l.qty,
-      }));
-      const { error: itemsError } = await supabase.from("sale_items").insert(items);
-      if (itemsError) throw itemsError;
+      if (status === "final") {
+        const items = cart.map((l) => ({
+          sale_id: sale.id,
+          product_id: l.product.id,
+          name_snapshot: lang === "bn" ? l.product.name_bn : l.product.name_en,
+          unit_price: Number(l.product.price),
+          quantity: l.qty,
+          line_total: Number(l.product.price) * l.qty,
+        }));
+        const { error: itemsError } = await supabase.from("sale_items").insert(items);
+        if (itemsError) throw itemsError;
+      }
 
+      const s = settings.data;
       return {
-        invoice: Number(sale.invoice_no),
-        lines: cart,
-        subtotal,
-        discount: discountVal,
-        tax: taxVal,
-        total,
-        paid: paidVal,
-        method,
-        customer,
-        at: sale.created_at as string,
-      } satisfies Receipt;
+        status,
+        receipt: {
+          invoice: Number(sale.invoice_no),
+          lines: cart,
+          subtotal,
+          discount: discountVal,
+          tax: taxVal,
+          total,
+          paid: paidVal,
+          method,
+          customer,
+          at: sale.created_at as string,
+          shopName: s?.shop_name ?? t("appName"),
+          shopAddress: s?.address ?? "",
+          shopPhone: s?.phone ?? "",
+          footer: s?.receipt_footer ?? t("thanks"),
+        } satisfies Receipt,
+      };
     },
-    onSuccess: (r) => {
-      setReceipt(r);
+    onSuccess: ({ status, receipt: r }) => {
+      if (status === "final") setReceipt(r);
+      else toast.success(status === "draft" ? t("holdSale") : t("saveQuotation"));
       resetSale();
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["sales"] });
@@ -194,10 +265,23 @@ function PosPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
+
   return (
     <div className="grid gap-4 p-4 lg:grid-cols-[1fr_380px]">
       {/* Catalog */}
       <section className="min-w-0">
+        <div className="relative">
+          <Barcode className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            ref={scanRef}
+            value={scan}
+            onChange={(e) => setScan(e.target.value)}
+            onKeyDown={onScan}
+            placeholder={t("scanBarcode")}
+            maxLength={60}
+            className="mb-3 h-11 pl-9"
+          />
+        </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -208,6 +292,7 @@ function PosPage() {
             className="h-11 pl-9"
           />
         </div>
+
 
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
@@ -313,7 +398,35 @@ function PosPage() {
           ))}
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-4 space-y-1">
+          <Label className="text-xs">{t("selectCustomer")}</Label>
+          <Select
+            value={contactId}
+            onValueChange={(v) => {
+              setContactId(v);
+              const c = (customers.data ?? []).find((x) => x.id === v);
+              if (c) {
+                setCustomer(c.name);
+                setPhone(c.phone ?? "");
+              }
+            }}
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder={t("walkIn")} />
+            </SelectTrigger>
+            <SelectContent>
+              {(customers.data ?? [])
+                .filter((c) => c.type === "customer")
+                .map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="space-y-1">
             <Label className="text-xs">{t("discount")}</Label>
             <Input inputMode="decimal" value={discount} onChange={(e) => setDiscount(e.target.value)} className="h-9" />
@@ -331,6 +444,7 @@ function PosPage() {
             <Input value={phone} maxLength={20} onChange={(e) => setPhone(e.target.value)} className="h-9" />
           </div>
         </div>
+
 
         <div className="mt-4 space-y-1.5 border-t border-border pt-3 text-sm">
           <Row label={t("subtotal")} value={money(subtotal, lang)} />
@@ -373,10 +487,30 @@ function PosPage() {
         <Button
           className="mt-4 h-12 text-base"
           disabled={cart.length === 0 || checkout.isPending}
-          onClick={() => checkout.mutate()}
+          onClick={() => checkout.mutate("final")}
         >
           {t("checkout")} · {money(total, lang)}
         </Button>
+
+        <div className="mt-2 flex gap-2">
+          <Button
+            variant="outline"
+            className="flex-1"
+            disabled={cart.length === 0 || checkout.isPending}
+            onClick={() => checkout.mutate("draft")}
+          >
+            <PauseCircle className="mr-1 size-4" /> {t("holdSale")}
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1"
+            disabled={cart.length === 0 || checkout.isPending}
+            onClick={() => checkout.mutate("quotation")}
+          >
+            {t("saveQuotation")}
+          </Button>
+        </div>
+
       </aside>
 
       <ReceiptDialog receipt={receipt} onClose={() => setReceipt(null)} />
@@ -403,10 +537,13 @@ function ReceiptDialog({ receipt, onClose }: { receipt: Receipt | null; onClose:
           <DialogTitle>{t("receipt")}</DialogTitle>
         </DialogHeader>
         <div id="receipt-print" className="rounded-lg border border-dashed border-border p-4 text-sm">
-          <p className="text-center font-display text-lg font-bold">{t("appName")}</p>
+          <p className="text-center font-display text-lg font-bold">{receipt.shopName || t("appName")}</p>
+          {receipt.shopAddress && <p className="text-center text-xs">{receipt.shopAddress}</p>}
+          {receipt.shopPhone && <p className="text-center text-xs">{receipt.shopPhone}</p>}
           <p className="text-center text-xs text-muted-foreground">
             {t("invoice")} #{num(receipt.invoice, lang)} · {new Date(receipt.at).toLocaleString()}
           </p>
+
           {receipt.customer && <p className="mt-1 text-center text-xs">{receipt.customer}</p>}
           <div className="my-3 space-y-1 border-y border-dashed border-border py-3">
             {receipt.lines.map((l) => (
@@ -427,7 +564,7 @@ function ReceiptDialog({ receipt, onClose }: { receipt: Receipt | null; onClose:
           </div>
           <Row label={t("paid")} value={money(receipt.paid, lang)} />
           <Row label={t("change")} value={money(Math.max(receipt.paid - receipt.total, 0), lang)} />
-          <p className="mt-3 text-center text-xs text-muted-foreground">{t("thanks")}</p>
+          <p className="mt-3 text-center text-xs text-muted-foreground">{receipt.footer || t("thanks")}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="flex-1" onClick={() => window.print()}>
