@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
+import { Route as AuthenticatedStockTransfersRouteImport } from './routes/_authenticated/stock-transfers'
 import { Route as AuthenticatedStockAdjustmentsRouteImport } from './routes/_authenticated/stock-adjustments'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
@@ -32,6 +33,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
 import { Route as AuthenticatedChartOfAccountsRouteImport } from './routes/_authenticated/chart-of-accounts'
 import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
+import { Route as AuthenticatedBranchesRouteImport } from './routes/_authenticated/branches'
 import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authenticated/audit-logs'
 import { Route as AuthenticatedApiHubRouteImport } from './routes/_authenticated/api-hub'
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
@@ -60,6 +62,12 @@ const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStockTransfersRoute =
+  AuthenticatedStockTransfersRouteImport.update({
+    id: '/stock-transfers',
+    path: '/stock-transfers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedStockAdjustmentsRoute =
   AuthenticatedStockAdjustmentsRouteImport.update({
     id: '/stock-adjustments',
@@ -153,6 +161,11 @@ const AuthenticatedCatalogRoute = AuthenticatedCatalogRouteImport.update({
   path: '/catalog',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBranchesRoute = AuthenticatedBranchesRouteImport.update({
+  id: '/branches',
+  path: '/branches',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAuditLogsRoute = AuthenticatedAuditLogsRouteImport.update({
   id: '/audit-logs',
   path: '/audit-logs',
@@ -176,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/accounts': typeof AuthenticatedAccountsRoute
   '/api-hub': typeof AuthenticatedApiHubRoute
   '/audit-logs': typeof AuthenticatedAuditLogsRoute
+  '/branches': typeof AuthenticatedBranchesRoute
   '/catalog': typeof AuthenticatedCatalogRoute
   '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/contacts': typeof AuthenticatedContactsRoute
@@ -194,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/sales': typeof AuthenticatedSalesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
+  '/stock-transfers': typeof AuthenticatedStockTransfersRoute
   '/users': typeof AuthenticatedUsersRoute
 }
 export interface FileRoutesByTo {
@@ -203,6 +218,7 @@ export interface FileRoutesByTo {
   '/accounts': typeof AuthenticatedAccountsRoute
   '/api-hub': typeof AuthenticatedApiHubRoute
   '/audit-logs': typeof AuthenticatedAuditLogsRoute
+  '/branches': typeof AuthenticatedBranchesRoute
   '/catalog': typeof AuthenticatedCatalogRoute
   '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/contacts': typeof AuthenticatedContactsRoute
@@ -221,6 +237,7 @@ export interface FileRoutesByTo {
   '/sales': typeof AuthenticatedSalesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
+  '/stock-transfers': typeof AuthenticatedStockTransfersRoute
   '/users': typeof AuthenticatedUsersRoute
 }
 export interface FileRoutesById {
@@ -232,6 +249,7 @@ export interface FileRoutesById {
   '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
   '/_authenticated/api-hub': typeof AuthenticatedApiHubRoute
   '/_authenticated/audit-logs': typeof AuthenticatedAuditLogsRoute
+  '/_authenticated/branches': typeof AuthenticatedBranchesRoute
   '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
   '/_authenticated/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
@@ -250,6 +268,7 @@ export interface FileRoutesById {
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/stock-adjustments': typeof AuthenticatedStockAdjustmentsRoute
+  '/_authenticated/stock-transfers': typeof AuthenticatedStockTransfersRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
 }
 export interface FileRouteTypes {
@@ -261,6 +280,7 @@ export interface FileRouteTypes {
     | '/accounts'
     | '/api-hub'
     | '/audit-logs'
+    | '/branches'
     | '/catalog'
     | '/chart-of-accounts'
     | '/contacts'
@@ -279,6 +299,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/settings'
     | '/stock-adjustments'
+    | '/stock-transfers'
     | '/users'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -288,6 +309,7 @@ export interface FileRouteTypes {
     | '/accounts'
     | '/api-hub'
     | '/audit-logs'
+    | '/branches'
     | '/catalog'
     | '/chart-of-accounts'
     | '/contacts'
@@ -306,6 +328,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/settings'
     | '/stock-adjustments'
+    | '/stock-transfers'
     | '/users'
   id:
     | '__root__'
@@ -316,6 +339,7 @@ export interface FileRouteTypes {
     | '/_authenticated/accounts'
     | '/_authenticated/api-hub'
     | '/_authenticated/audit-logs'
+    | '/_authenticated/branches'
     | '/_authenticated/catalog'
     | '/_authenticated/chart-of-accounts'
     | '/_authenticated/contacts'
@@ -334,6 +358,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sales'
     | '/_authenticated/settings'
     | '/_authenticated/stock-adjustments'
+    | '/_authenticated/stock-transfers'
     | '/_authenticated/users'
   fileRoutesById: FileRoutesById
 }
@@ -379,6 +404,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/users'
       preLoaderRoute: typeof AuthenticatedUsersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/stock-transfers': {
+      id: '/_authenticated/stock-transfers'
+      path: '/stock-transfers'
+      fullPath: '/stock-transfers'
+      preLoaderRoute: typeof AuthenticatedStockTransfersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/stock-adjustments': {
@@ -507,6 +539,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCatalogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/branches': {
+      id: '/_authenticated/branches'
+      path: '/branches'
+      fullPath: '/branches'
+      preLoaderRoute: typeof AuthenticatedBranchesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/audit-logs': {
       id: '/_authenticated/audit-logs'
       path: '/audit-logs'
@@ -535,6 +574,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRoute
   AuthenticatedApiHubRoute: typeof AuthenticatedApiHubRoute
   AuthenticatedAuditLogsRoute: typeof AuthenticatedAuditLogsRoute
+  AuthenticatedBranchesRoute: typeof AuthenticatedBranchesRoute
   AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
   AuthenticatedChartOfAccountsRoute: typeof AuthenticatedChartOfAccountsRoute
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
@@ -553,6 +593,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStockAdjustmentsRoute: typeof AuthenticatedStockAdjustmentsRoute
+  AuthenticatedStockTransfersRoute: typeof AuthenticatedStockTransfersRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
 }
 
@@ -560,6 +601,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountsRoute: AuthenticatedAccountsRoute,
   AuthenticatedApiHubRoute: AuthenticatedApiHubRoute,
   AuthenticatedAuditLogsRoute: AuthenticatedAuditLogsRoute,
+  AuthenticatedBranchesRoute: AuthenticatedBranchesRoute,
   AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
   AuthenticatedChartOfAccountsRoute: AuthenticatedChartOfAccountsRoute,
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
@@ -578,6 +620,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStockAdjustmentsRoute: AuthenticatedStockAdjustmentsRoute,
+  AuthenticatedStockTransfersRoute: AuthenticatedStockTransfersRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
 }
 

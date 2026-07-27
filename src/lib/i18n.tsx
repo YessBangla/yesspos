@@ -377,7 +377,35 @@ const dict = {
   particulars: { bn: "বিবরণ", en: "Particulars" },
   balanceCol: { bn: "ব্যালান্স", en: "Balance" },
   closingBalance: { bn: "সমাপনী ব্যালান্স", en: "Closing balance" },
+  grpBranch: { bn: "ব্রাঞ্চ", en: "Branch" },
+  branches: { bn: "ব্রাঞ্চ সমূহ", en: "Branches" },
+  
+  branchesHint: {
+    bn: "একাধিক শাখা/আউটলেট পরিচালনা করুন — প্রতিটির আলাদা স্টক ও লেনদেন",
+    en: "Manage multiple outlets — each with its own stock and transactions",
+  },
+  addBranch: { bn: "নতুন ব্রাঞ্চ", en: "New branch" },
+  branchName: { bn: "ব্রাঞ্চের নাম", en: "Branch name" },
+  branchCode: { bn: "কোড", en: "Code" },
+  allBranches: { bn: "সব ব্রাঞ্চ", en: "All branches" },
+  currentBranch: { bn: "বর্তমান ব্রাঞ্চ", en: "Current branch" },
+  noBranch: { bn: "ব্রাঞ্চ নির্ধারিত নয়", en: "No branch assigned" },
+  branchActive: { bn: "সক্রিয়", en: "Active" },
+  branchStock: { bn: "ব্রাঞ্চ স্টক", en: "Branch stock" },
+  totalStock: { bn: "মোট স্টক", en: "Total stock" },
+  stockTransfer: { bn: "স্টক ট্রান্সফার", en: "Stock transfer" },
+  stockTransferHint: {
+    bn: "এক ব্রাঞ্চ থেকে অন্য ব্রাঞ্চে পণ্য স্থানান্তর করুন",
+    en: "Move products from one branch to another",
+  },
+  newTransfer: { bn: "নতুন ট্রান্সফার", en: "New transfer" },
+  fromBranch: { bn: "যে ব্রাঞ্চ থেকে", en: "From branch" },
+  toBranch: { bn: "যে ব্রাঞ্চে", en: "To branch" },
+  transferItems: { bn: "পণ্য তালিকা", en: "Items" },
+  sameBranchError: { bn: "দুই ব্রাঞ্চ আলাদা হতে হবে", en: "Branches must be different" },
+  noItems: { bn: "অন্তত একটি পণ্য যোগ করুন", en: "Add at least one product" },
 } as const;
+
 
 
 

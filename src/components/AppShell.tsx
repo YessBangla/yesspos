@@ -1,6 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowRightLeft,
   BarChart3,
   Barcode,
   BookOpenCheck,
@@ -82,8 +83,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         { to: "/catalog", feature: "catalog", label: t("catalog"), icon: Tags },
         { to: "/stock-adjustments", feature: "stock-adjustments", label: t("stockAdjust"), icon: SlidersHorizontal },
         { to: "/labels", feature: "labels", label: t("labels"), icon: Barcode },
+        { to: "/stock-transfers", feature: "stock-transfers", label: t("stockTransfer"), icon: ArrowRightLeft },
       ],
     },
+
     {
       id: "purchase",
       label: t("grpPurchase"),

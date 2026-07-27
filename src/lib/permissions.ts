@@ -24,7 +24,10 @@ export const FEATURES = [
   "day-book",
   "financials",
   "party-statement",
+  "branches",
+  "stock-transfers",
 ] as const;
+
 
 
 export type Feature = (typeof FEATURES)[number];
@@ -50,7 +53,9 @@ export const ROLE_FEATURES: Record<AppRole, readonly Feature[]> = {
     "day-book",
     "party-statement",
     "financials",
+    "stock-transfers",
   ],
+
   cashier: ["pos", "sales", "products", "contacts", "payments"],
   staff: ["pos", "products", "labels"],
 };
