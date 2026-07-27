@@ -3,7 +3,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
   Barcode,
+  BookOpenCheck,
   Boxes,
+  CalendarDays,
+  FileSpreadsheet,
+  Landmark,
+  ListTree,
+  Scale,
   ChevronDown,
   FileText,
   HandCoins,
@@ -91,6 +97,19 @@ export function AppShell({ children }: { children: ReactNode }) {
       items: [
         { to: "/payments", feature: "payments", label: t("paymentsLedger"), icon: HandCoins },
         { to: "/expenses", feature: "expenses", label: t("expenses"), icon: Wallet },
+      ],
+    },
+    {
+      id: "accounting",
+      label: t("grpAccounts"),
+      icon: Landmark,
+      items: [
+        { to: "/accounts", feature: "accounts", label: t("accounts"), icon: Landmark },
+        { to: "/chart-of-accounts", feature: "chart-of-accounts", label: t("chartOfAccounts"), icon: ListTree },
+        { to: "/journal", feature: "journal", label: t("journal"), icon: BookOpenCheck },
+        { to: "/day-book", feature: "day-book", label: t("dayBook"), icon: CalendarDays },
+        { to: "/financials", feature: "financials", label: t("financials"), icon: Scale },
+        { to: "/party-statement", feature: "party-statement", label: t("partyStatement"), icon: FileSpreadsheet },
       ],
     },
     {

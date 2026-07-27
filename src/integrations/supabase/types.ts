@@ -14,6 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_transactions: {
+        Row: {
+          account_id: string | null
+          amount: number
+          created_at: string
+          id: string
+          note: string | null
+          to_account_id: string | null
+          txn_date: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          to_account_id?: string | null
+          txn_date?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          to_account_id?: string | null
+          txn_date?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_transactions_to_account_id_fkey"
+            columns: ["to_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounts: {
+        Row: {
+          account_number: string | null
+          bank_name: string | null
+          branch: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          note: string | null
+          opening_balance: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          bank_name?: string | null
+          branch?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          note?: string | null
+          opening_balance?: number
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          bank_name?: string | null
+          branch?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          note?: string | null
+          opening_balance?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       api_settings: {
         Row: {
           api_key: string | null
@@ -312,6 +408,127 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      journal_entries: {
+        Row: {
+          created_at: string
+          entry_date: string
+          id: string
+          narration: string | null
+          reference: string | null
+          updated_at: string
+          user_id: string | null
+          voucher_no: number
+        }
+        Insert: {
+          created_at?: string
+          entry_date?: string
+          id?: string
+          narration?: string | null
+          reference?: string | null
+          updated_at?: string
+          user_id?: string | null
+          voucher_no?: number
+        }
+        Update: {
+          created_at?: string
+          entry_date?: string
+          id?: string
+          narration?: string | null
+          reference?: string | null
+          updated_at?: string
+          user_id?: string | null
+          voucher_no?: number
+        }
+        Relationships: []
+      }
+      journal_lines: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          credit: number
+          debit: number
+          entry_id: string
+          id: string
+          ledger_account_id: string | null
+          note: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          credit?: number
+          debit?: number
+          entry_id: string
+          id?: string
+          ledger_account_id?: string | null
+          note?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          credit?: number
+          debit?: number
+          entry_id?: string
+          id?: string
+          ledger_account_id?: string | null
+          note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_lines_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_lines_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_lines_ledger_account_id_fkey"
+            columns: ["ledger_account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ledger_accounts: {
+        Row: {
+          class: string
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name_bn: string
+          name_en: string
+          updated_at: string
+        }
+        Insert: {
+          class?: string
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name_bn: string
+          name_en: string
+          updated_at?: string
+        }
+        Update: {
+          class?: string
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name_bn?: string
+          name_en?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       payments: {
         Row: {

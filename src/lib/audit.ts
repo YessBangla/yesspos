@@ -16,7 +16,11 @@ export type AuditAction =
   | "stock_adjust"
   | "purchase"
   | "expense"
-  | "settings_update";
+  | "settings_update"
+  | "account_create"
+  | "account_txn"
+  | "journal_entry"
+  | "ledger_account";
 
 /** Fire-and-forget audit trail entry. Never blocks or breaks the calling flow. */
 export async function logAudit(

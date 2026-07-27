@@ -18,6 +18,12 @@ export const FEATURES = [
   "audit-logs",
   "settings",
   "api-hub",
+  "accounts",
+  "chart-of-accounts",
+  "journal",
+  "day-book",
+  "financials",
+  "party-statement",
 ] as const;
 
 
@@ -40,6 +46,10 @@ export const ROLE_FEATURES: Record<AppRole, readonly Feature[]> = {
     "catalog",
     "reports",
     "dashboard",
+    "accounts",
+    "day-book",
+    "party-statement",
+    "financials",
   ],
   cashier: ["pos", "sales", "products", "contacts", "payments"],
   staff: ["pos", "products", "labels"],

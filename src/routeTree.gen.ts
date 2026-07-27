@@ -22,13 +22,19 @@ import { Route as AuthenticatedPurchasesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
+import { Route as AuthenticatedPartyStatementRouteImport } from './routes/_authenticated/party-statement'
 import { Route as AuthenticatedLabelsRouteImport } from './routes/_authenticated/labels'
+import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
+import { Route as AuthenticatedFinancialsRouteImport } from './routes/_authenticated/financials'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
+import { Route as AuthenticatedDayBookRouteImport } from './routes/_authenticated/day-book'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
+import { Route as AuthenticatedChartOfAccountsRouteImport } from './routes/_authenticated/chart-of-accounts'
 import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
 import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authenticated/audit-logs'
 import { Route as AuthenticatedApiHubRouteImport } from './routes/_authenticated/api-hub'
+import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -95,14 +101,35 @@ const AuthenticatedPaymentsRoute = AuthenticatedPaymentsRouteImport.update({
   path: '/payments',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPartyStatementRoute =
+  AuthenticatedPartyStatementRouteImport.update({
+    id: '/party-statement',
+    path: '/party-statement',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLabelsRoute = AuthenticatedLabelsRouteImport.update({
   id: '/labels',
   path: '/labels',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFinancialsRoute = AuthenticatedFinancialsRouteImport.update({
+  id: '/financials',
+  path: '/financials',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
   id: '/expenses',
   path: '/expenses',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDayBookRoute = AuthenticatedDayBookRouteImport.update({
+  id: '/day-book',
+  path: '/day-book',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -115,6 +142,12 @@ const AuthenticatedContactsRoute = AuthenticatedContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedChartOfAccountsRoute =
+  AuthenticatedChartOfAccountsRouteImport.update({
+    id: '/chart-of-accounts',
+    path: '/chart-of-accounts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCatalogRoute = AuthenticatedCatalogRouteImport.update({
   id: '/catalog',
   path: '/catalog',
@@ -130,18 +163,29 @@ const AuthenticatedApiHubRoute = AuthenticatedApiHubRouteImport.update({
   path: '/api-hub',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/accounts': typeof AuthenticatedAccountsRoute
   '/api-hub': typeof AuthenticatedApiHubRoute
   '/audit-logs': typeof AuthenticatedAuditLogsRoute
   '/catalog': typeof AuthenticatedCatalogRoute
+  '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/day-book': typeof AuthenticatedDayBookRoute
   '/expenses': typeof AuthenticatedExpensesRoute
+  '/financials': typeof AuthenticatedFinancialsRoute
+  '/journal': typeof AuthenticatedJournalRoute
   '/labels': typeof AuthenticatedLabelsRoute
+  '/party-statement': typeof AuthenticatedPartyStatementRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/pos': typeof AuthenticatedPosRoute
   '/products': typeof AuthenticatedProductsRoute
@@ -156,13 +200,19 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/accounts': typeof AuthenticatedAccountsRoute
   '/api-hub': typeof AuthenticatedApiHubRoute
   '/audit-logs': typeof AuthenticatedAuditLogsRoute
   '/catalog': typeof AuthenticatedCatalogRoute
+  '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/day-book': typeof AuthenticatedDayBookRoute
   '/expenses': typeof AuthenticatedExpensesRoute
+  '/financials': typeof AuthenticatedFinancialsRoute
+  '/journal': typeof AuthenticatedJournalRoute
   '/labels': typeof AuthenticatedLabelsRoute
+  '/party-statement': typeof AuthenticatedPartyStatementRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/pos': typeof AuthenticatedPosRoute
   '/products': typeof AuthenticatedProductsRoute
@@ -179,13 +229,19 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
   '/_authenticated/api-hub': typeof AuthenticatedApiHubRoute
   '/_authenticated/audit-logs': typeof AuthenticatedAuditLogsRoute
   '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
+  '/_authenticated/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/day-book': typeof AuthenticatedDayBookRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
+  '/_authenticated/financials': typeof AuthenticatedFinancialsRoute
+  '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/labels': typeof AuthenticatedLabelsRoute
+  '/_authenticated/party-statement': typeof AuthenticatedPartyStatementRoute
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
   '/_authenticated/products': typeof AuthenticatedProductsRoute
@@ -202,13 +258,19 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/accounts'
     | '/api-hub'
     | '/audit-logs'
     | '/catalog'
+    | '/chart-of-accounts'
     | '/contacts'
     | '/dashboard'
+    | '/day-book'
     | '/expenses'
+    | '/financials'
+    | '/journal'
     | '/labels'
+    | '/party-statement'
     | '/payments'
     | '/pos'
     | '/products'
@@ -223,13 +285,19 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/accounts'
     | '/api-hub'
     | '/audit-logs'
     | '/catalog'
+    | '/chart-of-accounts'
     | '/contacts'
     | '/dashboard'
+    | '/day-book'
     | '/expenses'
+    | '/financials'
+    | '/journal'
     | '/labels'
+    | '/party-statement'
     | '/payments'
     | '/pos'
     | '/products'
@@ -245,13 +313,19 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/sitemap.xml'
+    | '/_authenticated/accounts'
     | '/_authenticated/api-hub'
     | '/_authenticated/audit-logs'
     | '/_authenticated/catalog'
+    | '/_authenticated/chart-of-accounts'
     | '/_authenticated/contacts'
     | '/_authenticated/dashboard'
+    | '/_authenticated/day-book'
     | '/_authenticated/expenses'
+    | '/_authenticated/financials'
+    | '/_authenticated/journal'
     | '/_authenticated/labels'
+    | '/_authenticated/party-statement'
     | '/_authenticated/payments'
     | '/_authenticated/pos'
     | '/_authenticated/products'
@@ -363,6 +437,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPaymentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/party-statement': {
+      id: '/_authenticated/party-statement'
+      path: '/party-statement'
+      fullPath: '/party-statement'
+      preLoaderRoute: typeof AuthenticatedPartyStatementRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/labels': {
       id: '/_authenticated/labels'
       path: '/labels'
@@ -370,11 +451,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLabelsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/journal': {
+      id: '/_authenticated/journal'
+      path: '/journal'
+      fullPath: '/journal'
+      preLoaderRoute: typeof AuthenticatedJournalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/financials': {
+      id: '/_authenticated/financials'
+      path: '/financials'
+      fullPath: '/financials'
+      preLoaderRoute: typeof AuthenticatedFinancialsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/expenses': {
       id: '/_authenticated/expenses'
       path: '/expenses'
       fullPath: '/expenses'
       preLoaderRoute: typeof AuthenticatedExpensesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/day-book': {
+      id: '/_authenticated/day-book'
+      path: '/day-book'
+      fullPath: '/day-book'
+      preLoaderRoute: typeof AuthenticatedDayBookRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -389,6 +491,13 @@ declare module '@tanstack/react-router' {
       path: '/contacts'
       fullPath: '/contacts'
       preLoaderRoute: typeof AuthenticatedContactsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chart-of-accounts': {
+      id: '/_authenticated/chart-of-accounts'
+      path: '/chart-of-accounts'
+      fullPath: '/chart-of-accounts'
+      preLoaderRoute: typeof AuthenticatedChartOfAccountsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/catalog': {
@@ -412,17 +521,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApiHubRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/accounts': {
+      id: '/_authenticated/accounts'
+      path: '/accounts'
+      fullPath: '/accounts'
+      preLoaderRoute: typeof AuthenticatedAccountsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRoute
   AuthenticatedApiHubRoute: typeof AuthenticatedApiHubRoute
   AuthenticatedAuditLogsRoute: typeof AuthenticatedAuditLogsRoute
   AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
+  AuthenticatedChartOfAccountsRoute: typeof AuthenticatedChartOfAccountsRoute
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDayBookRoute: typeof AuthenticatedDayBookRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
+  AuthenticatedFinancialsRoute: typeof AuthenticatedFinancialsRoute
+  AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedLabelsRoute: typeof AuthenticatedLabelsRoute
+  AuthenticatedPartyStatementRoute: typeof AuthenticatedPartyStatementRoute
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
   AuthenticatedProductsRoute: typeof AuthenticatedProductsRoute
@@ -435,13 +557,19 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountsRoute: AuthenticatedAccountsRoute,
   AuthenticatedApiHubRoute: AuthenticatedApiHubRoute,
   AuthenticatedAuditLogsRoute: AuthenticatedAuditLogsRoute,
   AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
+  AuthenticatedChartOfAccountsRoute: AuthenticatedChartOfAccountsRoute,
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDayBookRoute: AuthenticatedDayBookRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
+  AuthenticatedFinancialsRoute: AuthenticatedFinancialsRoute,
+  AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedLabelsRoute: AuthenticatedLabelsRoute,
+  AuthenticatedPartyStatementRoute: AuthenticatedPartyStatementRoute,
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
   AuthenticatedProductsRoute: AuthenticatedProductsRoute,
