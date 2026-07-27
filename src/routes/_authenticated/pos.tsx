@@ -405,6 +405,7 @@ function PosPage() {
   // ---- Keyboard shortcuts ----
   const checkoutMutate = checkout.mutate;
   const canCheckout = cart.length > 0 && !checkout.isPending;
+  const canPay = canCheckout && !!method;
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const key = e.key;
