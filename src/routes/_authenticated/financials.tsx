@@ -109,7 +109,7 @@ function FinancialsPage() {
         <div>
           <h1 className="font-display text-2xl font-bold">{t("financials")}</h1>
           <p className="text-sm text-muted-foreground">
-            {t("trialBalance")} · {t("profitLossReport")} · {t("balanceSheet")}
+            {t("trialBalance")} · {t("profitLoss")} · {t("balanceSheet")}
           </p>
         </div>
         <div className="flex flex-wrap items-end gap-2">
@@ -131,7 +131,7 @@ function FinancialsPage() {
         <Tabs defaultValue="trial" className="mt-4">
           <TabsList>
             <TabsTrigger value="trial">{t("trialBalance")}</TabsTrigger>
-            <TabsTrigger value="pl">{t("profitLossReport")}</TabsTrigger>
+            <TabsTrigger value="pl">{t("profitLoss")}</TabsTrigger>
             <TabsTrigger value="bs">{t("balanceSheet")}</TabsTrigger>
           </TabsList>
 
