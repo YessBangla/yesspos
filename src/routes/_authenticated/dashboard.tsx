@@ -142,6 +142,9 @@ function DashboardPage() {
   const expenses = d?.expenses ?? [];
   const contacts = d?.contacts ?? [];
   const payments = d?.payments ?? [];
+  const purchaseReturns = d?.purchaseReturns ?? [];
+  const quotations = sales.filter((s) => s.status === "quotation");
+
 
   const finalSales = sales.filter((s) => s.status === "final");
   const saleTotal = finalSales.reduce((s, r) => s + Number(r.total), 0);
