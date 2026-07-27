@@ -134,7 +134,30 @@ const dict = {
   to: { bn: "শেষ", en: "To" },
   view: { bn: "দেখুন", en: "View" },
   balanceDue: { bn: "বাকি", en: "Balance due" },
+  usersRoles: { bn: "ইউজার ও রোল", en: "Users & roles" },
+  usersRolesHint: {
+    bn: "স্টাফ অ্যাকাউন্ট তৈরি করুন এবং রোল নির্ধারণ করুন",
+    en: "Create staff accounts and assign their roles",
+  },
+  addUser: { bn: "নতুন ইউজার", en: "Add user" },
+  searchUser: { bn: "ইউজার খুঁজুন", en: "Search user" },
+  username: { bn: "ইউজারনেম", en: "Username" },
+  usernameOrEmail: { bn: "ইউজারনেম বা ইমেইল", en: "Username or email" },
+  role: { bn: "রোল", en: "Role" },
+  actions: { bn: "অ্যাকশন", en: "Actions" },
+  resetPassword: { bn: "পাসওয়ার্ড পরিবর্তন", en: "Reset password" },
+  adminOnly: { bn: "শুধু অ্যাডমিন এই পাতা দেখতে পারবেন", en: "Only admins can view this page" },
+  userCreated: { bn: "ইউজার তৈরি হয়েছে", en: "User created" },
+  userDeleted: { bn: "ইউজার মুছে ফেলা হয়েছে", en: "User deleted" },
+  roleUpdated: { bn: "রোল হালনাগাদ হয়েছে", en: "Role updated" },
+  passwordUpdated: { bn: "পাসওয়ার্ড হালনাগাদ হয়েছে", en: "Password updated" },
+  roleSuperAdmin: { bn: "সুপার অ্যাডমিন", en: "Super Admin" },
+  roleAdmin: { bn: "অ্যাডমিন", en: "Admin" },
+  roleManager: { bn: "ম্যানেজার", en: "Manager" },
+  roleCashier: { bn: "ক্যাশিয়ার", en: "Cashier" },
+  roleStaff: { bn: "স্টাফ", en: "Staff" },
 } as const;
+
 
 
 export type TKey = keyof typeof dict;
