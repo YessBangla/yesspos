@@ -271,6 +271,18 @@ function PosPage() {
       {/* Catalog */}
       <section className="min-w-0">
         <div className="relative">
+          <Barcode className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            ref={scanRef}
+            value={scan}
+            onChange={(e) => setScan(e.target.value)}
+            onKeyDown={onScan}
+            placeholder={t("scanBarcode")}
+            maxLength={60}
+            className="mb-3 h-11 pl-9"
+          />
+        </div>
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
@@ -280,6 +292,7 @@ function PosPage() {
             className="h-11 pl-9"
           />
         </div>
+
 
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
