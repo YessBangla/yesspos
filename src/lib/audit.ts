@@ -23,7 +23,8 @@ export type AuditAction =
   | "ledger_account"
   | "branch_create"
   | "branch_update"
-  | "stock_transfer";
+  | "stock_transfer"
+  | "contact_create";
 
 /** Fire-and-forget audit trail entry. Never blocks or breaks the calling flow. */
 export async function logAudit(

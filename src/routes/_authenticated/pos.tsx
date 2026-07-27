@@ -43,6 +43,7 @@ import { money, num, useI18n, type TKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { logAudit } from "@/lib/audit";
 import { getPrinterSize, printHtml, setPrinterSize, type PrinterSize } from "@/lib/print";
+import { QuickAddCustomer, QuickAddProduct } from "@/components/QuickAddDialogs";
 
 export const Route = createFileRoute("/_authenticated/pos")({
   head: () => ({
@@ -126,7 +127,7 @@ function PosPage() {
   const [coupon, setCoupon] = useState<Coupon | null>(null);
   const [taxPct, setTaxPct] = useState("0");
   const [paid, setPaid] = useState("");
-  const [method, setMethod] = useState("cash");
+  const [method, setMethod] = useState("");
   const [customer, setCustomer] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -299,7 +300,7 @@ function PosPage() {
     setPhone("");
     setEmail("");
     setContactId("");
-    setMethod("cash");
+    setMethod("");
   }, [settings.data?.default_tax_pct]);
 
   const applyCoupon = useMutation({
@@ -405,6 +406,7 @@ function PosPage() {
   // ---- Keyboard shortcuts ----
   const checkoutMutate = checkout.mutate;
   const canCheckout = cart.length > 0 && !checkout.isPending;
+  const canPay = canCheckout && !!method;
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const key = e.key;
@@ -432,7 +434,8 @@ function PosPage() {
         });
       } else if (key === "F9" || (key === "Enter" && (e.ctrlKey || e.metaKey))) {
         e.preventDefault();
-        if (canCheckout) checkoutMutate("final");
+        if (canPay) checkoutMutate("final");
+        else if (canCheckout) toast.error(t("selectPaymentFirst"));
       } else if (key === "Escape" && !isTyping) {
         e.preventDefault();
         resetSale();
@@ -440,7 +443,7 @@ function PosPage() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [canCheckout, checkoutMutate, resetSale, t]);
+  }, [canCheckout, canPay, checkoutMutate, resetSale, t]);
 
   const cashierName = me.data?.username ?? "";
   const initials = (cashierName || "?").slice(0, 2).toUpperCase();
@@ -512,6 +515,7 @@ function PosPage() {
                   className="h-12 w-full rounded-xl bg-primary/5 pl-10 text-base"
                 />
               </div>
+              <QuickAddProduct />
               <ShortcutHelp />
             </div>
           </div>
@@ -623,31 +627,42 @@ function PosPage() {
           </div>
 
           <div className="space-y-2 border-b border-border p-3 sm:p-4">
-            <Select
-              value={contactId}
-              onValueChange={(v) => {
-                setContactId(v);
-                const c = (customers.data ?? []).find((x) => x.id === v);
-                if (c) {
+            <div className="flex items-center gap-2">
+              <Select
+                value={contactId}
+                onValueChange={(v) => {
+                  setContactId(v);
+                  const c = (customers.data ?? []).find((x) => x.id === v);
+                  if (c) {
+                    setCustomer(c.name);
+                    setPhone(c.phone ?? "");
+                    setEmail(c.email ?? "");
+                  }
+                }}
+              >
+                <SelectTrigger className="h-11 flex-1 rounded-xl bg-muted/50">
+                  <SelectValue placeholder={t("walkIn")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {(customers.data ?? [])
+                    .filter((c) => c.type === "customer")
+                    .map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <QuickAddCustomer
+                onCreated={(c) => {
+                  setContactId(c.id);
                   setCustomer(c.name);
                   setPhone(c.phone ?? "");
                   setEmail(c.email ?? "");
-                }
-              }}
-            >
-              <SelectTrigger className="h-11 rounded-xl bg-muted/50">
-                <SelectValue placeholder={t("walkIn")} />
-              </SelectTrigger>
-              <SelectContent>
-                {(customers.data ?? [])
-                  .filter((c) => c.type === "customer")
-                  .map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+                }}
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-2">
               <Input
                 value={customer}
@@ -863,15 +878,40 @@ function PosPage() {
               </div>
             </div>
 
+            {method === "cash" && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 rounded-lg text-xs"
+                  onClick={() => setPaid(total.toFixed(2))}
+                >
+                  {t("exactAmount")}
+                </Button>
+                {[100, 200, 500, 1000, 2000].map((v) => (
+                  <Button
+                    key={v}
+                    size="sm"
+                    variant="outline"
+                    className="h-9 rounded-lg text-xs"
+                    onClick={() => setPaid(String((Number(paid) || 0) + v))}
+                  >
+                    +{num(v, lang)}
+                  </Button>
+                ))}
+              </div>
+            )}
+
             <div className="mt-3 flex items-end gap-4">
               <div className="flex-1 space-y-1">
                 <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {t("paid")}
+                  {method === "cash" ? t("cashReceived") : t("paid")}
                 </Label>
                 <Input
                   ref={paidRef}
                   inputMode="decimal"
                   value={paid}
+                  disabled={!method}
                   placeholder={total.toFixed(2)}
                   onChange={(e) => setPaid(e.target.value)}
                   className="h-12 rounded-xl bg-success/10 text-lg font-bold"
@@ -879,20 +919,32 @@ function PosPage() {
               </div>
               <div className="flex-1 text-right">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {changeVal >= 0 ? t("change") : t("due")}
+                  {changeVal >= 0 ? (method === "cash" ? t("changeReturn") : t("change")) : t("due")}
                 </p>
-                <p className="font-display text-xl font-bold">{money(Math.abs(changeVal), lang)}</p>
+                <p
+                  className={cn(
+                    "font-display text-xl font-bold",
+                    changeVal < 0 ? "text-destructive" : "text-success",
+                  )}
+                >
+                  {money(Math.abs(changeVal), lang)}
+                </p>
               </div>
             </div>
 
             <Button
               variant="accent"
               className="mt-3 h-16 w-full rounded-2xl font-display text-lg font-black"
-              disabled={!canCheckout}
+              disabled={!canPay}
               onClick={() => checkout.mutate("final")}
             >
               {t("checkout")} · {money(total, lang)}
             </Button>
+            {cart.length > 0 && !method && (
+              <p className="mt-1 text-center text-xs font-semibold text-destructive">
+                {t("selectPaymentFirst")}
+              </p>
+            )}
 
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Button
@@ -972,6 +1024,7 @@ function ShortcutHelp() {
 function ReceiptDialog({ receipt, onClose }: { receipt: Receipt | null; onClose: () => void }) {
   const { t, lang } = useI18n();
   const [size, setSize] = useState<PrinterSize>("80mm");
+  const [confirmPrint, setConfirmPrint] = useState(false);
 
   useEffect(() => {
     setSize(getPrinterSize());
@@ -1138,15 +1191,60 @@ function ReceiptDialog({ receipt, onClose }: { receipt: Receipt | null; onClose:
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" className="h-12 flex-1" onClick={() => printHtml(buildPrintHtml(), size)}>
+          <Button
+            variant="outline"
+            className="h-12 flex-1"
+            disabled={!receipt.method}
+            title={receipt.method ? undefined : t("selectPaymentFirst")}
+            onClick={() => setConfirmPrint(true)}
+          >
             <Printer className="mr-1 size-4" /> {t("print")}
           </Button>
           <Button className="h-12 flex-1" onClick={onClose}>
             {t("newSale")}
           </Button>
         </div>
+        {!receipt.method && (
+          <p className="text-center text-xs font-semibold text-destructive">{t("selectPaymentFirst")}</p>
+        )}
+
+        <Dialog open={confirmPrint} onOpenChange={setConfirmPrint}>
+          <DialogContent className="max-w-xs">
+            <DialogHeader>
+              <DialogTitle>{t("confirmReceiveTitle")}</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">{t("confirmReceiveHint")}</p>
+            <div className="space-y-1 rounded-xl border border-border bg-muted/40 p-3 text-sm">
+              <Row label={`${t("paymentMethod")}`} value={t(methodLabel)} />
+              <Row label={t("total")} value={money(receipt.total, lang)} />
+              <Row
+                label={receipt.method === "cash" ? t("cashReceived") : t("paid")}
+                value={money(receipt.paid, lang)}
+              />
+              <Row
+                label={receipt.paid >= receipt.total ? t("changeReturn") : t("due")}
+                value={money(Math.abs(receipt.paid - receipt.total), lang)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setConfirmPrint(false)}>
+                {t("notYet")}
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  setConfirmPrint(false);
+                  printHtml(buildPrintHtml(), size);
+                }}
+              >
+                {t("yesReceived")}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
+
   );
 }
 
