@@ -107,7 +107,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-end gap-2 border-b border-border bg-card px-4 py-2.5">
+        <header className="flex flex-wrap items-center justify-end gap-2 border-b border-border bg-card px-4 py-2.5">
+          <QuickActions />
           <LangToggle />
           <Button variant="ghost" size="sm" onClick={signOut} className="md:hidden">
             <LogOut className="size-4" />
