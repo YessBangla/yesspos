@@ -254,9 +254,10 @@ function PosPage() {
         } satisfies Receipt,
       };
     },
-    onSuccess: ({
-      void logAudit("sale", { entity: "sale" }); status, receipt: r }) => {
+    onSuccess: ({ status, receipt: r }) => {
+      void logAudit("sale", { entity: "sale", details: `${status} · ${r?.invoiceNo ?? ""}` });
       if (status === "final") setReceipt(r);
+
       else toast.success(status === "draft" ? t("holdSale") : t("saveQuotation"));
       resetSale();
       queryClient.invalidateQueries({ queryKey: ["products"] });
