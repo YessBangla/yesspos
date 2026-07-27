@@ -515,7 +515,7 @@ function PosPage() {
                   className="h-12 w-full rounded-xl bg-primary/5 pl-10 text-base"
                 />
               </div>
-              <QuickAddProduct />
+              <QuickAddProduct onCreated={(product) => add(product)} />
               <ShortcutHelp />
             </div>
           </div>
@@ -682,7 +682,7 @@ function PosPage() {
             </div>
           </div>
 
-          <div className="min-h-24 flex-1 space-y-2.5 p-3 max-lg:overflow-y-auto sm:p-4">
+          <div className="min-h-24 flex-none space-y-2.5 p-3 sm:p-4">
             {cart.length === 0 && (
               <div className="flex flex-col items-center gap-2 py-10 text-center">
                 <ShoppingCart className="size-8 text-muted-foreground/40" />

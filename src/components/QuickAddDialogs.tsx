@@ -18,8 +18,28 @@ import { useI18n } from "@/lib/i18n";
 import { useMyBranch } from "@/lib/use-branch";
 import { logAudit } from "@/lib/audit";
 
+type QuickCustomer = {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  type: string;
+};
+
+type QuickProduct = {
+  id: string;
+  name_en: string;
+  name_bn: string;
+  sku: string;
+  barcode: string | null;
+  price: number;
+  stock: number;
+  unit: string;
+  category_id: string | null;
+};
+
 /** [+] Quick-create a customer straight from the POS screen. */
-export function QuickAddCustomer({ onCreated }: { onCreated?: (c: { id: string; name: string; phone: string | null; email: string | null }) => void }) {
+export function QuickAddCustomer({ onCreated }: { onCreated?: (c: QuickCustomer) => void }) {
   const { t } = useI18n();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -38,13 +58,16 @@ export function QuickAddCustomer({ onCreated }: { onCreated?: (c: { id: string; 
           email: form.email.trim().slice(0, 120) || null,
           address: form.address.trim().slice(0, 200) || null,
         })
-        .select("id,name,phone,email")
+        .select("id,name,phone,email,type")
         .single();
       if (error) throw error;
-      return data;
+      return data as QuickCustomer;
     },
     onSuccess: (c) => {
       void logAudit("contact_create", { entity: "contact", entityId: c.id });
+      qc.setQueryData<QuickCustomer[]>(["contacts"], (old) =>
+        old ? [c, ...old.filter((item) => item.id !== c.id)] : [c],
+      );
       qc.invalidateQueries({ queryKey: ["contacts"] });
       onCreated?.(c);
       setForm({ name: "", phone: "", email: "", address: "" });
@@ -99,7 +122,7 @@ export function QuickAddCustomer({ onCreated }: { onCreated?: (c: { id: string; 
 }
 
 /** [+] Quick-create a product (with optional opening stock for this branch). */
-export function QuickAddProduct({ onCreated }: { onCreated?: (id: string) => void }) {
+export function QuickAddProduct({ onCreated }: { onCreated?: (product: QuickProduct) => void }) {
   const { t } = useI18n();
   const qc = useQueryClient();
   const myBranch = useMyBranch();
@@ -143,7 +166,7 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (id: string) => voi
           category_id: form.category_id || null,
           is_active: true,
         })
-        .select("id")
+        .select("id,name_en,name_bn,sku,barcode,price,stock,unit,category_id")
         .single();
       if (error) throw error;
 
@@ -161,13 +184,20 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (id: string) => voi
         });
         if (adjError) throw adjError;
       }
-      return data.id as string;
+      return {
+        ...(data as QuickProduct),
+        price: Number(data.price) || 0,
+        stock: qty > 0 ? qty : Number(data.stock) || 0,
+      };
     },
-    onSuccess: (id) => {
-      void logAudit("product_create", { entity: "product", entityId: id });
+    onSuccess: (product) => {
+      void logAudit("product_create", { entity: "product", entityId: product.id });
+      qc.setQueryData<QuickProduct[]>(["products"], (old) =>
+        old ? [product, ...old.filter((item) => item.id !== product.id)] : [product],
+      );
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["branch-stock"] });
-      onCreated?.(id);
+      onCreated?.(product);
       setForm({ name_en: "", name_bn: "", sku: "", barcode: "", price: "", cost: "", stock: "", unit: "pcs", category_id: "" });
       setOpen(false);
       toast.success(t("saved"));
