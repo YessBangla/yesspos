@@ -151,6 +151,8 @@ function DashboardPage() {
   const salePaid = finalSales.reduce((s, r) => s + Number(r.paid), 0);
   const saleDue = Math.max(saleTotal - salePaid, 0);
   const returnTotal = returns.reduce((s, r) => s + Number(r.total), 0);
+  const purchaseReturnTotal = purchaseReturns.reduce((s, r) => s + Number(r.total), 0);
+
   const purchaseTotal = purchases.reduce((s, r) => s + Number(r.total), 0);
   const purchasePaid = purchases.reduce((s, r) => s + Number(r.paid), 0);
   const purchaseDue = Math.max(purchaseTotal - purchasePaid, 0);
