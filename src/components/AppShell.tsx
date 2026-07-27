@@ -30,14 +30,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/pos", label: t("pos"), icon: ShoppingCart },
     { to: "/sales", label: t("sales"), icon: ReceiptText },
     { to: "/products", label: t("products"), icon: Boxes },
+    { to: "/stock-adjustments", label: t("stockAdjust"), icon: SlidersHorizontal },
+    { to: "/labels", label: t("labels"), icon: Barcode },
     { to: "/purchases", label: t("purchases"), icon: Truck },
     { to: "/contacts", label: t("contacts"), icon: Users },
+    { to: "/payments", label: t("paymentsLedger"), icon: HandCoins },
     { to: "/expenses", label: t("expenses"), icon: Wallet },
+    { to: "/catalog", label: t("catalog"), icon: Tags },
     { to: "/reports", label: t("reports"), icon: PieChart },
     { to: "/dashboard", label: t("dashboard"), icon: BarChart3 },
     { to: "/users", label: t("usersRoles"), icon: ShieldCheck },
     { to: "/settings", label: t("settings"), icon: SettingsIcon },
   ] as const;
+
 
 
   async function signOut() {
