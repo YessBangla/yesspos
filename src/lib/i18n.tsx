@@ -262,7 +262,6 @@ const dict = {
   totalCustomer: { bn: "মোট কাস্টমার", en: "Total customer" },
   totalSupplier: { bn: "মোট সাপ্লায়ার", en: "Total supplier" },
   saleReturn: { bn: "বিক্রয় ফেরত", en: "Sale return" },
-  totalReceived: { bn: "মোট আদায়", en: "Total received" },
   totalDueAmount: { bn: "মোট বাকি", en: "Total due" },
   totalPurchasePaid: { bn: "ক্রয়ে পরিশোধ", en: "Purchase paid" },
   totalPurchaseDue: { bn: "ক্রয়ে বাকি", en: "Purchase due" },
@@ -278,7 +277,6 @@ const dict = {
   netCash: { bn: "নিট নগদ", en: "Net cash" },
   recentTransactions: { bn: "সাম্প্রতিক লেনদেন", en: "Recent transactions" },
   bestSeller: { bn: "সেরা বিক্রেতা পণ্য", en: "Best seller" },
-  qty: { bn: "পরিমাণ", en: "Qty" },
 } as const;
 
 
