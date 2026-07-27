@@ -2,7 +2,12 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
+  Barcode,
   Boxes,
+  HandCoins,
+  SlidersHorizontal,
+  Tags,
+
   LogOut,
   PieChart,
   ReceiptText,
