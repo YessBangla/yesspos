@@ -32,6 +32,15 @@ export const Route = createFileRoute("/_authenticated/purchases")({
 
 type Product = { id: string; name_en: string; name_bn: string; sku: string; cost: number; unit: string };
 type Line = { product: Product; qty: number; cost: string };
+type PurchaseRow = {
+  id: string;
+  ref_no: number;
+  total: number;
+  paid: number;
+  purchased_on: string;
+  supplier_id: string | null;
+  note: string | null;
+};
 
 function PurchasesPage() {
   const { t, lang } = useI18n();
@@ -42,6 +51,10 @@ function PurchasesPage() {
   const [note, setNote] = useState("");
   const [pick, setPick] = useState("");
   const [lines, setLines] = useState<Line[]>([]);
+  const [returning, setReturning] = useState<PurchaseRow | null>(null);
+  const [retQtys, setRetQtys] = useState<Record<string, string>>({});
+  const [retReason, setRetReason] = useState("");
+
 
   const suppliers = useQuery({
     queryKey: ["contacts"],
