@@ -158,6 +158,45 @@ export type Database = {
         }
         Relationships: []
       }
+      coupons: {
+        Row: {
+          code: string
+          created_at: string
+          expires_on: string | null
+          id: string
+          is_active: boolean
+          max_discount: number | null
+          min_amount: number
+          type: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_on?: string | null
+          id?: string
+          is_active?: boolean
+          max_discount?: number | null
+          min_amount?: number
+          type?: string
+          updated_at?: string
+          value?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_on?: string | null
+          id?: string
+          is_active?: boolean
+          max_discount?: number | null
+          min_amount?: number
+          type?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
       expense_categories: {
         Row: {
           created_at: string
@@ -597,6 +636,7 @@ export type Database = {
         Row: {
           cashier_id: string | null
           contact_id: string | null
+          coupon_code: string | null
           created_at: string
           customer_name: string | null
           customer_phone: string | null
@@ -614,6 +654,7 @@ export type Database = {
         Insert: {
           cashier_id?: string | null
           contact_id?: string | null
+          coupon_code?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone?: string | null
@@ -631,6 +672,7 @@ export type Database = {
         Update: {
           cashier_id?: string | null
           contact_id?: string | null
+          coupon_code?: string | null
           created_at?: string
           customer_name?: string | null
           customer_phone?: string | null
