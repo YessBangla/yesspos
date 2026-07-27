@@ -87,6 +87,7 @@ function StockAdjustPage() {
       queryClient.invalidateQueries({ queryKey: ["stock-adjustments"] });
       queryClient.invalidateQueries({ queryKey: ["products-min"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["branch-stock"] });
       toast.success(t("save"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),

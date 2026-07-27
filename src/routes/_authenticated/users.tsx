@@ -18,6 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { downloadCsv, logAudit } from "@/lib/audit";
+import { useBranches } from "@/lib/use-branch";
 import { APP_ROLES, createAppUser, deleteAppUser, setUserPassword, type AppRole } from "@/lib/users.functions";
 
 export const Route = createFileRoute("/_authenticated/users")({
@@ -42,7 +43,7 @@ const roleKey: Record<AppRole, "roleSuperAdmin" | "roleAdmin" | "roleManager" | 
   staff: "roleStaff",
 };
 
-const emptyForm = { username: "", password: "", fullName: "", role: "cashier" as AppRole };
+const emptyForm = { username: "", password: "", fullName: "", role: "cashier" as AppRole, branchId: "none" };
 
 function UsersPage() {
   const { t } = useI18n();
@@ -53,6 +54,7 @@ function UsersPage() {
   const [pwFor, setPwFor] = useState<string | null>(null);
   const [newPw, setNewPw] = useState("");
 
+  const branches = useBranches();
   const createFn = useServerFn(createAppUser);
   const passwordFn = useServerFn(setUserPassword);
   const deleteFn = useServerFn(deleteAppUser);
@@ -79,11 +81,34 @@ function UsersPage() {
   const profiles = useQuery({
     queryKey: ["profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id, full_name, username, created_at");
+      const { data, error } = await supabase.from("profiles").select("id, full_name, username, created_at, branch_id");
       if (error) throw error;
-      return data as { id: string; full_name: string | null; username: string | null; created_at: string }[];
+      return data as {
+        id: string;
+        full_name: string | null;
+        username: string | null;
+        created_at: string;
+        branch_id: string | null;
+      }[];
     },
   });
+
+  const changeBranch = useMutation({
+    mutationFn: async ({ userId, branchId }: { userId: string; branchId: string }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ branch_id: branchId === "none" ? null : branchId })
+        .eq("id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["my-branch"] });
+      toast.success(t("saved"));
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -111,7 +136,14 @@ function UsersPage() {
   }
 
   const create = useMutation({
-    mutationFn: async () => createFn({ data: form }),
+    mutationFn: async () => {
+      const { branchId, ...rest } = form;
+      await createFn({ data: rest });
+      if (branchId && branchId !== "none") {
+        await supabase.from("profiles").update({ branch_id: branchId }).eq("username", rest.username);
+      }
+    },
+
     onSuccess: () => {
       toast.success(t("userCreated"));
       void logAudit("user_create", { entity: "user", details: `${form.username} (${form.role})` });
@@ -220,7 +252,9 @@ function UsersPage() {
               <th className="px-4 py-3 font-medium">{t("username")}</th>
               <th className="px-4 py-3 font-medium">{t("fullName")}</th>
               <th className="px-4 py-3 font-medium">{t("role")}</th>
+              <th className="px-4 py-3 font-medium">{t("branch")}</th>
               <th className="px-4 py-3 text-right font-medium">{t("actions")}</th>
+
             </tr>
           </thead>
           <tbody>
@@ -246,6 +280,25 @@ function UsersPage() {
                   </Select>
                 </td>
                 <td className="px-4 py-3">
+                  <Select
+                    value={u.branch_id ?? "none"}
+                    onValueChange={(branchId) => changeBranch.mutate({ userId: u.id, branchId })}
+                  >
+                    <SelectTrigger className="w-44">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{t("noBranch")}</SelectItem>
+                      {(branches.data ?? []).map((b) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </td>
+                <td className="px-4 py-3">
+
                   <div className="flex justify-end gap-1">
                     <Button variant="ghost" size="icon" onClick={() => setPwFor(u.id)} title={t("resetPassword")}>
                       <KeyRound className="size-4" />
@@ -265,7 +318,7 @@ function UsersPage() {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                   —
                 </td>
               </tr>
@@ -312,6 +365,23 @@ function UsersPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-1.5">
+              <Label>{t("branch")}</Label>
+              <Select value={form.branchId} onValueChange={(branchId) => setForm({ ...form, branchId })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t("noBranch")}</SelectItem>
+                  {(branches.data ?? []).map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button className="w-full" disabled={create.isPending} onClick={() => create.mutate()}>
               {t("save")}
             </Button>

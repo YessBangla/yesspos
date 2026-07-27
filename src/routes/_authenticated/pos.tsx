@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useBranchStock, useMyBranch } from "@/lib/use-branch";
 import { money, num, useI18n, type TKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { logAudit } from "@/lib/audit";
@@ -154,6 +155,9 @@ function PosPage() {
     },
   });
 
+  const myBranch = useMyBranch();
+  const branchStock = useBranchStock(myBranch.data?.id);
+
   const products = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
@@ -175,16 +179,20 @@ function PosPage() {
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (products.data ?? []).filter(
-      (p) =>
-        (cat === "all" || p.category_id === cat) &&
-        (!q ||
-          p.name_en.toLowerCase().includes(q) ||
-          p.name_bn.includes(query.trim()) ||
-          p.sku.toLowerCase().includes(q) ||
-          (p.barcode ?? "").toLowerCase().includes(q)),
-    );
-  }, [products.data, query, cat]);
+    const stockMap = branchStock.data;
+    return (products.data ?? [])
+      .map((p) => (stockMap ? { ...p, stock: stockMap.get(p.id) ?? 0 } : p))
+      .filter(
+        (p) =>
+          (cat === "all" || p.category_id === cat) &&
+          (!q ||
+            p.name_en.toLowerCase().includes(q) ||
+            p.name_bn.includes(query.trim()) ||
+            p.sku.toLowerCase().includes(q) ||
+            (p.barcode ?? "").toLowerCase().includes(q)),
+      );
+  }, [products.data, branchStock.data, query, cat]);
+
 
   const subtotal = cart.reduce((s, l) => s + Number(l.product.price) * l.qty, 0);
   const manualDiscount =
@@ -352,6 +360,7 @@ function PosPage() {
       } else toast.success(status === "draft" ? t("holdSale") : t("saveQuotation"));
       resetSale();
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["branch-stock"] });
       queryClient.invalidateQueries({ queryKey: ["sales"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
     },

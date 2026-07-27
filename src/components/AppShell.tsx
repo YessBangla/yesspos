@@ -1,10 +1,12 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowRightLeft,
   BarChart3,
   Barcode,
   BookOpenCheck,
   Boxes,
+  Building2,
   CalendarDays,
   FileSpreadsheet,
   Landmark,
@@ -37,6 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { LangToggle } from "@/components/LangToggle";
 import { QuickActions } from "@/components/QuickActions";
+import { useMyBranch } from "@/lib/use-branch";
 import { cn } from "@/lib/utils";
 import { useMyRole } from "@/lib/use-my-role";
 import { canAccess, type Feature } from "@/lib/permissions";
@@ -57,6 +60,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const me = useMyRole();
+  const myBranch = useMyBranch();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
@@ -82,8 +86,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         { to: "/catalog", feature: "catalog", label: t("catalog"), icon: Tags },
         { to: "/stock-adjustments", feature: "stock-adjustments", label: t("stockAdjust"), icon: SlidersHorizontal },
         { to: "/labels", feature: "labels", label: t("labels"), icon: Barcode },
+        { to: "/stock-transfers", feature: "stock-transfers", label: t("stockTransfer"), icon: ArrowRightLeft },
       ],
     },
+
     {
       id: "purchase",
       label: t("grpPurchase"),
@@ -137,8 +143,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       icon: SettingsIcon,
       items: [
         { to: "/settings", feature: "settings", label: t("settings"), icon: SettingsIcon },
+        { to: "/branches", feature: "branches", label: t("branches"), icon: Building2 },
         { to: "/api-hub", feature: "api-hub", label: t("apiHub"), icon: Plug },
       ],
+
     },
   ];
 
@@ -286,7 +294,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Button variant="outline" size="icon" className="md:hidden" onClick={() => setMobileOpen(true)}>
             <Menu className="size-4" />
           </Button>
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-muted-foreground">
+            <Building2 className="size-3.5" />
+            {myBranch.data?.name ?? t("noBranch")}
+          </span>
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+
             <QuickActions />
             <LangToggle />
             <Button variant="ghost" size="sm" onClick={signOut} className="md:hidden">

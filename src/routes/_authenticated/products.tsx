@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useBranchStock, useMyBranch } from "@/lib/use-branch";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -85,6 +86,9 @@ function ProductsPage() {
     },
   });
 
+  const myBranch = useMyBranch();
+  const branchStock = useBranchStock(myBranch.data?.id);
+
   const products = useQuery({
     queryKey: ["products-all"],
     queryFn: async () => {
@@ -96,14 +100,17 @@ function ProductsPage() {
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (products.data ?? []).filter(
-      (p) =>
-        !q ||
-        p.name_en.toLowerCase().includes(q) ||
-        p.name_bn.includes(query.trim()) ||
-        p.sku.toLowerCase().includes(q),
-    );
-  }, [products.data, query]);
+    const stockMap = branchStock.data;
+    return (products.data ?? [])
+      .map((p) => ({ ...p, branch_stock: stockMap ? (stockMap.get(p.id) ?? 0) : p.stock }))
+      .filter(
+        (p) =>
+          !q ||
+          p.name_en.toLowerCase().includes(q) ||
+          p.name_bn.includes(query.trim()) ||
+          p.sku.toLowerCase().includes(q),
+      );
+  }, [products.data, branchStock.data, query]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -115,15 +122,34 @@ function ProductsPage() {
         low_stock_at: Number(form.low_stock_at),
       });
       if (!parsed.success) throw new Error(parsed.error.issues[0].message);
-      const payload = { ...parsed.data, category_id: form.category_id || null };
+      const branchId = myBranch.data?.id ?? null;
+      const { stock, ...rest } = parsed.data;
+      const payload = { ...rest, category_id: form.category_id || null };
+      let productId = editing?.id ?? null;
       if (editing) {
         const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("products").insert(payload);
+        const { data, error } = await supabase
+          .from("products")
+          .insert({ ...payload, stock: branchId ? 0 : stock })
+          .select("id")
+          .single();
+        if (error) throw error;
+        productId = data.id;
+      }
+      // Per-branch stock is the source of truth when the user belongs to a branch.
+      if (branchId && productId) {
+        const { error } = await supabase
+          .from("product_stock")
+          .upsert({ product_id: productId, branch_id: branchId, stock }, { onConflict: "product_id,branch_id" });
+        if (error) throw error;
+      } else if (editing) {
+        const { error } = await supabase.from("products").update({ stock }).eq("id", editing.id);
         if (error) throw error;
       }
     },
+
     onSuccess: () => {
       setOpen(false);
       setEditing(null);
@@ -131,6 +157,7 @@ function ProductsPage() {
       queryClient.invalidateQueries({ queryKey: ["products-all"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
+      queryClient.invalidateQueries({ queryKey: ["branch-stock"] });
       toast.success(t("save"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
@@ -148,7 +175,7 @@ function ProductsPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
-  function startEdit(p: Row) {
+  function startEdit(p: Row & { branch_stock?: number }) {
     setEditing(p);
     setForm({
       name_en: p.name_en,
@@ -156,7 +183,7 @@ function ProductsPage() {
       sku: p.sku,
       price: String(p.price),
       cost: String(p.cost),
-      stock: String(p.stock),
+      stock: String(p.branch_stock ?? p.stock),
       low_stock_at: String(p.low_stock_at),
       unit: p.unit,
       category_id: p.category_id ?? "",
@@ -214,7 +241,7 @@ function ProductsPage() {
             )}
             {visible.map((p) => {
               const cat = categories.data?.find((c) => c.id === p.category_id);
-              const low = p.stock <= p.low_stock_at;
+              const low = p.branch_stock <= p.low_stock_at;
               return (
                 <tr key={p.id} className="border-b border-border last:border-0">
                   <td className="px-4 py-3 font-medium">{lang === "bn" ? p.name_bn : p.name_en}</td>
@@ -228,14 +255,14 @@ function ProductsPage() {
                     <span
                       className={cn(
                         "rounded-full px-2 py-0.5 text-xs font-semibold",
-                        p.stock <= 0
+                        p.branch_stock <= 0
                           ? "bg-destructive/10 text-destructive"
                           : low
                             ? "bg-warning/20 text-warning-foreground"
                             : "bg-muted text-muted-foreground",
                       )}
                     >
-                      {num(p.stock, lang)} {p.unit}
+                      {num(p.branch_stock, lang)} {p.unit}
                     </span>
                   </td>
                   <td className="px-4 py-3">
