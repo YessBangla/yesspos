@@ -57,8 +57,9 @@ export function QuickAddCustomer({ onCreated }: { onCreated?: (c: { id: string; 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="icon" variant="secondary" className="size-11 shrink-0 rounded-xl" aria-label={t("newCustomer")}>
+        <Button variant="accent" className="h-11 shrink-0 gap-1.5 rounded-xl px-3" aria-label={t("newCustomer")}>
           <Plus className="size-4" />
+          <span className="text-xs font-semibold">{t("newCustomer")}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
