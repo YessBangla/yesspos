@@ -625,31 +625,42 @@ function PosPage() {
           </div>
 
           <div className="space-y-2 border-b border-border p-3 sm:p-4">
-            <Select
-              value={contactId}
-              onValueChange={(v) => {
-                setContactId(v);
-                const c = (customers.data ?? []).find((x) => x.id === v);
-                if (c) {
+            <div className="flex items-center gap-2">
+              <Select
+                value={contactId}
+                onValueChange={(v) => {
+                  setContactId(v);
+                  const c = (customers.data ?? []).find((x) => x.id === v);
+                  if (c) {
+                    setCustomer(c.name);
+                    setPhone(c.phone ?? "");
+                    setEmail(c.email ?? "");
+                  }
+                }}
+              >
+                <SelectTrigger className="h-11 flex-1 rounded-xl bg-muted/50">
+                  <SelectValue placeholder={t("walkIn")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {(customers.data ?? [])
+                    .filter((c) => c.type === "customer")
+                    .map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <QuickAddCustomer
+                onCreated={(c) => {
+                  setContactId(c.id);
                   setCustomer(c.name);
                   setPhone(c.phone ?? "");
                   setEmail(c.email ?? "");
-                }
-              }}
-            >
-              <SelectTrigger className="h-11 rounded-xl bg-muted/50">
-                <SelectValue placeholder={t("walkIn")} />
-              </SelectTrigger>
-              <SelectContent>
-                {(customers.data ?? [])
-                  .filter((c) => c.type === "customer")
-                  .map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+                }}
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-2">
               <Input
                 value={customer}
