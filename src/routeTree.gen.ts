@@ -29,6 +29,7 @@ import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
 import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authenticated/audit-logs'
 import { Route as AuthenticatedApiHubRouteImport } from './routes/_authenticated/api-hub'
+import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -130,11 +131,17 @@ const AuthenticatedApiHubRoute = AuthenticatedApiHubRouteImport.update({
   path: '/api-hub',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/accounts': typeof AuthenticatedAccountsRoute
   '/api-hub': typeof AuthenticatedApiHubRoute
   '/audit-logs': typeof AuthenticatedAuditLogsRoute
   '/catalog': typeof AuthenticatedCatalogRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/accounts': typeof AuthenticatedAccountsRoute
   '/api-hub': typeof AuthenticatedApiHubRoute
   '/audit-logs': typeof AuthenticatedAuditLogsRoute
   '/catalog': typeof AuthenticatedCatalogRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
   '/_authenticated/api-hub': typeof AuthenticatedApiHubRoute
   '/_authenticated/audit-logs': typeof AuthenticatedAuditLogsRoute
   '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
@@ -202,6 +211,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/accounts'
     | '/api-hub'
     | '/audit-logs'
     | '/catalog'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/accounts'
     | '/api-hub'
     | '/audit-logs'
     | '/catalog'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/sitemap.xml'
+    | '/_authenticated/accounts'
     | '/_authenticated/api-hub'
     | '/_authenticated/audit-logs'
     | '/_authenticated/catalog'
@@ -412,10 +424,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApiHubRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/accounts': {
+      id: '/_authenticated/accounts'
+      path: '/accounts'
+      fullPath: '/accounts'
+      preLoaderRoute: typeof AuthenticatedAccountsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRoute
   AuthenticatedApiHubRoute: typeof AuthenticatedApiHubRoute
   AuthenticatedAuditLogsRoute: typeof AuthenticatedAuditLogsRoute
   AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
@@ -435,6 +455,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountsRoute: AuthenticatedAccountsRoute,
   AuthenticatedApiHubRoute: AuthenticatedApiHubRoute,
   AuthenticatedAuditLogsRoute: AuthenticatedAuditLogsRoute,
   AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
