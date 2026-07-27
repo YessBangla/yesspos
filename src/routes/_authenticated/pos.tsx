@@ -537,10 +537,13 @@ function ReceiptDialog({ receipt, onClose }: { receipt: Receipt | null; onClose:
           <DialogTitle>{t("receipt")}</DialogTitle>
         </DialogHeader>
         <div id="receipt-print" className="rounded-lg border border-dashed border-border p-4 text-sm">
-          <p className="text-center font-display text-lg font-bold">{t("appName")}</p>
+          <p className="text-center font-display text-lg font-bold">{receipt.shopName || t("appName")}</p>
+          {receipt.shopAddress && <p className="text-center text-xs">{receipt.shopAddress}</p>}
+          {receipt.shopPhone && <p className="text-center text-xs">{receipt.shopPhone}</p>}
           <p className="text-center text-xs text-muted-foreground">
             {t("invoice")} #{num(receipt.invoice, lang)} · {new Date(receipt.at).toLocaleString()}
           </p>
+
           {receipt.customer && <p className="mt-1 text-center text-xs">{receipt.customer}</p>}
           <div className="my-3 space-y-1 border-y border-dashed border-border py-3">
             {receipt.lines.map((l) => (
