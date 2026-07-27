@@ -80,6 +80,7 @@ function StockAdjustPage() {
       if (error) throw error;
     },
     onSuccess: () => {
+      void logAudit("stock_adjust", { entity: "stock_adjustment" });
       setOpen(false);
       setForm({ ...emptyForm });
       queryClient.invalidateQueries({ queryKey: ["stock-adjustments"] });

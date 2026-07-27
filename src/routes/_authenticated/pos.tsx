@@ -254,7 +254,8 @@ function PosPage() {
         } satisfies Receipt,
       };
     },
-    onSuccess: ({ status, receipt: r }) => {
+    onSuccess: ({
+      void logAudit("sale", { entity: "sale" }); status, receipt: r }) => {
       if (status === "final") setReceipt(r);
       else toast.success(status === "draft" ? t("holdSale") : t("saveQuotation"));
       resetSale();

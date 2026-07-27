@@ -83,6 +83,7 @@ function ExpensesPage() {
       if (error) throw error;
     },
     onSuccess: () => {
+      void logAudit("expense", { entity: "expense" });
       setOpen(false);
       setForm({ ...emptyForm });
       queryClient.invalidateQueries({ queryKey: ["expenses"] });

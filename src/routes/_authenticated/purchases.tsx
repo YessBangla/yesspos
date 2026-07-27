@@ -119,6 +119,7 @@ function PurchasesPage() {
       }
     },
     onSuccess: () => {
+      void logAudit("purchase", { entity: "purchase" });
       setOpen(false);
       setLines([]);
       setPaid("0");

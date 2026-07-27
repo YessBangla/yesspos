@@ -135,6 +135,7 @@ function PaymentsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
+      void logAudit("payment", { entity: "payment" });
       setOpen(false);
       setForm({ ...emptyForm });
       queryClient.invalidateQueries({ queryKey: ["payments"] });
