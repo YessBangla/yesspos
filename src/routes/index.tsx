@@ -535,7 +535,7 @@ function Index() {
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {outcomes.map((o) => (
-              <div key={o.title} className="surface-panel p-6">
+              <div key={o.title} className="surface-panel shade-card p-6" style={shadeStyle}>
                 <span className="mb-4 flex size-10 items-center justify-center rounded-lg bg-secondary text-primary">
                   <o.icon className="size-5" />
                 </span>
@@ -563,7 +563,7 @@ function Index() {
             </div>
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {modules.map((m) => (
-                <article key={m.title} className="surface-panel p-5">
+                <article key={m.title} className="surface-panel shade-card p-5" style={shadeStyle}>
                   <span className="mb-3 flex size-10 items-center justify-center rounded-lg bg-secondary text-primary">
                     <m.icon className="size-5" />
                   </span>
@@ -589,7 +589,7 @@ function Index() {
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-4">
             {workflow.map((w) => (
-              <div key={w.step} className="surface-panel p-5">
+              <div key={w.step} className="surface-panel shade-card p-5" style={shadeStyle}>
                 <p className="font-display text-2xl font-bold text-primary/70">{w.step}</p>
                 <h3 className="mt-2 text-base font-semibold">{w.title}</h3>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{w.body}</p>
@@ -621,7 +621,7 @@ function Index() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               {governance.map((g) => (
-                <div key={g.title} className="surface-panel p-5">
+                <div key={g.title} className="surface-panel shade-card p-5" style={shadeStyle}>
                   <g.icon className="size-5 text-primary" />
                   <h3 className="mt-3 text-base font-semibold">{g.title}</h3>
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{g.body}</p>
@@ -653,7 +653,7 @@ function Index() {
                 { icon: FileSpreadsheet, t: L("এক্সপোর্ট", "Exports"), b: L("ইউজার ও রিপোর্ট CSV আকারে নামান।", "Download users and reports as CSV.") },
                 { icon: ShieldCheck, t: L("অডিট ট্রেইল", "Audit trail"), b: L("লগইন ও গুরুত্বপূর্ণ অ্যাকশনের রেকর্ড।", "Records of logins and key actions.") },
               ].map((c) => (
-                <div key={c.t} className="surface-panel p-5">
+                <div key={c.t} className="surface-panel shade-card p-5" style={shadeStyle}>
                   <c.icon className="size-5 text-primary" />
                   <h3 className="mt-3 text-base font-semibold">{c.t}</h3>
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{c.b}</p>
@@ -697,7 +697,7 @@ function Index() {
           </h2>
           <dl className="mt-8 grid gap-4 sm:grid-cols-2">
             {faqs.map((f) => (
-              <div key={f.q} className="surface-panel p-5">
+              <div key={f.q} className="surface-panel shade-card p-5" style={shadeStyle}>
                 <dt className="font-semibold">{f.q}</dt>
                 <dd className="mt-1 text-sm leading-relaxed text-muted-foreground">{f.a}</dd>
               </div>
