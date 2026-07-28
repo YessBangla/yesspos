@@ -4,6 +4,12 @@ export type Lang = "bn" | "en";
 
 const dict = {
   appName: { bn: "শেরা পস", en: "SheraPOS" },
+  home: { bn: "হোম", en: "Home" },
+  privacyPolicy: { bn: "প্রাইভেসি পলিসি", en: "Privacy Policy" },
+  termsOfService: { bn: "সেবার শর্তাবলি", en: "Terms of Service" },
+  legal: { bn: "আইনগত", en: "Legal" },
+  inventoryStatus: { bn: "ইনভেন্টরি ও স্টক", en: "Inventory & stock" },
+  billing: { bn: "বিলিং ও সাবস্ক্রিপশন", en: "Billing & subscription" },
   tagline: {
     bn: "দোকানের বিক্রি, স্টক আর হিসাব — এক জায়গায়",
     en: "Sales, stock and reports for your shop — in one place",
