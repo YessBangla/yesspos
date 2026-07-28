@@ -351,65 +351,104 @@ function Index() {
 
       <main>
         {/* Hero */}
-        <section className="border-b border-border">
-          <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-16 pt-12 md:grid-cols-2 md:pt-20">
-            <div>
-              <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-semibold tracking-wide text-secondary-foreground">
-                <span className="size-1.5 rounded-full bg-primary" />
-                POS • Inventory • Accounting • Analytics
-              </p>
-              <h1 className="font-display text-4xl font-bold leading-[1.1] tracking-tight md:text-5xl">
-                {t("tagline")}
-              </h1>
-              <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">{t("heroSub")}</p>
-              <ul className="mt-6 space-y-2 text-sm">
-                {[
-                  L("এক স্ক্রিনে বিলিং, স্টক আর হিসাব", "Billing, stock and accounts on one screen"),
-                  L("বাংলা ও ইংরেজি — টাকা (৳) ভিত্তিক", "Bengali and English, Taka (৳) native"),
-                  L("থার্মাল ও A4 প্রিন্টারে রসিদ", "Receipts on thermal and A4 printers"),
-                  L("রোলভিত্তিক অ্যাক্সেস ও অডিট লগ", "Role-based access with a full audit log"),
-                ].map((li) => (
-                  <li key={li} className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-                    <span className="text-muted-foreground">{li}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button asChild size="lg">
-                  <Link to="/auth">
-                    {t("getStarted")} <ArrowRight className="ml-1 size-4" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link to="/auth">{t("signIn")}</Link>
-                </Button>
+        <section className="relative overflow-hidden border-b border-border">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center opacity-[0.10]"
+            style={{ backgroundImage: `url(${heroShade})` }}
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/40 via-background/80 to-background"
+          />
+          <div className="mx-auto max-w-6xl px-5 pb-16 pt-12 md:pt-20">
+            <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr]">
+              <div className="rise-in">
+                <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/80 px-3 py-1 text-xs font-semibold tracking-wide text-secondary-foreground backdrop-blur">
+                  <span className="size-1.5 rounded-full bg-primary" />
+                  POS • Inventory • Accounting • Analytics
+                </p>
+                <h1 className="font-display text-4xl font-bold leading-[1.1] tracking-tight md:text-5xl">
+                  {t("tagline")}
+                </h1>
+                <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground">{t("heroSub")}</p>
+                <ul className="mt-6 grid gap-2 text-sm sm:grid-cols-2">
+                  {[
+                    L("এক স্ক্রিনে বিলিং, স্টক আর হিসাব", "Billing, stock and accounts on one screen"),
+                    L("বাংলা ও ইংরেজি — টাকা (৳) ভিত্তিক", "Bengali and English, Taka (৳) native"),
+                    L("থার্মাল ও A4 প্রিন্টারে রসিদ", "Receipts on thermal and A4 printers"),
+                    L("রোলভিত্তিক অ্যাক্সেস ও অডিট লগ", "Role-based access with a full audit log"),
+                  ].map((li) => (
+                    <li key={li} className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                      <span className="text-muted-foreground">{li}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <Button asChild size="lg">
+                    <Link to="/auth">
+                      {t("getStarted")} <ArrowRight className="ml-1 size-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild size="lg" variant="outline">
+                    <Link to="/auth">{t("signIn")}</Link>
+                  </Button>
+                </div>
+                <p className="mt-4 text-xs text-muted-foreground">
+                  {L(
+                    "কোনো ইনস্টলেশন লাগে না • ব্রাউজারেই চলে • বাংলা ও ইংরেজি",
+                    "No installation • Runs in the browser • Bengali & English",
+                  )}
+                </p>
               </div>
-              <p className="mt-4 text-xs text-muted-foreground">
-                {L(
-                  "কোনো ইনস্টলেশন লাগে না • ব্রাউজারেই চলে • বাংলা ও ইংরেজি",
-                  "No installation • Runs in the browser • Bengali & English",
-                )}
-              </p>
+
+              <div className="rise-in soft-float surface-panel shade-card p-4" style={shadeStyle}>
+                <div className="gradient-brand rounded-lg p-4 text-primary-foreground">
+                  <p className="text-xs opacity-80">{t("todaySales")}</p>
+                  <p className="font-display text-3xl font-bold">৳12,480.00</p>
+                  <p className="mt-1 text-xs opacity-80">
+                    {L("৪২টি ইনভয়েস • ৩ শাখা", "42 invoices • 3 branches")}
+                  </p>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  {heroMetrics.map((m) => (
+                    <div key={m.label} className="rounded-lg border border-border bg-muted/40 p-3">
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <m.icon className="size-3.5 text-primary" /> {m.label}
+                      </span>
+                      <p className="mt-1 font-display text-lg font-bold">{m.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div className="surface-panel p-4">
-              <div className="gradient-brand rounded-lg p-4 text-primary-foreground">
-                <p className="text-xs opacity-80">{t("todaySales")}</p>
-                <p className="font-display text-3xl font-bold">৳12,480.00</p>
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-3">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="rounded-lg border border-border bg-muted/50 p-3">
-                    <div className="h-8 rounded bg-secondary" />
-                    <div className="mt-2 h-2 w-3/4 rounded bg-border" />
-                    <div className="mt-1 h-2 w-1/2 rounded bg-border" />
+            {/* Hero info cards */}
+            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {heroCards.map((c, i) => (
+                <article
+                  key={c.title}
+                  className="surface-panel shade-card rise-in p-5"
+                  style={{ ...shadeStyle, animationDelay: `${0.08 * (i + 1)}s` }}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex size-10 items-center justify-center rounded-lg bg-secondary text-primary">
+                      <c.icon className="size-5" />
+                    </span>
+                    <span className="rounded-full border border-border bg-background/60 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                      {c.tag}
+                    </span>
                   </div>
-                ))}
-              </div>
+                  <p className="mt-4 font-display text-2xl font-bold">{c.metric}</p>
+                  <h2 className="mt-0.5 text-sm font-semibold">{c.title}</h2>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{c.body}</p>
+                </article>
+              ))}
             </div>
           </div>
         </section>
+
 
         {/* Stats */}
         <section className="border-b border-border bg-muted/30">
