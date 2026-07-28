@@ -175,7 +175,7 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (product: QuickProd
         const { data: userData } = await supabase.auth.getUser();
         const { error: adjError } = await supabase.from("stock_adjustments").insert({
           product_id: data.id,
-          branch_id: myBranch.branch.id,
+          branch_id: myBranch.branchId,
           user_id: userData.user?.id ?? null,
           type: "add",
           quantity: qty,
