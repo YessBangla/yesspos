@@ -80,6 +80,58 @@ function Index() {
   const bn = lang === "bn";
   const L = (b: string, e: string) => (bn ? b : e);
 
+  const heroMetrics = [
+    { icon: Boxes, label: L("স্টক আইটেম", "Stock items"), value: L("১,২৪০", "1,240") },
+    { icon: Users, label: L("কাস্টমার", "Customers"), value: L("৮৬২", "862") },
+    { icon: Building2, label: L("শাখা", "Branches"), value: L("০৩", "03") },
+    { icon: CreditCard, label: L("বকেয়া আদায়", "Dues collected"), value: "৳3,150" },
+  ];
+
+  const heroCards = [
+    {
+      icon: ShoppingCart,
+      tag: L("বিলিং", "Billing"),
+      metric: L("< ১০ সে.", "< 10 sec"),
+      title: L("প্রতি বিলে গড় সময়", "Average time per bill"),
+      body: L(
+        "বারকোড স্ক্যান, কিবোর্ড শর্টকাট আর এক-ক্লিক পেমেন্টে কাউন্টার দ্রুত চলে।",
+        "Barcode scan, keyboard shortcuts and one-click payment keep the counter moving.",
+      ),
+    },
+    {
+      icon: Boxes,
+      tag: L("ইনভেন্টরি", "Inventory"),
+      metric: L("রিয়েল-টাইম", "Real-time"),
+      title: L("শাখাভিত্তিক স্টক আপডেট", "Branch-wise stock updates"),
+      body: L(
+        "প্রতিটি বিক্রি, ক্রয় ও ট্রান্সফারে স্টক সাথে সাথেই সমন্বয় হয়, লো-স্টক অ্যালার্টসহ।",
+        "Every sale, purchase and transfer adjusts stock instantly, with low-stock alerts.",
+      ),
+    },
+    {
+      icon: Landmark,
+      tag: L("অ্যাকাউন্টিং", "Accounting"),
+      metric: L("ডাবল-এন্ট্রি", "Double-entry"),
+      title: L("স্বয়ংক্রিয় লেজার ও ভাউচার", "Automated ledgers & vouchers"),
+      body: L(
+        "চার্ট অব অ্যাকাউন্টস, ডে-বুক ও আর্থিক বিবরণী নিজে থেকেই তৈরি হয়।",
+        "Chart of accounts, day book and financial statements build themselves.",
+      ),
+    },
+    {
+      icon: ShieldCheck,
+      tag: L("গভর্ন্যান্স", "Governance"),
+      metric: L("৫ রোল", "5 roles"),
+      title: L("অ্যাক্সেস কন্ট্রোল ও অডিট", "Access control & audit"),
+      body: L(
+        "সুপার অ্যাডমিন থেকে স্টাফ পর্যন্ত অনুমতি, আর প্রতিটি অ্যাকশনের অডিট লগ।",
+        "Permissions from super admin to staff, with an audit log for every action.",
+      ),
+    },
+  ];
+
+
+
   const modules = [
     {
       icon: ShoppingCart,
