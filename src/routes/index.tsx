@@ -24,6 +24,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { LangToggle } from "@/components/LangToggle";
+import heroShade from "@/assets/hero-shade.jpg";
+import cardShade from "@/assets/card-shade.jpg";
+
+const shadeStyle = { "--card-shade": `url(${cardShade})` } as React.CSSProperties;
+
 
 const SITE = "https://yesspos.lovable.app";
 
