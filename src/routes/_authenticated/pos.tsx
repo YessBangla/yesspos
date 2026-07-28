@@ -336,6 +336,7 @@ function PosPage() {
         .from("sales")
         .insert({
           cashier_id: uid,
+          branch_id: myBranch.branchId,
           contact_id: contactId || null,
           status,
           customer_name: customer.trim().slice(0, 80) || null,
