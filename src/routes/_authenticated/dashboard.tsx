@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -32,6 +32,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useMyRole } from "@/lib/use-my-role";
+import { useActiveBranch } from "@/lib/active-branch";
+import { canAccess, type Feature } from "@/lib/permissions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -62,6 +64,8 @@ function rangeStart(key: RangeKey) {
 function DashboardPage() {
   const { t, lang } = useI18n();
   const me = useMyRole();
+  const { branch, canSwitch, branchId } = useActiveBranch();
+  const scopeId = canSwitch ? null : branchId;
   const [range, setRange] = useState<RangeKey>("month");
   const [tab, setTab] = useState<"sale" | "purchase" | "payment" | "quotation">("sale");
 
@@ -69,8 +73,11 @@ function DashboardPage() {
   const fromIso = from.toISOString();
   const fromDate = fromIso.slice(0, 10);
 
+  // Staff locked to one location only ever see that location's numbers.
+  const scoped = <T,>(q: T): T => (scopeId ? (q as any).eq("branch_id", scopeId) : q);
+
   const stats = useQuery({
-    queryKey: ["dashboard", range],
+    queryKey: ["dashboard", range, scopeId],
     queryFn: async () => {
       const [
         salesRes,
@@ -83,25 +90,31 @@ function DashboardPage() {
         paymentsRes,
         purchaseReturnsRes,
       ] = await Promise.all([
-          supabase
-            .from("sales")
-            .select("id,invoice_no,total,paid,status,created_at,customer_name,payment_method")
-            .gte("created_at", fromIso)
+          scoped(
+            supabase
+              .from("sales")
+              .select("id,invoice_no,total,paid,status,created_at,customer_name,payment_method")
+              .gte("created_at", fromIso),
+          )
             .order("created_at", { ascending: false }),
           supabase.from("products").select("id,name_en,name_bn,stock,low_stock_at,unit,cost"),
           supabase.from("sale_items").select("sale_id,product_id,name_snapshot,quantity,line_total"),
-          supabase
-            .from("purchases")
-            .select("id,ref_no,total,paid,purchased_on,created_at")
-            .gte("purchased_on", fromDate)
+          scoped(
+            supabase
+              .from("purchases")
+              .select("id,ref_no,total,paid,purchased_on,created_at")
+              .gte("purchased_on", fromDate),
+          )
             .order("purchased_on", { ascending: false }),
           supabase.from("sale_returns").select("id,total,created_at").gte("created_at", fromIso),
-          supabase.from("expenses").select("amount,spent_on,payment_method").gte("spent_on", fromDate),
+          scoped(supabase.from("expenses").select("amount,spent_on,payment_method").gte("spent_on", fromDate)),
           supabase.from("contacts").select("id,type"),
-          supabase
-            .from("payments")
-            .select("id,amount,direction,method,paid_on,note")
-            .gte("paid_on", fromDate)
+          scoped(
+            supabase
+              .from("payments")
+              .select("id,amount,direction,method,paid_on,note")
+              .gte("paid_on", fromDate),
+          )
             .order("paid_on", { ascending: false }),
           supabase.from("purchase_returns").select("id,total,created_at").gte("created_at", fromIso),
         ]);
@@ -220,6 +233,30 @@ function DashboardPage() {
     .sort((a, b) => b.qty - a.qty)
     .slice(0, 5);
 
+  const activity = useQuery({
+    queryKey: ["dashboard-activity"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("id,username,action,entity,created_at")
+        .order("created_at", { ascending: false })
+        .limit(8);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const quickActions: { to: string; feature: Feature; label: string; icon: typeof ShoppingCart }[] = [
+    { to: "/pos", feature: "pos", label: t("pos"), icon: ShoppingCart },
+    { to: "/products", feature: "products", label: t("products"), icon: Boxes },
+    { to: "/purchases", feature: "purchases", label: t("purchases"), icon: Truck },
+    { to: "/payments", feature: "payments", label: t("paymentsLedger"), icon: HandCoins },
+    { to: "/expenses", feature: "expenses", label: t("expenses"), icon: Wallet },
+    { to: "/inventory", feature: "inventory", label: t("inventoryStatus"), icon: Boxes },
+    { to: "/contacts", feature: "contacts", label: t("contacts"), icon: Users },
+    { to: "/branches", feature: "branches", label: t("branches"), icon: Receipt },
+  ].filter((a) => canAccess(me.data?.role, a.feature));
+
   const ranges: { key: RangeKey; label: string }[] = [
     { key: "today", label: t("rangeToday") },
     { key: "week", label: t("rangeWeek") },
@@ -233,6 +270,10 @@ function DashboardPage() {
         <h1 className="font-display text-2xl font-bold">
           {t("welcome")}{" "}
           <span className="text-primary">{me.data?.username ?? ""}</span>
+          <span className="ml-2 align-middle text-xs font-medium text-muted-foreground">
+            {branch?.name ?? t("noBranch")}
+            {!canSwitch && ` · ${t("branchLocked")}`}
+          </span>
         </h1>
         <div className="inline-flex overflow-hidden rounded-xl border border-border bg-card">
           {ranges.map((r) => (
@@ -246,6 +287,24 @@ function DashboardPage() {
             >
               {r.label}
             </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="surface-panel p-3">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {t("quickActionsTitle")}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {quickActions.map((a) => (
+            <Link
+              key={a.to}
+              to={a.to}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:border-primary/50 hover:bg-accent"
+            >
+              <a.icon className="size-4 text-primary" />
+              {a.label}
+            </Link>
           ))}
         </div>
       </div>
@@ -425,6 +484,24 @@ function DashboardPage() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className="surface-panel p-4">
+          <h2 className="mb-3 text-lg font-semibold">{t("recentActivity")}</h2>
+          {(activity.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">{t("noData")}</p>}
+          <ul className="space-y-2">
+            {(activity.data ?? []).map((a) => (
+              <li key={a.id} className="flex items-center justify-between gap-2 text-sm">
+                <span className="min-w-0 flex-1 truncate">
+                  <span className="font-medium">{a.username ?? "—"}</span>{" "}
+                  <span className="text-muted-foreground">{a.action}</span>
+                </span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {new Date(a.created_at).toLocaleString()}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <div className="surface-panel p-4">
