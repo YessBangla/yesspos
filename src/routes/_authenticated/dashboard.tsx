@@ -246,7 +246,7 @@ function DashboardPage() {
     },
   });
 
-  const quickActions: { to: string; feature: Feature; label: string; icon: typeof ShoppingCart }[] = [
+  const quickActions = ([
     { to: "/pos", feature: "pos", label: t("pos"), icon: ShoppingCart },
     { to: "/products", feature: "products", label: t("products"), icon: Boxes },
     { to: "/purchases", feature: "purchases", label: t("purchases"), icon: Truck },
@@ -255,7 +255,9 @@ function DashboardPage() {
     { to: "/inventory", feature: "inventory", label: t("inventoryStatus"), icon: Boxes },
     { to: "/contacts", feature: "contacts", label: t("contacts"), icon: Users },
     { to: "/branches", feature: "branches", label: t("branches"), icon: Receipt },
-  ].filter((a) => canAccess(me.data?.role, a.feature));
+  ] as { to: string; feature: Feature; label: string; icon: typeof ShoppingCart }[]).filter((a) =>
+    canAccess(me.data?.role, a.feature),
+  );
 
   const ranges: { key: RangeKey; label: string }[] = [
     { key: "today", label: t("rangeToday") },
