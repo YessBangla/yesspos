@@ -24,6 +24,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { LangToggle } from "@/components/LangToggle";
+import heroShade from "@/assets/hero-shade.jpg";
+import cardShade from "@/assets/card-shade.jpg";
+
+const shadeStyle = { "--card-shade": `url(${cardShade})` } as React.CSSProperties;
+
 
 const SITE = "https://yesspos.lovable.app";
 
@@ -74,6 +79,58 @@ function Index() {
   const { t, lang } = useI18n();
   const bn = lang === "bn";
   const L = (b: string, e: string) => (bn ? b : e);
+
+  const heroMetrics = [
+    { icon: Boxes, label: L("স্টক আইটেম", "Stock items"), value: L("১,২৪০", "1,240") },
+    { icon: Users, label: L("কাস্টমার", "Customers"), value: L("৮৬২", "862") },
+    { icon: Building2, label: L("শাখা", "Branches"), value: L("০৩", "03") },
+    { icon: CreditCard, label: L("বকেয়া আদায়", "Dues collected"), value: "৳3,150" },
+  ];
+
+  const heroCards = [
+    {
+      icon: ShoppingCart,
+      tag: L("বিলিং", "Billing"),
+      metric: L("< ১০ সে.", "< 10 sec"),
+      title: L("প্রতি বিলে গড় সময়", "Average time per bill"),
+      body: L(
+        "বারকোড স্ক্যান, কিবোর্ড শর্টকাট আর এক-ক্লিক পেমেন্টে কাউন্টার দ্রুত চলে।",
+        "Barcode scan, keyboard shortcuts and one-click payment keep the counter moving.",
+      ),
+    },
+    {
+      icon: Boxes,
+      tag: L("ইনভেন্টরি", "Inventory"),
+      metric: L("রিয়েল-টাইম", "Real-time"),
+      title: L("শাখাভিত্তিক স্টক আপডেট", "Branch-wise stock updates"),
+      body: L(
+        "প্রতিটি বিক্রি, ক্রয় ও ট্রান্সফারে স্টক সাথে সাথেই সমন্বয় হয়, লো-স্টক অ্যালার্টসহ।",
+        "Every sale, purchase and transfer adjusts stock instantly, with low-stock alerts.",
+      ),
+    },
+    {
+      icon: Landmark,
+      tag: L("অ্যাকাউন্টিং", "Accounting"),
+      metric: L("ডাবল-এন্ট্রি", "Double-entry"),
+      title: L("স্বয়ংক্রিয় লেজার ও ভাউচার", "Automated ledgers & vouchers"),
+      body: L(
+        "চার্ট অব অ্যাকাউন্টস, ডে-বুক ও আর্থিক বিবরণী নিজে থেকেই তৈরি হয়।",
+        "Chart of accounts, day book and financial statements build themselves.",
+      ),
+    },
+    {
+      icon: ShieldCheck,
+      tag: L("গভর্ন্যান্স", "Governance"),
+      metric: L("৫ রোল", "5 roles"),
+      title: L("অ্যাক্সেস কন্ট্রোল ও অডিট", "Access control & audit"),
+      body: L(
+        "সুপার অ্যাডমিন থেকে স্টাফ পর্যন্ত অনুমতি, আর প্রতিটি অ্যাকশনের অডিট লগ।",
+        "Permissions from super admin to staff, with an audit log for every action.",
+      ),
+    },
+  ];
+
+
 
   const modules = [
     {
@@ -351,65 +408,104 @@ function Index() {
 
       <main>
         {/* Hero */}
-        <section className="border-b border-border">
-          <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-16 pt-12 md:grid-cols-2 md:pt-20">
-            <div>
-              <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-semibold tracking-wide text-secondary-foreground">
-                <span className="size-1.5 rounded-full bg-primary" />
-                POS • Inventory • Accounting • Analytics
-              </p>
-              <h1 className="font-display text-4xl font-bold leading-[1.1] tracking-tight md:text-5xl">
-                {t("tagline")}
-              </h1>
-              <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">{t("heroSub")}</p>
-              <ul className="mt-6 space-y-2 text-sm">
-                {[
-                  L("এক স্ক্রিনে বিলিং, স্টক আর হিসাব", "Billing, stock and accounts on one screen"),
-                  L("বাংলা ও ইংরেজি — টাকা (৳) ভিত্তিক", "Bengali and English, Taka (৳) native"),
-                  L("থার্মাল ও A4 প্রিন্টারে রসিদ", "Receipts on thermal and A4 printers"),
-                  L("রোলভিত্তিক অ্যাক্সেস ও অডিট লগ", "Role-based access with a full audit log"),
-                ].map((li) => (
-                  <li key={li} className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-                    <span className="text-muted-foreground">{li}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button asChild size="lg">
-                  <Link to="/auth">
-                    {t("getStarted")} <ArrowRight className="ml-1 size-4" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link to="/auth">{t("signIn")}</Link>
-                </Button>
+        <section className="relative overflow-hidden border-b border-border">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center opacity-[0.10]"
+            style={{ backgroundImage: `url(${heroShade})` }}
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/40 via-background/80 to-background"
+          />
+          <div className="mx-auto max-w-6xl px-5 pb-16 pt-12 md:pt-20">
+            <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr]">
+              <div className="rise-in">
+                <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/80 px-3 py-1 text-xs font-semibold tracking-wide text-secondary-foreground backdrop-blur">
+                  <span className="size-1.5 rounded-full bg-primary" />
+                  POS • Inventory • Accounting • Analytics
+                </p>
+                <h1 className="font-display text-4xl font-bold leading-[1.1] tracking-tight md:text-5xl">
+                  {t("tagline")}
+                </h1>
+                <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground">{t("heroSub")}</p>
+                <ul className="mt-6 grid gap-2 text-sm sm:grid-cols-2">
+                  {[
+                    L("এক স্ক্রিনে বিলিং, স্টক আর হিসাব", "Billing, stock and accounts on one screen"),
+                    L("বাংলা ও ইংরেজি — টাকা (৳) ভিত্তিক", "Bengali and English, Taka (৳) native"),
+                    L("থার্মাল ও A4 প্রিন্টারে রসিদ", "Receipts on thermal and A4 printers"),
+                    L("রোলভিত্তিক অ্যাক্সেস ও অডিট লগ", "Role-based access with a full audit log"),
+                  ].map((li) => (
+                    <li key={li} className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                      <span className="text-muted-foreground">{li}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <Button asChild size="lg">
+                    <Link to="/auth">
+                      {t("getStarted")} <ArrowRight className="ml-1 size-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild size="lg" variant="outline">
+                    <Link to="/auth">{t("signIn")}</Link>
+                  </Button>
+                </div>
+                <p className="mt-4 text-xs text-muted-foreground">
+                  {L(
+                    "কোনো ইনস্টলেশন লাগে না • ব্রাউজারেই চলে • বাংলা ও ইংরেজি",
+                    "No installation • Runs in the browser • Bengali & English",
+                  )}
+                </p>
               </div>
-              <p className="mt-4 text-xs text-muted-foreground">
-                {L(
-                  "কোনো ইনস্টলেশন লাগে না • ব্রাউজারেই চলে • বাংলা ও ইংরেজি",
-                  "No installation • Runs in the browser • Bengali & English",
-                )}
-              </p>
+
+              <div className="rise-in soft-float surface-panel shade-card p-4" style={shadeStyle}>
+                <div className="gradient-brand rounded-lg p-4 text-primary-foreground">
+                  <p className="text-xs opacity-80">{t("todaySales")}</p>
+                  <p className="font-display text-3xl font-bold">৳12,480.00</p>
+                  <p className="mt-1 text-xs opacity-80">
+                    {L("৪২টি ইনভয়েস • ৩ শাখা", "42 invoices • 3 branches")}
+                  </p>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  {heroMetrics.map((m) => (
+                    <div key={m.label} className="rounded-lg border border-border bg-muted/40 p-3">
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <m.icon className="size-3.5 text-primary" /> {m.label}
+                      </span>
+                      <p className="mt-1 font-display text-lg font-bold">{m.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div className="surface-panel p-4">
-              <div className="gradient-brand rounded-lg p-4 text-primary-foreground">
-                <p className="text-xs opacity-80">{t("todaySales")}</p>
-                <p className="font-display text-3xl font-bold">৳12,480.00</p>
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-3">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="rounded-lg border border-border bg-muted/50 p-3">
-                    <div className="h-8 rounded bg-secondary" />
-                    <div className="mt-2 h-2 w-3/4 rounded bg-border" />
-                    <div className="mt-1 h-2 w-1/2 rounded bg-border" />
+            {/* Hero info cards */}
+            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {heroCards.map((c, i) => (
+                <article
+                  key={c.title}
+                  className="surface-panel shade-card rise-in p-5"
+                  style={{ ...shadeStyle, animationDelay: `${0.08 * (i + 1)}s` }}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex size-10 items-center justify-center rounded-lg bg-secondary text-primary">
+                      <c.icon className="size-5" />
+                    </span>
+                    <span className="rounded-full border border-border bg-background/60 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                      {c.tag}
+                    </span>
                   </div>
-                ))}
-              </div>
+                  <p className="mt-4 font-display text-2xl font-bold">{c.metric}</p>
+                  <h2 className="mt-0.5 text-sm font-semibold">{c.title}</h2>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{c.body}</p>
+                </article>
+              ))}
             </div>
           </div>
         </section>
+
 
         {/* Stats */}
         <section className="border-b border-border bg-muted/30">
@@ -439,7 +535,7 @@ function Index() {
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {outcomes.map((o) => (
-              <div key={o.title} className="surface-panel p-6">
+              <div key={o.title} className="surface-panel shade-card p-6" style={shadeStyle}>
                 <span className="mb-4 flex size-10 items-center justify-center rounded-lg bg-secondary text-primary">
                   <o.icon className="size-5" />
                 </span>
@@ -467,7 +563,7 @@ function Index() {
             </div>
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {modules.map((m) => (
-                <article key={m.title} className="surface-panel p-5">
+                <article key={m.title} className="surface-panel shade-card p-5" style={shadeStyle}>
                   <span className="mb-3 flex size-10 items-center justify-center rounded-lg bg-secondary text-primary">
                     <m.icon className="size-5" />
                   </span>
@@ -493,7 +589,7 @@ function Index() {
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-4">
             {workflow.map((w) => (
-              <div key={w.step} className="surface-panel p-5">
+              <div key={w.step} className="surface-panel shade-card p-5" style={shadeStyle}>
                 <p className="font-display text-2xl font-bold text-primary/70">{w.step}</p>
                 <h3 className="mt-2 text-base font-semibold">{w.title}</h3>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{w.body}</p>
@@ -525,7 +621,7 @@ function Index() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               {governance.map((g) => (
-                <div key={g.title} className="surface-panel p-5">
+                <div key={g.title} className="surface-panel shade-card p-5" style={shadeStyle}>
                   <g.icon className="size-5 text-primary" />
                   <h3 className="mt-3 text-base font-semibold">{g.title}</h3>
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{g.body}</p>
@@ -557,7 +653,7 @@ function Index() {
                 { icon: FileSpreadsheet, t: L("এক্সপোর্ট", "Exports"), b: L("ইউজার ও রিপোর্ট CSV আকারে নামান।", "Download users and reports as CSV.") },
                 { icon: ShieldCheck, t: L("অডিট ট্রেইল", "Audit trail"), b: L("লগইন ও গুরুত্বপূর্ণ অ্যাকশনের রেকর্ড।", "Records of logins and key actions.") },
               ].map((c) => (
-                <div key={c.t} className="surface-panel p-5">
+                <div key={c.t} className="surface-panel shade-card p-5" style={shadeStyle}>
                   <c.icon className="size-5 text-primary" />
                   <h3 className="mt-3 text-base font-semibold">{c.t}</h3>
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{c.b}</p>
@@ -601,7 +697,7 @@ function Index() {
           </h2>
           <dl className="mt-8 grid gap-4 sm:grid-cols-2">
             {faqs.map((f) => (
-              <div key={f.q} className="surface-panel p-5">
+              <div key={f.q} className="surface-panel shade-card p-5" style={shadeStyle}>
                 <dt className="font-semibold">{f.q}</dt>
                 <dd className="mt-1 text-sm leading-relaxed text-muted-foreground">{f.a}</dd>
               </div>
