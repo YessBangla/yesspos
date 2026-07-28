@@ -675,6 +675,11 @@ function Index() {
               <li><Link to="/auth" className="hover:text-foreground">{t("signIn")}</Link></li>
               <li><Link to="/auth" className="hover:text-foreground">{t("getStarted")}</Link></li>
             </ul>
+            <p className="mt-5 font-semibold">{L("আইনগত", "Legal")}</p>
+            <ul className="mt-3 space-y-2 text-muted-foreground">
+              <li><Link to="/privacy" className="hover:text-foreground">{L("প্রাইভেসি পলিসি", "Privacy Policy")}</Link></li>
+              <li><Link to="/terms" className="hover:text-foreground">{L("সেবার শর্তাবলি", "Terms of Service")}</Link></li>
+            </ul>
           </div>
         </div>
         <div className="border-t border-border">

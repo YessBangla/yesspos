@@ -143,6 +143,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       items: [
         { to: "/dashboard", feature: "dashboard", label: t("dashboard"), icon: BarChart3 },
         { to: "/reports", feature: "reports", label: t("reports"), icon: PieChart },
+        { to: "/inventory", feature: "inventory", label: t("inventoryStatus"), icon: Boxes },
         { to: "/audit-logs", feature: "audit-logs", label: t("auditLog"), icon: History },
       ],
     },

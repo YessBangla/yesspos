@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -40,6 +41,11 @@ import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedApiHubRouteImport } from './routes/_authenticated/api-hub'
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -199,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/accounts': typeof AuthenticatedAccountsRoute
   '/api-hub': typeof AuthenticatedApiHubRoute
   '/audit-logs': typeof AuthenticatedAuditLogsRoute
@@ -230,6 +237,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/accounts': typeof AuthenticatedAccountsRoute
   '/api-hub': typeof AuthenticatedApiHubRoute
   '/audit-logs': typeof AuthenticatedAuditLogsRoute
@@ -263,6 +271,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
   '/_authenticated/api-hub': typeof AuthenticatedApiHubRoute
   '/_authenticated/audit-logs': typeof AuthenticatedAuditLogsRoute
@@ -296,6 +305,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/privacy'
     | '/sitemap.xml'
+    | '/terms'
     | '/accounts'
     | '/api-hub'
     | '/audit-logs'
@@ -327,6 +337,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/privacy'
     | '/sitemap.xml'
+    | '/terms'
     | '/accounts'
     | '/api-hub'
     | '/audit-logs'
@@ -359,6 +370,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/privacy'
     | '/sitemap.xml'
+    | '/terms'
     | '/_authenticated/accounts'
     | '/_authenticated/api-hub'
     | '/_authenticated/audit-logs'
@@ -392,10 +404,18 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -674,6 +694,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
