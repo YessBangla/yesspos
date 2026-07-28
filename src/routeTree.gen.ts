@@ -26,6 +26,7 @@ import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPartyStatementRouteImport } from './routes/_authenticated/party-statement'
 import { Route as AuthenticatedLabelsRouteImport } from './routes/_authenticated/labels'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
+import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedFinancialsRouteImport } from './routes/_authenticated/financials'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedDayBookRouteImport } from './routes/_authenticated/day-book'
@@ -125,6 +126,11 @@ const AuthenticatedJournalRoute = AuthenticatedJournalRouteImport.update({
   path: '/journal',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedFinancialsRoute = AuthenticatedFinancialsRouteImport.update({
   id: '/financials',
   path: '/financials',
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/day-book': typeof AuthenticatedDayBookRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/financials': typeof AuthenticatedFinancialsRoute
+  '/inventory': typeof AuthenticatedInventoryRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/labels': typeof AuthenticatedLabelsRoute
   '/party-statement': typeof AuthenticatedPartyStatementRoute
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   '/day-book': typeof AuthenticatedDayBookRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/financials': typeof AuthenticatedFinancialsRoute
+  '/inventory': typeof AuthenticatedInventoryRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/labels': typeof AuthenticatedLabelsRoute
   '/party-statement': typeof AuthenticatedPartyStatementRoute
@@ -257,6 +265,7 @@ export interface FileRoutesById {
   '/_authenticated/day-book': typeof AuthenticatedDayBookRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
   '/_authenticated/financials': typeof AuthenticatedFinancialsRoute
+  '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/labels': typeof AuthenticatedLabelsRoute
   '/_authenticated/party-statement': typeof AuthenticatedPartyStatementRoute
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | '/day-book'
     | '/expenses'
     | '/financials'
+    | '/inventory'
     | '/journal'
     | '/labels'
     | '/party-statement'
@@ -317,6 +327,7 @@ export interface FileRouteTypes {
     | '/day-book'
     | '/expenses'
     | '/financials'
+    | '/inventory'
     | '/journal'
     | '/labels'
     | '/party-statement'
@@ -347,6 +358,7 @@ export interface FileRouteTypes {
     | '/_authenticated/day-book'
     | '/_authenticated/expenses'
     | '/_authenticated/financials'
+    | '/_authenticated/inventory'
     | '/_authenticated/journal'
     | '/_authenticated/labels'
     | '/_authenticated/party-statement'
@@ -490,6 +502,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJournalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inventory': {
+      id: '/_authenticated/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof AuthenticatedInventoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/financials': {
       id: '/_authenticated/financials'
       path: '/financials'
@@ -582,6 +601,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDayBookRoute: typeof AuthenticatedDayBookRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
   AuthenticatedFinancialsRoute: typeof AuthenticatedFinancialsRoute
+  AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedLabelsRoute: typeof AuthenticatedLabelsRoute
   AuthenticatedPartyStatementRoute: typeof AuthenticatedPartyStatementRoute
@@ -609,6 +629,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDayBookRoute: AuthenticatedDayBookRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
   AuthenticatedFinancialsRoute: AuthenticatedFinancialsRoute,
+  AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedLabelsRoute: AuthenticatedLabelsRoute,
   AuthenticatedPartyStatementRoute: AuthenticatedPartyStatementRoute,
@@ -636,13 +657,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
