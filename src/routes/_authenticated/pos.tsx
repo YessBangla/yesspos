@@ -37,7 +37,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { useBranchStock, useMyBranch } from "@/lib/use-branch";
+import { useBranchStock } from "@/lib/use-branch";
+import { useActiveBranch } from "@/lib/active-branch";
 import { useMyRole } from "@/lib/use-my-role";
 import { money, num, useI18n, type TKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -165,8 +166,8 @@ function PosPage() {
     },
   });
 
-  const myBranch = useMyBranch();
-  const branchStock = useBranchStock(myBranch.data?.id);
+  const myBranch = useActiveBranch();
+  const branchStock = useBranchStock(myBranch.branchId);
 
   const products = useQuery({
     queryKey: ["products"],
@@ -335,6 +336,7 @@ function PosPage() {
         .from("sales")
         .insert({
           cashier_id: uid,
+          branch_id: myBranch.branchId,
           contact_id: contactId || null,
           status,
           customer_name: customer.trim().slice(0, 80) || null,
@@ -471,7 +473,7 @@ function PosPage() {
           <div className="flex shrink-0 items-center gap-3">
             <div className="hidden text-right sm:block">
               <p className="text-[10px] uppercase tracking-wider opacity-70">
-                {myBranch.data?.name ?? t("branch")}
+                {myBranch.branch?.name ?? t("branch")}
               </p>
               <p className="truncate text-sm font-semibold">{cashierName}</p>
             </div>

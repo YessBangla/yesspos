@@ -16,7 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { useBranchStock, useMyBranch } from "@/lib/use-branch";
+import { useBranchStock } from "@/lib/use-branch";
+import { useActiveBranch } from "@/lib/active-branch";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -86,8 +87,8 @@ function ProductsPage() {
     },
   });
 
-  const myBranch = useMyBranch();
-  const branchStock = useBranchStock(myBranch.data?.id);
+  const myBranch = useActiveBranch();
+  const branchStock = useBranchStock(myBranch.branchId);
 
   const products = useQuery({
     queryKey: ["products-all"],
@@ -122,7 +123,7 @@ function ProductsPage() {
         low_stock_at: Number(form.low_stock_at),
       });
       if (!parsed.success) throw new Error(parsed.error.issues[0].message);
-      const branchId = myBranch.data?.id ?? null;
+      const branchId = myBranch.branchId ?? null;
       const { stock, ...rest } = parsed.data;
       const payload = { ...rest, category_id: form.category_id || null };
       let productId = editing?.id ?? null;

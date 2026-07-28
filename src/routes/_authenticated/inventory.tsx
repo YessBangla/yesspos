@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Download, PackageX, Boxes } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { money, num, useI18n } from "@/lib/i18n";
 import { downloadCsv } from "@/lib/audit";
-import { useBranches } from "@/lib/use-branch";
+import { useActiveBranch } from "@/lib/active-branch";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/inventory")({
@@ -53,8 +53,13 @@ type Row = {
 
 function InventoryPage() {
   const { t, lang } = useI18n();
-  const branches = useBranches();
+  const { options: allowedBranches, canSwitch, branchId: myBranchId } = useActiveBranch();
   const [branchId, setBranchId] = useState<string>("all");
+
+  // Staff without switching rights only ever see their own location.
+  useEffect(() => {
+    if (!canSwitch && myBranchId) setBranchId(myBranchId);
+  }, [canSwitch, myBranchId]);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "low" | "out">("all");
 
@@ -172,13 +177,13 @@ function InventoryPage() {
         <div className="surface-panel flex items-end gap-2 p-3">
           <div className="min-w-0 flex-1 space-y-1.5">
             <Label>{t("branch")}</Label>
-            <Select value={branchId} onValueChange={setBranchId}>
+            <Select value={branchId} onValueChange={setBranchId} disabled={!canSwitch}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t("allBranches")}</SelectItem>
-                {(branches.data ?? []).map((b) => (
+                {canSwitch && <SelectItem value="all">{t("allBranches")}</SelectItem>}
+                {allowedBranches.map((b) => (
                   <SelectItem key={b.id} value={b.id}>
                     {b.name}
                   </SelectItem>

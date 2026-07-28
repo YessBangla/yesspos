@@ -39,7 +39,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { LangToggle } from "@/components/LangToggle";
 import { QuickActions } from "@/components/QuickActions";
-import { useMyBranch } from "@/lib/use-branch";
+import { BranchSwitcher } from "@/components/BranchSwitcher";
 import { cn } from "@/lib/utils";
 import { useMyRole } from "@/lib/use-my-role";
 import { canAccess, type Feature } from "@/lib/permissions";
@@ -60,7 +60,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const me = useMyRole();
-  const myBranch = useMyBranch();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
@@ -303,10 +302,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Button variant="outline" size="icon" className="md:hidden" onClick={() => setMobileOpen(true)}>
             <Menu className="size-4" />
           </Button>
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-muted-foreground">
-            <Building2 className="size-3.5" />
-            {myBranch.data?.name ?? t("noBranch")}
-          </span>
+          <BranchSwitcher />
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
 
             <QuickActions />
