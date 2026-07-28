@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { useMyBranch } from "@/lib/use-branch";
+import { useActiveBranch } from "@/lib/active-branch";
 import { logAudit } from "@/lib/audit";
 
 type QuickCustomer = {
@@ -125,7 +125,7 @@ export function QuickAddCustomer({ onCreated }: { onCreated?: (c: QuickCustomer)
 export function QuickAddProduct({ onCreated }: { onCreated?: (product: QuickProduct) => void }) {
   const { t } = useI18n();
   const qc = useQueryClient();
-  const myBranch = useMyBranch();
+  const myBranch = useActiveBranch();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     name_en: "",
@@ -171,11 +171,11 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (product: QuickProd
       if (error) throw error;
 
       const qty = Number(form.stock) || 0;
-      if (qty > 0 && myBranch.data?.id) {
+      if (qty > 0 && myBranch.branchId) {
         const { data: userData } = await supabase.auth.getUser();
         const { error: adjError } = await supabase.from("stock_adjustments").insert({
           product_id: data.id,
-          branch_id: myBranch.data.id,
+          branch_id: myBranch.branch.id,
           user_id: userData.user?.id ?? null,
           type: "add",
           quantity: qty,
