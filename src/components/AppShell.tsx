@@ -269,6 +269,16 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="space-y-1 p-2">
         <Button
+          variant={simple ? "secondary" : "ghost"}
+          size="sm"
+          title={t("simpleModeHint")}
+          className={cn("w-full text-sidebar-foreground/80", collapsed ? "justify-center" : "justify-start")}
+          onClick={toggleSimple}
+        >
+          <Sparkles className={cn("size-4", !collapsed && "mr-2")} />
+          {!collapsed && (simple ? t("fullMode") : t("simpleMode"))}
+        </Button>
+        <Button
           variant="ghost"
           size="sm"
           className={cn("w-full text-sidebar-foreground/70", collapsed ? "justify-center" : "justify-start")}
