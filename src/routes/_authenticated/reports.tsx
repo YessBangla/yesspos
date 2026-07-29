@@ -321,6 +321,59 @@ function ReportsPage() {
         </div>
       </div>
 
+      {tab === "due" && (report.data?.dueSales.length ?? 0) > 0 && (
+        <>
+          <h2 className="mt-8 font-display text-lg font-bold">
+            {lang === "bn" ? "বাকি আদায়ের রিমাইন্ডার" : "Due collection reminders"}
+          </h2>
+          <div className="surface-panel mt-3 grid gap-2 p-3 sm:grid-cols-2">
+            {(report.data?.dueSales ?? []).slice(0, 20).map((s) => {
+              const due = Number(s.total) - Number(s.paid);
+              const msg = buildDueReminder(
+                {
+                  shopName: settings.data?.shop_name ?? "SheraPOS",
+                  customer: s.customer_name ?? "",
+                  invoice: Number(s.invoice_no),
+                  due,
+                },
+                lang,
+              );
+              return (
+                <div
+                  key={s.id}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      #{num(Number(s.invoice_no), lang)} · {s.customer_name || t("walkIn")}
+                    </p>
+                    <p className="truncate text-xs text-destructive">{money(due, lang)}</p>
+                  </div>
+                  <div className="flex shrink-0 gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => shareOnWhatsApp(s.customer_phone ?? "", msg)}
+                    >
+                      <MessageCircle className="size-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={!s.customer_phone}
+                      onClick={() => shareOnSms(s.customer_phone ?? "", msg)}
+                    >
+                      <Smartphone className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+
       <h2 className="mt-8 font-display text-lg font-bold">{t("expiringSoon")}</h2>
       <div className="surface-panel mt-3 overflow-x-auto">
         <table className="w-full min-w-[480px] text-sm">
