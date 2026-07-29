@@ -1828,6 +1828,45 @@ export type Database = {
           },
         ]
       }
+      site_content: {
+        Row: {
+          created_at: string
+          group_name: string
+          id: string
+          key: string
+          kind: string
+          label: string
+          sort_order: number
+          updated_at: string
+          value_bn: string
+          value_en: string
+        }
+        Insert: {
+          created_at?: string
+          group_name?: string
+          id?: string
+          key: string
+          kind?: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+          value_bn?: string
+          value_en?: string
+        }
+        Update: {
+          created_at?: string
+          group_name?: string
+          id?: string
+          key?: string
+          kind?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+          value_bn?: string
+          value_en?: string
+        }
+        Relationships: []
+      }
       stock_adjustments: {
         Row: {
           adjusted_on: string

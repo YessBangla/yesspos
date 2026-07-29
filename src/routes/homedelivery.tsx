@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TextSizeToggle } from "@/components/TextSizeToggle";
+import { useSiteContent } from "@/lib/site-content";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -136,6 +138,7 @@ const checkoutSchema = z.object({
 function ShopPage() {
   const { lang } = useI18n();
   const bn = lang === "bn";
+  const { text: sc } = useSiteContent();
   const cart = useShopCart();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
@@ -496,7 +499,7 @@ function ShopPage() {
             <span className="gradient-brand grid size-9 place-items-center rounded-xl text-primary-foreground">
               <ShoppingBasket className="size-5" />
             </span>
-            <span className="hidden font-display text-lg font-bold text-primary sm:block">Sokoler Bazar</span>
+            <span className="hidden font-display text-lg font-bold text-primary sm:block">{sc("brand.name", "Sokoler Bazar")}</span>
           </Link>
 
           <div className="relative min-w-[160px] flex-1">
@@ -537,7 +540,8 @@ function ShopPage() {
             )}
           </div>
 
-          <div className="hidden shrink-0 sm:block">
+          <div className="hidden shrink-0 items-center gap-2 sm:flex">
+            <TextSizeToggle />
             <CustomerAccountMenu />
           </div>
 
@@ -659,11 +663,11 @@ function ShopPage() {
           <section className="mt-5 grid gap-3 sm:grid-cols-3">
             <div className="gradient-brand col-span-full rounded-2xl p-5 text-primary-foreground sm:col-span-2">
               <p className="text-xs opacity-80">{bn ? "অনলাইন সুপারশপ" : "Online supershop"}</p>
-              <h1 className="font-display text-2xl font-bold leading-tight">
-                {bn ? "বাজার এখন দরজায়, ১ ঘণ্টায় ডেলিভারি" : "Your daily bazar, delivered in 1 hour"}
+              <h1 className="font-display text-xl font-bold leading-tight sm:text-2xl">
+                {sc("shop.hero_title", bn ? "বাজার এখন দরজায়, ১ ঘণ্টায় ডেলিভারি" : "Your daily bazar, delivered in 1 hour")}
               </h1>
               <p className="mt-1 text-sm opacity-90">
-                {bn ? "৳১০০০+ অর্ডারে ফ্রি ডেলিভারি · ক্যাশ অন ডেলিভারি" : "Free delivery above ৳1000 · Cash on delivery"}
+                {sc("shop.hero_subtitle", bn ? "৳১০০০+ অর্ডারে ফ্রি ডেলিভারি · ক্যাশ অন ডেলিভারি" : "Free delivery above ৳1000 · Cash on delivery")}
               </p>
             </div>
             <div className="grid gap-3">
@@ -771,7 +775,7 @@ function ShopPage() {
       <footer className="mt-12 border-t border-border bg-card pb-24 lg:pb-0">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 text-sm sm:grid-cols-3">
           <div>
-            <p className="font-display text-base font-bold text-primary">Sokoler Bazar</p>
+            <p className="font-display text-base font-bold text-primary">{sc("brand.name", "Sokoler Bazar")}</p>
             <p className="mt-1 text-muted-foreground">
               {bn
                 ? "সুপারশপের সব পণ্য অনলাইনে — অর্ডার করুন, ঘরে বসে বুঝে নিন।"
