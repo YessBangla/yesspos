@@ -165,7 +165,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   ];
 
   const visibleGroups = groups
-    .map((g) => ({ ...g, items: g.items.filter((i) => canAccess(me.data?.role, i.feature)) }))
+    .map((g) => ({
+      ...g,
+      items: g.items.filter(
+        (i) =>
+          canAccess(me.data?.role, i.feature) &&
+          (!simple || (SIMPLE_ROUTES as readonly string[]).includes(i.to)),
+      ),
+    }))
     .filter((g) => g.items.length > 0);
 
   const allItems = groups.flatMap((g) => g.items);
