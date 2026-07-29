@@ -123,8 +123,15 @@ function ProductsPage() {
 
   const products = useQuery({
     queryKey: ["products-all"],
+    staleTime: 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*").order("name_en");
+      const { data, error } = await supabase
+        .from("products")
+        .select(
+          "id,name_en,name_bn,sku,seq,price,cost,stock,low_stock_at,unit,is_active,category_id,image_url,pack_size,brand",
+        )
+        .order("name_en")
+        .limit(2000);
       if (error) throw error;
       return data as unknown as Row[];
     },
