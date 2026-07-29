@@ -57,6 +57,14 @@ import { cn } from "@/lib/utils";
 import { logAudit } from "@/lib/audit";
 import { getPrinterSize, printHtml, setPrinterSize, type PrinterSize } from "@/lib/print";
 import { QuickAddCustomer, QuickAddProduct } from "@/components/QuickAddDialogs";
+import {
+  REDEEM_MIN_POINTS,
+  applyLoyalty,
+  maxRedeemable,
+  pointsFor,
+  pointsToMoney,
+  registerMember,
+} from "@/lib/loyalty";
 import { isOfflineSupported, queueSale } from "@/lib/offline-queue";
 import { normalizePhone } from "@/lib/share-invoice";
 
@@ -87,6 +95,7 @@ type Product = {
   category_id: string | null;
   image_url: string | null;
   pack_size: string | null;
+  brand: string | null;
 };
 
 
@@ -106,6 +115,7 @@ type SaleSnapshot = {
   email: string;
   contactId: string;
   changeGiven: boolean;
+  redeemPoints: string;
 };
 
 type Coupon = {
@@ -171,6 +181,7 @@ function PosPage() {
   const [contactId, setContactId] = useState("");
   const [scan, setScan] = useState("");
   const [changeGiven, setChangeGiven] = useState(false);
+  const [redeemPoints, setRedeemPoints] = useState("");
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [tabs, setTabs] = useState<{ id: string; name: string }[]>([{ id: "t1", name: "1" }]);
   const [activeTab, setActiveTab] = useState("t1");
@@ -215,7 +226,7 @@ function PosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id,name_en,name_bn,sku,seq,barcode,price,stock,unit,category_id,image_url,pack_size")
+        .select("id,name_en,name_bn,sku,seq,barcode,price,stock,unit,category_id,image_url,pack_size,brand")
         .eq("is_active", true)
         .order("name_en");
       if (error) throw error;
@@ -283,7 +294,24 @@ function PosPage() {
     const raw = coupon.type === "percent" ? (subtotal * Number(coupon.value)) / 100 : Number(coupon.value);
     return coupon.max_discount != null ? Math.min(raw, Number(coupon.max_discount)) : raw;
   }, [coupon, subtotal]);
-  const discountVal = Math.min(Math.max(manualDiscount + couponDiscount, 0), subtotal);
+  const selectedMember = useMemo(() => {
+    const c = (customers.data ?? []).find((x) => x.id === contactId) as
+      | { id: string; name: string; is_member?: boolean | null; loyalty_points?: number | null }
+      | undefined;
+    if (!c) return null;
+    return { id: c.id, name: c.name, isMember: !!c.is_member, points: Number(c.loyalty_points ?? 0) };
+  }, [customers.data, contactId]);
+
+  const preLoyaltyTotal = Math.max(
+    subtotal - Math.min(Math.max(manualDiscount + couponDiscount, 0), subtotal),
+    0,
+  );
+  const redeemCap = maxRedeemable(selectedMember?.points ?? 0, preLoyaltyTotal);
+  const redeemPts = selectedMember?.isMember
+    ? Math.max(0, Math.min(Math.floor(Number(redeemPoints) || 0), redeemCap))
+    : 0;
+  const loyaltyDiscount = pointsToMoney(redeemPts);
+  const discountVal = Math.min(Math.max(manualDiscount + couponDiscount + loyaltyDiscount, 0), subtotal);
   const taxVal = ((subtotal - discountVal) * (Number(taxPct) || 0)) / 100;
   const total = Math.max(subtotal - discountVal + taxVal, 0);
   const paidVal = paid === "" ? total : Number(paid) || 0;
@@ -349,6 +377,7 @@ function PosPage() {
     setPhone("");
     setEmail("");
     setContactId("");
+    setRedeemPoints("");
     setMethod("");
   }, [settings.data?.default_tax_pct]);
 
@@ -366,9 +395,10 @@ function PosPage() {
       phone,
       email,
       contactId,
+      redeemPoints,
       changeGiven,
     }),
-    [cart, discount, discountMode, couponCode, coupon, taxPct, paid, method, customer, phone, email, contactId, changeGiven],
+    [cart, discount, discountMode, couponCode, coupon, taxPct, paid, method, customer, phone, email, contactId, changeGiven, redeemPoints],
   );
 
   const applySale = useCallback((s: SaleSnapshot) => {
@@ -384,6 +414,7 @@ function PosPage() {
     setPhone(s.phone);
     setEmail(s.email);
     setContactId(s.contactId);
+    setRedeemPoints(s.redeemPoints ?? "");
     setChangeGiven(s.changeGiven);
   }, []);
 
@@ -536,6 +567,7 @@ function PosPage() {
       if (typeof navigator !== "undefined" && !navigator.onLine && isOfflineSupported()) {
         await queueSale(salePayload, itemRows);
         return {
+          loyalty: null as { earned: number; redeemed: number } | null,
           status,
           offline: true,
           receipt: {
@@ -559,7 +591,24 @@ function PosPage() {
       const { error: itemsError } = await supabase.from("sale_items").insert(items);
       if (itemsError) throw itemsError;
 
+      let loyalty: { earned: number; redeemed: number } | null = null;
+      if (status === "final" && contactId && selectedMember?.isMember) {
+        try {
+          await applyLoyalty({
+            contactId,
+            saleId: sale.id,
+            amount: total,
+            redeemPoints: redeemPts,
+            branchId: myBranch.branchId ?? null,
+          });
+          loyalty = { earned: pointsFor(total), redeemed: redeemPts };
+        } catch {
+          /* points are best-effort; never block a completed sale */
+        }
+      }
+
       return {
+        loyalty,
         status,
         offline: false,
         receipt: {
@@ -569,7 +618,14 @@ function PosPage() {
         } satisfies Receipt,
       };
     },
-    onSuccess: ({ status, offline, receipt: r }) => {
+    onSuccess: ({ status, offline, receipt: r, loyalty }) => {
+      if (loyalty) {
+        toast.success(
+          lang === "bn"
+            ? `পয়েন্ট: +${loyalty.earned}${loyalty.redeemed ? ` / ব্যবহৃত ${loyalty.redeemed}` : ""}`
+            : `Points: +${loyalty.earned}${loyalty.redeemed ? ` / used ${loyalty.redeemed}` : ""}`,
+        );
+      }
       void logAudit("sale", { entity: "sale", details: `${status} · ${r?.invoice ?? ""}` });
       if (status === "final") {
         setReceipt(r);
@@ -587,6 +643,7 @@ function PosPage() {
       queryClient.invalidateQueries({ queryKey: ["branch-stock"] });
       queryClient.invalidateQueries({ queryKey: ["sales"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
@@ -844,6 +901,11 @@ function PosPage() {
                     <span className="line-clamp-1 text-sm font-bold">
                       {lang === "bn" ? p.name_bn : p.name_en}
                     </span>
+                    {p.brand && (
+                      <span className="mt-0.5 w-fit rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                        {p.brand}
+                      </span>
+                    )}
                     <span className="truncate text-xs text-muted-foreground">
                       {productSerial(branchCode, p.seq)}
                       {p.pack_size ? ` · ${p.pack_size}` : ""}
@@ -939,6 +1001,22 @@ function PosPage() {
                 className="h-10 rounded-xl bg-muted/50"
               />
             </div>
+
+            <MemberPanel
+              lang={lang}
+              member={selectedMember}
+              phone={phone}
+              customer={customer}
+              redeemPoints={redeemPoints}
+              redeemCap={redeemCap}
+              onRedeemChange={setRedeemPoints}
+              onMember={(m) => {
+                setContactId(m.id);
+                setCustomer(m.name);
+                setPhone(m.phone ?? "");
+                queryClient.invalidateQueries({ queryKey: ["contacts"] });
+              }}
+            />
           </div>
 
           <div className="flex-none space-y-2.5 p-3 sm:p-4">
@@ -1102,6 +1180,13 @@ function PosPage() {
                   tone="success"
                 />
               )}
+              {redeemPts > 0 && (
+                <Row
+                  label={lang === "bn" ? `পয়েন্ট (${num(redeemPts, lang)})` : `Points (${redeemPts})`}
+                  value={`− ${money(loyaltyDiscount, lang)}`}
+                  tone="success"
+                />
+              )}
               <Row label={`${t("tax")} ${num(Number(taxPct) || 0, lang)}%`} value={money(taxVal, lang)} />
               <div className="flex items-baseline justify-between border-t border-border pt-2">
                 <span className="font-display text-lg font-bold">{t("total")}</span>
@@ -1260,6 +1345,98 @@ function PosPage() {
   );
 }
 
+
+function MemberPanel({
+  lang,
+  member,
+  phone,
+  customer,
+  redeemPoints,
+  redeemCap,
+  onRedeemChange,
+  onMember,
+}: {
+  lang: "bn" | "en";
+  member: { id: string; name: string; isMember: boolean; points: number } | null;
+  phone: string;
+  customer: string;
+  redeemPoints: string;
+  redeemCap: number;
+  onRedeemChange: (v: string) => void;
+  onMember: (m: { id: string; name: string; phone: string | null }) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const bn = lang === "bn";
+
+  async function join() {
+    const p = phone.trim();
+    if (p.length < 6) {
+      toast.error(bn ? "সদস্য করতে ফোন নম্বর দিন" : "Enter a phone number to enrol");
+      return;
+    }
+    setBusy(true);
+    try {
+      const m = await registerMember(p, customer.trim() || p);
+      onMember({ id: m.id, name: m.name, phone: m.phone });
+      toast.success(bn ? "সদস্য হয়ে গেছে" : "Member added");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!member?.isMember) {
+    return (
+      <div className="flex items-center justify-between gap-2 rounded-xl border border-dashed border-border bg-muted/30 px-3 py-2">
+        <p className="min-w-0 text-xs text-muted-foreground">
+          {bn ? "ফোন নম্বর দিয়ে সদস্য করুন — প্রতি ১০৳-এ ১ পয়েন্ট" : "Enrol by phone — 1 point per ৳10"}
+        </p>
+        <Button size="sm" variant="outline" className="h-8 shrink-0 text-xs" disabled={busy} onClick={join}>
+          {bn ? "সদস্য করুন" : "Make member"}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2">
+      <div className="flex items-center justify-between gap-2 text-xs font-semibold">
+        <span className="truncate text-primary">
+          {bn ? "সদস্য" : "Member"} · {member.name}
+        </span>
+        <span className="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-primary">
+          {num(member.points, lang)} {bn ? "পয়েন্ট" : "pts"}
+        </span>
+      </div>
+      {redeemCap > 0 ? (
+        <div className="flex items-center gap-2">
+          <Input
+            inputMode="numeric"
+            value={redeemPoints}
+            placeholder={bn ? "পয়েন্ট ব্যবহার" : "Redeem points"}
+            onChange={(e) => onRedeemChange(e.target.value)}
+            className="h-9 rounded-lg bg-card text-sm"
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-9 shrink-0 text-xs"
+            onClick={() => onRedeemChange(String(redeemCap))}
+          >
+            {bn ? "সর্বোচ্চ" : "Max"} {num(redeemCap, lang)}
+          </Button>
+        </div>
+      ) : (
+        <p className="text-[11px] text-muted-foreground">
+          {bn
+            ? `${num(REDEEM_MIN_POINTS, lang)} পয়েন্ট হলে ব্যবহার করা যাবে (১০ পয়েন্ট = ১৳)`
+            : `Redeemable from ${REDEEM_MIN_POINTS} points (10 points = ৳1)`}
+        </p>
+      )}
+    </div>
+  );
+}
 
 function Row({ label, value, tone }: { label: string; value: string; tone?: "success" }) {
   return (

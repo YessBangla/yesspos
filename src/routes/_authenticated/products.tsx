@@ -49,6 +49,7 @@ type Row = {
   category_id: string | null;
   image_url: string | null;
   pack_size: string | null;
+  brand: string | null;
 };
 
 const emptyForm = {
@@ -63,6 +64,7 @@ const emptyForm = {
   category_id: "",
   image_url: "",
   pack_size: "",
+  brand: "",
 };
 
 const schema = z.object({
@@ -76,6 +78,7 @@ const schema = z.object({
   unit: z.string().trim().min(1).max(12),
   image_url: z.string().trim().max(500),
   pack_size: z.string().trim().max(40),
+  brand: z.string().trim().max(60),
 });
 
 
@@ -95,6 +98,23 @@ function ProductsPage() {
       return data;
     },
   });
+
+  const brands = useQuery({
+    queryKey: ["catalog-brands"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("brands")
+        .select("id,name_en,name_bn,logo_url")
+        .order("name_en");
+      if (error) throw error;
+      return data as unknown as { id: string; name_en: string; name_bn: string; logo_url: string | null }[];
+    },
+    staleTime: 60_000,
+  });
+  const brandLogo = useMemo(
+    () => new Map((brands.data ?? []).map((b) => [b.name_en.toLowerCase(), b.logo_url])),
+    [brands.data],
+  );
 
   const myBranch = useActiveBranch();
   const branchCode = myBranch.branch?.code ?? null;
@@ -141,6 +161,7 @@ function ProductsPage() {
         category_id: form.category_id || null,
         image_url: rest.image_url || null,
         pack_size: rest.pack_size || null,
+        brand: rest.brand || null,
       };
 
       let productId = editing?.id ?? null;
@@ -207,6 +228,7 @@ function ProductsPage() {
       category_id: p.category_id ?? "",
       image_url: p.image_url ?? "",
       pack_size: p.pack_size ?? "",
+      brand: p.brand ?? "",
     });
 
     setOpen(true);
@@ -284,9 +306,24 @@ function ProductsPage() {
                       )}
                       <span className="flex min-w-0 flex-col">
                         <span className="truncate">{lang === "bn" ? p.name_bn : p.name_en}</span>
-                        {p.pack_size && (
-                          <span className="text-xs font-normal text-muted-foreground">{p.pack_size}</span>
-                        )}
+                        <span className="flex items-center gap-1.5 text-xs font-normal text-muted-foreground">
+                          {p.brand && (
+                            <span className="flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 font-semibold text-primary">
+                              {brandLogo.get(p.brand.toLowerCase()) && (
+                                <img
+                                  src={brandLogo.get(p.brand.toLowerCase()) as string}
+                                  alt=""
+                                  loading="lazy"
+                                  width={14}
+                                  height={14}
+                                  className="size-3.5 rounded-full object-contain"
+                                />
+                              )}
+                              {p.brand}
+                            </span>
+                          )}
+                          {p.pack_size}
+                        </span>
                       </span>
                     </div>
                   </td>
@@ -372,6 +409,21 @@ function ProductsPage() {
             <Field label={t("stock")} value={form.stock} onChange={(v) => setForm({ ...form, stock: v })} />
             <Field label={t("lowStock")} value={form.low_stock_at} onChange={(v) => setForm({ ...form, low_stock_at: v })} />
             <Field label={t("unit")} value={form.unit} onChange={(v) => setForm({ ...form, unit: v })} />
+            <div className="space-y-1.5">
+              <Label>{t("brand")}</Label>
+              <Input
+                value={form.brand}
+                list="brand-options"
+                maxLength={60}
+                placeholder={lang === "bn" ? "যেমন প্রাণ, তীর" : "e.g. Pran, Teer"}
+                onChange={(e) => setForm({ ...form, brand: e.target.value })}
+              />
+              <datalist id="brand-options">
+                {(brands.data ?? []).map((b) => (
+                  <option key={b.id} value={b.name_en} />
+                ))}
+              </datalist>
+            </div>
             <Field
               label={lang === "bn" ? "পরিমাণ / ওজন (যেমন ১ কেজি)" : "Pack size / weight"}
               value={form.pack_size}

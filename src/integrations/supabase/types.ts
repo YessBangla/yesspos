@@ -249,18 +249,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          logo_url: string | null
           name_bn: string
           name_en: string
         }
         Insert: {
           created_at?: string
           id?: string
+          logo_url?: string | null
           name_bn: string
           name_en: string
         }
         Update: {
           created_at?: string
           id?: string
+          logo_url?: string | null
           name_bn?: string
           name_en?: string
         }
@@ -326,7 +329,9 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          is_member: boolean
           loyalty_points: number
+          member_since: string | null
           name: string
           opening_balance: number
           phone: string | null
@@ -338,7 +343,9 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_member?: boolean
           loyalty_points?: number
+          member_since?: string | null
           name: string
           opening_balance?: number
           phone?: string | null
@@ -350,7 +357,9 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_member?: boolean
           loyalty_points?: number
+          member_since?: string | null
           name?: string
           opening_balance?: number
           phone?: string | null
@@ -607,6 +616,64 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      loyalty_ledger: {
+        Row: {
+          amount: number
+          branch_id: string | null
+          contact_id: string
+          created_at: string
+          id: string
+          note: string | null
+          points: number
+          sale_id: string | null
+          type: string
+        }
+        Insert: {
+          amount?: number
+          branch_id?: string | null
+          contact_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          points: number
+          sale_id?: string | null
+          type: string
+        }
+        Update: {
+          amount?: number
+          branch_id?: string | null
+          contact_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          points?: number
+          sale_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_ledger_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_ledger_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_ledger_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
@@ -1631,6 +1698,16 @@ export type Database = {
         Args: { _branch_id: string; _delta: number; _product_id: string }
         Returns: undefined
       }
+      apply_loyalty: {
+        Args: {
+          _amount: number
+          _branch_id?: string
+          _contact_id: string
+          _redeem_points?: number
+          _sale_id: string
+        }
+        Returns: number
+      }
       can_see_branch: { Args: { _branch_id: string }; Returns: boolean }
       has_role: {
         Args: {
@@ -1641,6 +1718,29 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       my_branch_id: { Args: never; Returns: string }
+      register_member: {
+        Args: { _name?: string; _phone: string }
+        Returns: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_member: boolean
+          loyalty_points: number
+          member_since: string | null
+          name: string
+          opening_balance: number
+          phone: string | null
+          type: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "contacts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       app_role: "admin" | "cashier" | "super_admin" | "manager" | "staff"

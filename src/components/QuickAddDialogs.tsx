@@ -27,6 +27,7 @@ type QuickCustomer = {
 };
 
 type QuickProduct = {
+  brand: string | null;
   id: string;
   name_en: string;
   name_bn: string;
@@ -142,6 +143,7 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (product: QuickProd
     category_id: "",
     pack_size: "",
     image_url: "",
+    brand: "",
   });
 
   const categories = useQuery({
@@ -171,9 +173,10 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (product: QuickProd
           category_id: form.category_id || null,
           pack_size: form.pack_size.trim() || null,
           image_url: form.image_url.trim() || null,
+          brand: form.brand.trim() || null,
           is_active: true,
         })
-        .select("id,name_en,name_bn,sku,seq,barcode,price,stock,unit,category_id,image_url,pack_size")
+        .select("id,name_en,name_bn,sku,seq,barcode,price,stock,unit,category_id,image_url,pack_size,brand")
         .single();
       if (error) throw error;
 
@@ -205,7 +208,7 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (product: QuickProd
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["branch-stock"] });
       onCreated?.(product);
-      setForm({ name_en: "", name_bn: "", sku: "", barcode: "", price: "", cost: "", stock: "", unit: "pcs", category_id: "", pack_size: "", image_url: "" });
+      setForm({ name_en: "", name_bn: "", sku: "", barcode: "", price: "", cost: "", stock: "", unit: "pcs", category_id: "", pack_size: "", image_url: "", brand: "" });
       setOpen(false);
       toast.success(t("saved"));
     },
@@ -275,6 +278,15 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (product: QuickProd
               maxLength={40}
               placeholder="1 kg / 500 ml"
               onChange={(e) => setForm({ ...form, pack_size: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>{t("brand")}</Label>
+            <Input
+              value={form.brand}
+              maxLength={60}
+              placeholder="Pran / Teer"
+              onChange={(e) => setForm({ ...form, brand: e.target.value })}
             />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
