@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
-import { shopPortalHref } from "@/lib/shop-portal";
 import { LangToggle } from "@/components/LangToggle";
 import heroShade from "@/assets/hero-shade.jpg";
 import cardShade from "@/assets/card-shade.jpg";
@@ -399,10 +398,10 @@ function Index() {
           <div className="flex items-center gap-2">
             <LangToggle />
             <Button asChild variant="accent" size="sm">
-              <a href={shopPortalHref()} target="_blank" rel="noreferrer">
+              <Link to="/homedelivery">
                 <ShoppingBag className="mr-1 size-4" />
                 {L("হোম ডেলিভারি অর্ডার দিন", "Order home delivery")}
-              </a>
+              </Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
               <Link to="/auth">{t("signIn")}</Link>
@@ -457,10 +456,10 @@ function Index() {
                     </Link>
                   </Button>
                   <Button asChild size="lg" variant="accent">
-                    <a href={shopPortalHref()} target="_blank" rel="noreferrer">
+                    <Link to="/homedelivery">
                       <ShoppingBag className="mr-1 size-4" />
                       {L("হোম ডেলিভারি অর্ডার দিন", "Order home delivery")}
-                    </a>
+                    </Link>
                   </Button>
                   <Button asChild size="lg" variant="outline">
                     <Link to="/auth">{t("signIn")}</Link>
