@@ -29,6 +29,7 @@ export const FEATURES = [
   "stock-transfers",
   "stock-count",
   "purchase-orders",
+  "assistant",
 ] as const;
 
 
@@ -60,9 +61,10 @@ export const ROLE_FEATURES: Record<AppRole, readonly Feature[]> = {
     "stock-transfers",
     "stock-count",
     "purchase-orders",
+    "assistant",
   ],
 
-  cashier: ["pos", "sales", "products", "contacts", "payments"],
+  cashier: ["pos", "sales", "products", "contacts", "payments", "assistant"],
   staff: ["pos", "products", "labels"],
 };
 
