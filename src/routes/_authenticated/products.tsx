@@ -86,6 +86,7 @@ function ProductsPage() {
   const { t, lang } = useI18n();
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
+  const [limit, setLimit] = useState(50);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Row | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
