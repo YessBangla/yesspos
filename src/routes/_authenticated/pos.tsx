@@ -67,6 +67,8 @@ import {
 } from "@/lib/loyalty";
 import { isOfflineSupported, queueSale } from "@/lib/offline-queue";
 import { normalizePhone } from "@/lib/share-invoice";
+import { checkPackCart } from "@/lib/pack-size";
+import { checkOrderConsistency, formatIssues } from "@/lib/order-check";
 
 
 
@@ -517,6 +519,33 @@ function PosPage() {
   const checkout = useMutation({
     mutationFn: async (status: "final" | "draft" | "quotation" = "final") => {
       if (cart.length === 0) throw new Error(t("emptyCart"));
+
+      // 1) Local pack size / weight validation.
+      const packIssues = checkPackCart(
+        cart.map((l) => ({
+          name: lang === "bn" ? l.product.name_bn : l.product.name_en,
+          pack_size: l.product.pack_size,
+          unit: l.product.unit,
+          qty: l.qty,
+          stock: l.product.stock,
+        })),
+      );
+      if (packIssues.length > 0) throw new Error(packIssues.map((i) => (lang === "bn" ? i.bn : i.en)).join("\n"));
+
+      // 2) Backend consistency check (price / pack size / stock across branches).
+      if (status === "final") {
+        const issues = await checkOrderConsistency(
+          cart.map((l) => ({
+            product_id: l.product.id,
+            name: lang === "bn" ? l.product.name_bn : l.product.name_en,
+            price: Number(l.product.price),
+            pack_size: l.product.pack_size,
+            quantity: l.qty,
+          })),
+        );
+        if (issues.length > 0) throw new Error(formatIssues(issues, lang === "bn"));
+      }
+
       const { data: sessionData } = await supabase.auth.getSession();
       const uid = sessionData.session?.user.id;
       if (!uid) throw new Error("Unauthorized");
