@@ -393,7 +393,7 @@ function PosPage() {
     resetSale();
   }, [activeTab, captureSale, resetSale]);
 
-  const closeTab = useCallback(
+  const doCloseTab = useCallback(
     (id: string) => {
       setTabs((prev) => {
         if (prev.length <= 1) return prev;
