@@ -49,6 +49,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useBranchStock } from "@/lib/use-branch";
 import { matchesSerial, productSerial } from "@/lib/serial";
+import { clearPosTabs, loadPosTabs, savePosTabs } from "@/lib/pos-tabs";
 import { useActiveBranch } from "@/lib/active-branch";
 import { useMyRole } from "@/lib/use-my-role";
 import { money, num, useI18n, type TKey } from "@/lib/i18n";
