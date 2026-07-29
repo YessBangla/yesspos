@@ -352,6 +352,36 @@ function ShopPage() {
             {bn ? "অফলাইন মোড — ব্রাউজ ও কার্ট কাজ করবে" : "Offline mode — browsing and cart still work"}
           </div>
         )}
+        {queued.length > 0 && (
+          <div className="flex flex-wrap items-center justify-center gap-2 bg-primary/10 px-3 py-1.5 text-xs">
+            <CloudUpload className="size-3.5 text-primary" />
+            <span>
+              {bn
+                ? `${num(queued.length, lang)}টি অর্ডার সিঙ্কের অপেক্ষায়`
+                : `${queued.length} order(s) waiting to sync`}
+              {queued.some((q) => q.attempts > 0) &&
+                ` · ${bn ? "পুনঃচেষ্টা" : "retry"} ${queued[0].attempts}/${QUEUE_MAX_ATTEMPTS}`}
+            </span>
+            <Button size="sm" variant="outline" className="h-6 px-2 text-[11px]" disabled={syncing} onClick={() => runSync(true)}>
+              {syncing ? <Loader2 className="mr-1 size-3 animate-spin" /> : <RefreshCw className="mr-1 size-3" />}
+              {bn ? "এখনই পাঠান" : "Sync now"}
+            </Button>
+            {queued.some((q) => q.attempts >= QUEUE_MAX_ATTEMPTS) && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[11px] text-destructive"
+                onClick={() =>
+                  queued
+                    .filter((q) => q.attempts >= QUEUE_MAX_ATTEMPTS)
+                    .forEach((q) => void dropQueuedOrder(q.id))
+                }
+              >
+                {bn ? "ব্যর্থগুলো মুছুন" : "Discard failed"}
+              </Button>
+            )}
+          </div>
+        )}
       </header>
 
       <div className="mx-auto max-w-6xl px-4">
@@ -453,7 +483,54 @@ function ShopPage() {
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                 />
               </div>
-              <F label={bn ? "নোট" : "Note"} v={form.note} on={(v) => setForm({ ...form, note: v })} />
+              <F label={bn ? "নোট (ঐচ্ছিক)" : "Note (optional)"} v={form.note} on={(v) => setForm({ ...form, note: v })} />
+
+              <div className="space-y-2">
+                <Label>{bn ? "ডেলিভারির দিন" : "Delivery day"}</Label>
+                <div className="flex flex-wrap gap-2">
+                  {nextDays(5).map((d) => {
+                    const key = d.toISOString().slice(0, 10);
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          setSlotDay(key);
+                          if (slotTime && !slotAvailable(d, slotTime)) setSlotTime("");
+                        }}
+                        className={cn(
+                          "rounded-xl border px-3 py-2 text-xs",
+                          slotDay === key ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border",
+                        )}
+                      >
+                        {d.toLocaleDateString(bn ? "bn-BD" : "en-GB", { weekday: "short", day: "numeric", month: "short" })}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Label>{bn ? "ডেলিভারির সময়" : "Delivery time"}</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {TIME_SLOTS.map((t) => {
+                    const ok = slotAvailable(new Date(slotDay), t.id);
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        disabled={!ok}
+                        onClick={() => setSlotTime(t.id)}
+                        className={cn(
+                          "rounded-xl border px-3 py-2 text-xs",
+                          !ok && "cursor-not-allowed opacity-40",
+                          slotTime === t.id ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border",
+                        )}
+                      >
+                        {bn ? t.bn : t.en}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="space-y-1.5">
                 <Label>{bn ? "পেমেন্ট" : "Payment"}</Label>
                 <div className="flex flex-wrap gap-2">
@@ -485,7 +562,21 @@ function ShopPage() {
               <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
             </div>
 
-            <Button className="w-full" size="lg" disabled={cart.lines.length === 0} onClick={placeOrder}>
+            {errors.length > 0 && (
+              <ul className="space-y-1 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+                {errors.map((e) => (
+                  <li key={e}>• {e}</li>
+                ))}
+              </ul>
+            )}
+
+            <Button
+              className="w-full"
+              size="lg"
+              disabled={cart.lines.length === 0 || placing}
+              onClick={placeOrder}
+            >
+              {placing && <Loader2 className="mr-2 size-4 animate-spin" />}
               {bn ? "অর্ডার কনফার্ম করুন" : "Place order"}
             </Button>
           </div>
