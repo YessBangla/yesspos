@@ -174,6 +174,7 @@ function PosPage() {
   });
 
   const myBranch = useActiveBranch();
+  const branchCode = myBranch.branch?.code ?? null;
   const branchStock = useBranchStock(myBranch.branchId);
 
   const products = useQuery({
@@ -635,7 +636,7 @@ function PosPage() {
                     <span className="line-clamp-1 text-sm font-bold">
                       {lang === "bn" ? p.name_bn : p.name_en}
                     </span>
-                    <span className="truncate text-xs text-muted-foreground">{p.sku}</span>
+                    <span className="truncate text-xs text-muted-foreground">{productSerial(branchCode, p.seq)}</span>
                   </span>
                   <span className="mt-auto flex items-center justify-between pt-1">
                     <span className="font-display text-base font-bold text-primary">
