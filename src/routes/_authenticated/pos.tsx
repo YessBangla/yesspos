@@ -46,6 +46,8 @@ import { logAudit } from "@/lib/audit";
 import { getPrinterSize, printHtml, setPrinterSize, type PrinterSize } from "@/lib/print";
 import { QuickAddCustomer, QuickAddProduct } from "@/components/QuickAddDialogs";
 import { isOfflineSupported, queueSale } from "@/lib/offline-queue";
+import { normalizePhone } from "@/lib/share-invoice";
+
 
 
 export const Route = createFileRoute("/_authenticated/pos")({
@@ -1201,8 +1203,9 @@ function ReceiptDialog({ receipt, onClose }: { receipt: Receipt | null; onClose:
               className="rounded-xl text-xs"
               onClick={() => {
                 if (!receipt.phone) return toast.error(t("needPhone"));
-                const to = receipt.phone.replace(/[^0-9]/g, "");
+                const to = normalizePhone(receipt.phone);
                 window.open(`https://wa.me/${to}?text=${encodeURIComponent(summaryText)}`, "_blank");
+
               }}
             >
               <MessageSquare className="mr-1 size-3.5" /> WA
