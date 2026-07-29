@@ -85,7 +85,10 @@ type Product = {
   stock: number;
   unit: string;
   category_id: string | null;
+  image_url: string | null;
+  pack_size: string | null;
 };
+
 
 type CartLine = { product: Product; qty: number };
 
