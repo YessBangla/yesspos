@@ -414,15 +414,18 @@ function Field({
   label,
   value,
   onChange,
+  maxLength = 80,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  maxLength?: number;
 }) {
   return (
     <div className="space-y-1.5">
       <Label>{label}</Label>
-      <Input value={value} maxLength={80} onChange={(e) => onChange(e.target.value)} />
+      <Input value={value} maxLength={maxLength} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
+
