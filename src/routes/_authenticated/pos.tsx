@@ -805,8 +805,20 @@ function PosPage() {
                   onClick={() => add(p)}
                   className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-[var(--shadow-lift)] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
                 >
-                  <span className="relative flex aspect-square w-full items-center justify-center rounded-xl bg-muted transition-colors group-hover:bg-primary/5">
-                    <Package className="size-10 text-primary/20 transition-transform group-hover:scale-110" />
+                  <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl bg-muted transition-colors group-hover:bg-primary/5">
+                    {p.image_url ? (
+                      <img
+                        src={p.image_url}
+                        alt={lang === "bn" ? p.name_bn : p.name_en}
+                        loading="lazy"
+                        width={512}
+                        height={512}
+                        className="size-full object-cover transition-transform group-hover:scale-105"
+                      />
+                    ) : (
+                      <Package className="size-10 text-primary/20 transition-transform group-hover:scale-110" />
+                    )}
+
                     <span
                       className={cn(
                         "absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold",
