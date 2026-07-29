@@ -215,7 +215,7 @@ function PosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id,name_en,name_bn,sku,seq,barcode,price,stock,unit,category_id")
+        .select("id,name_en,name_bn,sku,seq,barcode,price,stock,unit,category_id,image_url,pack_size")
         .eq("is_active", true)
         .order("name_en");
       if (error) throw error;
@@ -844,7 +844,10 @@ function PosPage() {
                     <span className="line-clamp-1 text-sm font-bold">
                       {lang === "bn" ? p.name_bn : p.name_en}
                     </span>
-                    <span className="truncate text-xs text-muted-foreground">{productSerial(branchCode, p.seq)}</span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {productSerial(branchCode, p.seq)}
+                      {p.pack_size ? ` · ${p.pack_size}` : ""}
+                    </span>
                   </span>
                   <span className="mt-auto flex items-center justify-between pt-1">
                     <span className="font-display text-base font-bold text-primary">
