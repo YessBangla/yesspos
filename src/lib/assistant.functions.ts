@@ -36,7 +36,7 @@ export const askAssistant = createServerFn({ method: "POST" })
 
     const [salesRes, lowStockRes, expenseRes, dueRes, topRes] = await Promise.all([
       supabase.from("sales").select("total,paid,created_at,status").gte("created_at", start).eq("status", "final"),
-      supabase.from("products").select("name_en,name_bn,stock,low_stock_alert").lte("stock", 5).limit(15),
+      supabase.from("products").select("name_en,name_bn,stock").lte("stock", 5).limit(15),
       supabase.from("expenses").select("amount,spent_on").gte("spent_on", start.slice(0, 10)),
       supabase
         .from("sales")
