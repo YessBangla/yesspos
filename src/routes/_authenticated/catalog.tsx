@@ -31,14 +31,18 @@ const schema = z.object({
 function CatalogList({ table, title }: { table: TableName; title: string }) {
   const { t, lang } = useI18n();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name_bn: "", name_en: "" });
+  const hasLogo = table === "brands";
+  const [form, setForm] = useState({ name_bn: "", name_en: "", logo_url: "" });
 
   const rows = useQuery({
     queryKey: [`catalog-${table}`],
     queryFn: async () => {
-      const { data, error } = await supabase.from(table).select("id,name_en,name_bn").order("name_en");
+      const { data, error } = await supabase
+        .from(table)
+        .select(hasLogo ? "id,name_en,name_bn,logo_url" : "id,name_en,name_bn")
+        .order("name_en");
       if (error) throw error;
-      return data;
+      return data as unknown as { id: string; name_en: string; name_bn: string; logo_url?: string | null }[];
     },
   });
 
@@ -46,11 +50,12 @@ function CatalogList({ table, title }: { table: TableName; title: string }) {
     mutationFn: async () => {
       const parsed = schema.safeParse(form);
       if (!parsed.success) throw new Error(parsed.error.issues[0].message);
-      const { error } = await supabase.from(table).insert(parsed.data);
+      const payload = hasLogo ? { ...parsed.data, logo_url: form.logo_url.trim() || null } : parsed.data;
+      const { error } = await supabase.from(table).insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
-      setForm({ name_bn: "", name_en: "" });
+      setForm({ name_bn: "", name_en: "", logo_url: "" });
       queryClient.invalidateQueries({ queryKey: [`catalog-${table}`] });
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success(t("save"));
@@ -88,6 +93,15 @@ function CatalogList({ table, title }: { table: TableName; title: string }) {
           value={form.name_en}
           onChange={(e) => setForm({ ...form, name_en: e.target.value })}
         />
+        {hasLogo && (
+          <Input
+            className="w-full"
+            placeholder={lang === "bn" ? "ব্র্যান্ড লোগোর লিংক" : "Brand logo URL"}
+            maxLength={500}
+            value={form.logo_url}
+            onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
+          />
+        )}
         <Button size="sm" onClick={() => add.mutate()} disabled={add.isPending}>
           <Plus className="mr-1 size-4" /> {t("add")}
         </Button>
@@ -96,7 +110,24 @@ function CatalogList({ table, title }: { table: TableName; title: string }) {
         {(rows.data ?? []).length === 0 && <li className="py-3 text-sm text-muted-foreground">{t("noData")}</li>}
         {(rows.data ?? []).map((r) => (
           <li key={r.id} className="flex items-center justify-between py-2 text-sm">
-            <span>{lang === "bn" ? r.name_bn : r.name_en}</span>
+            <span className="flex items-center gap-2">
+              {hasLogo &&
+                (r.logo_url ? (
+                  <img
+                    src={r.logo_url}
+                    alt={r.name_en}
+                    loading="lazy"
+                    width={24}
+                    height={24}
+                    className="size-6 rounded-full border border-border object-contain"
+                  />
+                ) : (
+                  <span className="grid size-6 place-items-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
+                    {r.name_en.slice(0, 1).toUpperCase()}
+                  </span>
+                ))}
+              {lang === "bn" ? r.name_bn : r.name_en}
+            </span>
             <Button variant="ghost" size="sm" onClick={() => remove.mutate(r.id)}>
               <Trash2 className="size-4" />
             </Button>
