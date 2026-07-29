@@ -540,7 +540,8 @@ function ShopPage() {
             )}
           </div>
 
-          <div className="hidden shrink-0 sm:block">
+          <div className="hidden shrink-0 items-center gap-2 sm:flex">
+            <TextSizeToggle />
             <CustomerAccountMenu />
           </div>
 
