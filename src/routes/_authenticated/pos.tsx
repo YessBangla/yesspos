@@ -294,7 +294,24 @@ function PosPage() {
     const raw = coupon.type === "percent" ? (subtotal * Number(coupon.value)) / 100 : Number(coupon.value);
     return coupon.max_discount != null ? Math.min(raw, Number(coupon.max_discount)) : raw;
   }, [coupon, subtotal]);
-  const discountVal = Math.min(Math.max(manualDiscount + couponDiscount, 0), subtotal);
+  const selectedMember = useMemo(() => {
+    const c = (customers.data ?? []).find((x) => x.id === contactId) as
+      | { id: string; name: string; is_member?: boolean | null; loyalty_points?: number | null }
+      | undefined;
+    if (!c) return null;
+    return { id: c.id, name: c.name, isMember: !!c.is_member, points: Number(c.loyalty_points ?? 0) };
+  }, [customers.data, contactId]);
+
+  const preLoyaltyTotal = Math.max(
+    subtotal - Math.min(Math.max(manualDiscount + couponDiscount, 0), subtotal),
+    0,
+  );
+  const redeemCap = maxRedeemable(selectedMember?.points ?? 0, preLoyaltyTotal);
+  const redeemPts = selectedMember?.isMember
+    ? Math.max(0, Math.min(Math.floor(Number(redeemPoints) || 0), redeemCap))
+    : 0;
+  const loyaltyDiscount = pointsToMoney(redeemPts);
+  const discountVal = Math.min(Math.max(manualDiscount + couponDiscount + loyaltyDiscount, 0), subtotal);
   const taxVal = ((subtotal - discountVal) * (Number(taxPct) || 0)) / 100;
   const total = Math.max(subtotal - discountVal + taxVal, 0);
   const paidVal = paid === "" ? total : Number(paid) || 0;
@@ -360,6 +377,7 @@ function PosPage() {
     setPhone("");
     setEmail("");
     setContactId("");
+    setRedeemPoints("");
     setMethod("");
   }, [settings.data?.default_tax_pct]);
 
@@ -549,6 +567,7 @@ function PosPage() {
       if (typeof navigator !== "undefined" && !navigator.onLine && isOfflineSupported()) {
         await queueSale(salePayload, itemRows);
         return {
+          loyalty: null as { earned: number; redeemed: number } | null,
           status,
           offline: true,
           receipt: {
@@ -572,7 +591,24 @@ function PosPage() {
       const { error: itemsError } = await supabase.from("sale_items").insert(items);
       if (itemsError) throw itemsError;
 
+      let loyalty: { earned: number; redeemed: number } | null = null;
+      if (status === "final" && contactId && selectedMember?.isMember) {
+        try {
+          await applyLoyalty({
+            contactId,
+            saleId: sale.id,
+            amount: total,
+            redeemPoints: redeemPts,
+            branchId: myBranch.branchId ?? null,
+          });
+          loyalty = { earned: pointsFor(total), redeemed: redeemPts };
+        } catch {
+          /* points are best-effort; never block a completed sale */
+        }
+      }
+
       return {
+        loyalty,
         status,
         offline: false,
         receipt: {
@@ -582,7 +618,14 @@ function PosPage() {
         } satisfies Receipt,
       };
     },
-    onSuccess: ({ status, offline, receipt: r }) => {
+    onSuccess: ({ status, offline, receipt: r, loyalty }) => {
+      if (loyalty) {
+        toast.success(
+          lang === "bn"
+            ? `পয়েন্ট: +${loyalty.earned}${loyalty.redeemed ? ` / ব্যবহৃত ${loyalty.redeemed}` : ""}`
+            : `Points: +${loyalty.earned}${loyalty.redeemed ? ` / used ${loyalty.redeemed}` : ""}`,
+        );
+      }
       void logAudit("sale", { entity: "sale", details: `${status} · ${r?.invoice ?? ""}` });
       if (status === "final") {
         setReceipt(r);
@@ -600,6 +643,7 @@ function PosPage() {
       queryClient.invalidateQueries({ queryKey: ["branch-stock"] });
       queryClient.invalidateQueries({ queryKey: ["sales"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
@@ -857,6 +901,11 @@ function PosPage() {
                     <span className="line-clamp-1 text-sm font-bold">
                       {lang === "bn" ? p.name_bn : p.name_en}
                     </span>
+                    {p.brand && (
+                      <span className="mt-0.5 w-fit rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                        {p.brand}
+                      </span>
+                    )}
                     <span className="truncate text-xs text-muted-foreground">
                       {productSerial(branchCode, p.seq)}
                       {p.pack_size ? ` · ${p.pack_size}` : ""}
@@ -952,6 +1001,22 @@ function PosPage() {
                 className="h-10 rounded-xl bg-muted/50"
               />
             </div>
+
+            <MemberPanel
+              lang={lang}
+              member={selectedMember}
+              phone={phone}
+              customer={customer}
+              redeemPoints={redeemPoints}
+              redeemCap={redeemCap}
+              onRedeemChange={setRedeemPoints}
+              onMember={(m) => {
+                setContactId(m.id);
+                setCustomer(m.name);
+                setPhone(m.phone ?? "");
+                queryClient.invalidateQueries({ queryKey: ["contacts"] });
+              }}
+            />
           </div>
 
           <div className="flex-none space-y-2.5 p-3 sm:p-4">
@@ -1112,6 +1177,13 @@ function PosPage() {
                 <Row
                   label={`${t("coupon")} · ${coupon.code}`}
                   value={`− ${money(couponDiscount, lang)}`}
+                  tone="success"
+                />
+              )}
+              {redeemPts > 0 && (
+                <Row
+                  label={lang === "bn" ? `পয়েন্ট (${num(redeemPts, lang)})` : `Points (${redeemPts})`}
+                  value={`− ${money(loyaltyDiscount, lang)}`}
                   tone="success"
                 />
               )}
