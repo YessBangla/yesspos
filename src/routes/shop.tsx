@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CloudUpload, Loader2, Minus, Plus, RefreshCw, Search, ShoppingBag, Truck, WifiOff } from "lucide-react";
 import { toast } from "sonner";
@@ -103,6 +103,50 @@ function ShopPage() {
   const [online, setOnline] = useState(true);
   const [form, setForm] = useState({ name: "", phone: "", address: "", area: "", note: "", payment: "cod" });
   const [placed, setPlaced] = useState<number | null>(null);
+  const [slotDay, setSlotDay] = useState(() => nextDays(1)[0].toISOString().slice(0, 10));
+  const [slotTime, setSlotTime] = useState<string>("");
+  const [errors, setErrors] = useState<string[]>([]);
+  const [queued, setQueued] = useState<QueuedOrder[]>([]);
+  const [syncing, setSyncing] = useState(false);
+  const [placing, setPlacing] = useState(false);
+
+  const refreshQueue = useCallback(async () => setQueued(await listQueuedOrders()), []);
+
+  const runSync = useCallback(
+    async (force = false) => {
+      if (!isQueueSupported()) return;
+      setSyncing(true);
+      try {
+        const res = await syncQueuedOrders(force);
+        if (res.synced > 0)
+          toast.success(
+            bn
+              ? `${res.synced}টি অপেক্ষমাণ অর্ডার পাঠানো হয়েছে (#${res.placed.join(", #")})`
+              : `${res.synced} queued order(s) sent (#${res.placed.join(", #")})`,
+          );
+        if (res.failed > 0)
+          toast.error(bn ? "কিছু অর্ডার পাঠানো যায়নি — আবার চেষ্টা হবে" : "Some orders failed — will retry");
+      } finally {
+        setSyncing(false);
+        await refreshQueue();
+      }
+    },
+    [bn, refreshQueue],
+  );
+
+  useEffect(() => {
+    refreshQueue();
+    const unsub = subscribeQueue(() => void refreshQueue());
+    void runSync();
+    const onOnline = () => void runSync(true);
+    window.addEventListener("online", onOnline);
+    const timer = window.setInterval(() => void runSync(), 30_000);
+    return () => {
+      unsub();
+      window.removeEventListener("online", onOnline);
+      window.clearInterval(timer);
+    };
+  }, [refreshQueue, runSync]);
 
   useEffect(() => {
     const sync = () => setOnline(navigator.onLine);
@@ -156,61 +200,122 @@ function ShopPage() {
   const fee = deliveryFeeFor(cart.subtotal);
   const total = cart.subtotal + fee;
 
-  async function placeOrder() {
+  const slotLabel = useMemo(() => {
+    if (!slotTime) return "";
+    const t = TIME_SLOTS.find((x) => x.id === slotTime);
+    return `${slotDay} ${t ? (bn ? t.bn : t.en) : slotTime}`;
+  }, [slotDay, slotTime, bn]);
+
+  function validate() {
+    const found: string[] = [];
     const parsed = checkoutSchema.safeParse(form);
     if (!parsed.success) {
-      toast.error(bn ? "নাম, ফোন ও ঠিকানা সঠিকভাবে দিন" : "Enter a valid name, phone and address");
+      const codes = new Set(parsed.error.issues.map((i) => String(i.message)));
+      if (codes.has("name")) found.push(bn ? "পুরো নাম লিখুন (কমপক্ষে ২ অক্ষর)" : "Enter your full name (min 2 characters)");
+      if (codes.has("phone")) found.push(bn ? "সঠিক বাংলাদেশি মোবাইল নম্বর দিন (01XXXXXXXXX)" : "Enter a valid Bangladeshi mobile number (01XXXXXXXXX)");
+      if (codes.has("address")) found.push(bn ? "সম্পূর্ণ ঠিকানা দিন — বাসা/রোড/এলাকা (কমপক্ষে ১০ অক্ষর)" : "Enter a full address — house/road/area (min 10 characters)");
+      if (codes.has("area")) found.push(bn ? "এলাকা লিখুন" : "Enter your area");
+      if (parsed.error.issues.some((i) => i.path[0] === "note")) found.push(bn ? "নোট সর্বোচ্চ ২০০ অক্ষর" : "Note can be at most 200 characters");
+    }
+    if (!slotTime) found.push(bn ? "ডেলিভারির সময় বেছে নিন" : "Choose a delivery slot");
+    else if (!slotAvailable(new Date(slotDay), slotTime))
+      found.push(bn ? "এই স্লটটি আর নেওয়া যাবে না, অন্যটি বেছে নিন" : "That slot has passed — pick another one");
+    if (cart.lines.length === 0) found.push(bn ? "কার্ট খালি" : "Cart is empty");
+
+    checkPackCart(
+      cart.lines.map((l) => ({ name: bn ? l.name_bn : l.name_en, pack_size: l.pack_size, qty: l.qty })),
+    ).forEach((i) => found.push(bn ? i.bn : i.en));
+
+    return { ok: found.length === 0, found, parsed };
+  }
+
+  async function placeOrder() {
+    const { ok, found, parsed } = validate();
+    setErrors(found);
+    if (!ok || !parsed.success) {
+      toast.error(found[0] ?? (bn ? "তথ্য ঠিক করুন" : "Please fix the highlighted fields"));
       return;
     }
-    if (cart.lines.length === 0) return;
 
-    const payload = {
-      order: {
-        customer_name: parsed.data.name,
-        customer_phone: parsed.data.phone,
-        address: parsed.data.address,
-        area: parsed.data.area || null,
-        note: parsed.data.note || null,
-        payment_method: form.payment,
-        subtotal: cart.subtotal,
-        delivery_fee: fee,
-        total,
-      },
-      lines: cart.lines,
+    const orderRow = {
+      customer_name: parsed.data.name,
+      customer_phone: parsed.data.phone,
+      address: parsed.data.address,
+      area: parsed.data.area,
+      note: parsed.data.note || null,
+      slot: slotLabel,
+      payment_method: form.payment,
+      subtotal: cart.subtotal,
+      delivery_fee: fee,
+      total,
     };
-
-    if (!navigator.onLine) {
-      localStorage.setItem(PENDING_KEY, JSON.stringify(payload));
-      toast.success(bn ? "অফলাইন — অনলাইনে এলে অর্ডার পাঠানো হবে" : "Offline — order will be sent once you reconnect");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("delivery_orders")
-      .insert(payload.order)
-      .select("id,order_no")
-      .single();
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
     const items = cart.lines.map((l) => ({
-      order_id: data.id,
       product_id: l.id,
       name_snapshot: bn ? l.name_bn : l.name_en,
       unit_price: l.price,
       quantity: l.qty,
       line_total: l.price * l.qty,
     }));
-    const { error: itemErr } = await supabase.from("delivery_order_items").insert(items);
-    if (itemErr) {
-      toast.error(itemErr.message);
+
+    // Offline → queue with retry, nothing is lost.
+    if (!navigator.onLine) {
+      await queueOrder(orderRow, items);
+      cart.clear();
+      setCheckout(false);
+      toast.success(bn ? "অফলাইন — অনলাইনে এলে অর্ডার স্বয়ংক্রিয়ভাবে যাবে" : "Offline — your order will be sent automatically when you reconnect");
       return;
     }
-    localStorage.removeItem(PENDING_KEY);
-    cart.clear();
-    setCheckout(false);
-    setPlaced(Number(data.order_no));
+
+    setPlacing(true);
+    try {
+      // Backend consistency check: price, pack size and stock across all branches.
+      const issues = await checkOrderConsistency(
+        cart.lines.map((l) => ({
+          product_id: l.id,
+          name: bn ? l.name_bn : l.name_en,
+          price: l.price,
+          pack_size: l.pack_size,
+          quantity: l.qty,
+        })),
+      );
+      if (issues.length > 0) {
+        const msgs = formatIssues(issues, bn).split("\n");
+        setErrors(msgs);
+        toast.error(bn ? "অর্ডার দেওয়া যাবে না — পণ্যের তথ্য মেলেনি" : "Cannot place order — product data mismatch");
+        void products.refetch();
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("delivery_orders")
+        .insert(orderRow)
+        .select("id,order_no")
+        .single();
+      if (error) throw error;
+
+      const { error: itemErr } = await supabase
+        .from("delivery_order_items")
+        .insert(items.map((i) => ({ ...i, order_id: data.id })));
+      if (itemErr) throw itemErr;
+
+      cart.clear();
+      setCheckout(false);
+      setErrors([]);
+      setPlaced(Number(data.order_no));
+    } catch (e) {
+      // Network/server hiccup → queue it instead of losing the order.
+      await queueOrder(orderRow, items);
+      cart.clear();
+      setCheckout(false);
+      toast.warning(
+        bn
+          ? "অর্ডার পাঠানো যায়নি — সারিতে রাখা হয়েছে, স্বয়ংক্রিয়ভাবে আবার চেষ্টা হবে"
+          : "Could not reach the server — order queued and will retry automatically",
+      );
+      console.error(e);
+    } finally {
+      setPlacing(false);
+    }
   }
 
   return (
