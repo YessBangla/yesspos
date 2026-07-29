@@ -51,10 +51,15 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/homedelivery")({
   validateSearch: (input: Record<string, unknown>) => {
-    const raw = { ...input, checkout: input.checkout === true || input.checkout === "1" || input.checkout === "true" };
-    const parsed = searchSchema.safeParse(raw);
+    const truthy = input.checkout === true || input.checkout === "1" || input.checkout === "true";
+    const parsed = searchSchema.safeParse({
+      q: typeof input.q === "string" && input.q.trim() ? input.q : undefined,
+      cat: typeof input.cat === "string" && input.cat.trim() ? input.cat : undefined,
+      checkout: truthy ? true : undefined,
+    });
     return parsed.success ? parsed.data : {};
   },
+
   head: () => ({
     meta: [
       { title: "Online grocery & home delivery — Yess Shop" },
