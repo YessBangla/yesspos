@@ -167,6 +167,7 @@ const dict = {
   title: { bn: "বিবরণ", en: "Title" },
   note: { bn: "নোট", en: "Note" },
   settings: { bn: "সেটিংস", en: "Settings" },
+  websiteContent: { bn: "ওয়েবসাইট কনটেন্ট", en: "Website content" },
   shopName: { bn: "দোকানের নাম", en: "Shop name" },
   receiptFooter: { bn: "রসিদের নিচের লেখা", en: "Receipt footer" },
   defaultTax: { bn: "ডিফল্ট ভ্যাট (%)", en: "Default VAT (%)" },

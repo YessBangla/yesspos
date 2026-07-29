@@ -19,6 +19,7 @@ export const FEATURES = [
   "users",
   "audit-logs",
   "settings",
+  "site-content",
   "api-hub",
   "accounts",
   "chart-of-accounts",
