@@ -373,6 +373,15 @@ function ProductsPage() {
                 </tr>
               );
             })}
+            {visible.length > limit && (
+              <tr>
+                <td className="px-4 py-4" colSpan={8}>
+                  <Button variant="outline" size="sm" onClick={() => setLimit((n) => n + 100)}>
+                    {lang === "bn" ? "আরও দেখুন" : "Load more"} ({num(visible.length - limit, lang)})
+                  </Button>
+                </td>
+              </tr>
+            )}
             {!products.isLoading && visible.length === 0 && (
               <tr>
                 <td className="px-4 py-6 text-muted-foreground" colSpan={8}>
