@@ -199,7 +199,10 @@ function ProductsPage() {
       low_stock_at: String(p.low_stock_at),
       unit: p.unit,
       category_id: p.category_id ?? "",
+      image_url: p.image_url ?? "",
+      pack_size: p.pack_size ?? "",
     });
+
     setOpen(true);
   }
 
