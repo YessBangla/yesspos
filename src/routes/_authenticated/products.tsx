@@ -136,7 +136,13 @@ function ProductsPage() {
       if (!parsed.success) throw new Error(parsed.error.issues[0].message);
       const branchId = myBranch.branchId ?? null;
       const { stock, ...rest } = parsed.data;
-      const payload = { ...rest, category_id: form.category_id || null };
+      const payload = {
+        ...rest,
+        category_id: form.category_id || null,
+        image_url: rest.image_url || null,
+        pack_size: rest.pack_size || null,
+      };
+
       let productId = editing?.id ?? null;
       if (editing) {
         const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
