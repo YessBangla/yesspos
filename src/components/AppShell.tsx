@@ -48,6 +48,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { LangToggle } from "@/components/LangToggle";
+import { TextSizeToggle } from "@/components/TextSizeToggle";
 import { QuickActions } from "@/components/QuickActions";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
@@ -275,7 +276,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <span className="gradient-brand flex size-9 shrink-0 items-center justify-center rounded-lg text-primary-foreground">
           <ReceiptText className="size-5" />
         </span>
-        {!collapsed && <span className="font-display text-lg font-bold">{t("appName")}</span>}
+        {!collapsed && <span className="truncate font-display text-lg font-bold">{t("appName")}</span>}
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-2 pb-3">
@@ -423,7 +424,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
             <OfflineIndicator />
             <QuickActions />
-
+            <TextSizeToggle />
             <LangToggle />
             <Button variant="ghost" size="sm" onClick={signOut} className="md:hidden">
               <LogOut className="size-4" />
