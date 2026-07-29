@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Download, Printer } from "lucide-react";
+import { Download, MessageCircle, Printer, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { downloadCsv } from "@/lib/audit";
 import { printHtml } from "@/lib/print";
+import { buildDueReminder, shareOnSms, shareOnWhatsApp } from "@/lib/share-invoice";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
@@ -46,7 +47,7 @@ function ReportsPage() {
       const [salesRes, purchasesRes, expensesRes, returnsRes, purchaseReturnsRes, productsRes] = await Promise.all([
         supabase
           .from("sales")
-          .select("id,invoice_no,customer_name,total,paid,status,created_at")
+          .select("id,invoice_no,customer_name,customer_phone,total,paid,status,created_at")
           .gte("created_at", startIso)
           .lte("created_at", endIso),
         supabase.from("purchases").select("total,paid,purchased_on").gte("purchased_on", from).lte("purchased_on", to),
@@ -331,7 +332,7 @@ function ReportsPage() {
               const due = Number(s.total) - Number(s.paid);
               const msg = buildDueReminder(
                 {
-                  shopName: settings.data?.shop_name ?? "SheraPOS",
+                  shopName: shop.data?.shop_name ?? "SheraPOS",
                   customer: s.customer_name ?? "",
                   invoice: Number(s.invoice_no),
                   due,
