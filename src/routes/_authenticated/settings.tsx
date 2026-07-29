@@ -38,9 +38,31 @@ function SettingsPage() {
     shop_name: "",
     address: "",
     phone: "",
+    currency_symbol: "৳",
     default_tax_pct: "0",
     receipt_footer: "",
   });
+  const [printer, setPrinter] = useState<PrinterSize>("80mm");
+  const [newPassword, setNewPassword] = useState("");
+
+  useEffect(() => {
+    setPrinter(getPrinterSize());
+  }, []);
+
+  const changePassword = useMutation({
+    mutationFn: async () => {
+      if (newPassword.trim().length < 6) throw new Error("min 6");
+      const { error } = await supabase.auth.updateUser({ password: newPassword.trim() });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setNewPassword("");
+      void logAudit("password_change", { entity: "user" });
+      toast.success(t("passwordChanged"));
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
 
   const settings = useQuery({
     queryKey: ["business-settings"],
