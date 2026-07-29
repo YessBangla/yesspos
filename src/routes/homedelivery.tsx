@@ -768,7 +768,7 @@ function ShopPage() {
         </aside>
       </div>
 
-      <footer className="mt-12 border-t border-border bg-card">
+      <footer className="mt-12 border-t border-border bg-card pb-24 lg:pb-0">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 text-sm sm:grid-cols-3">
           <div>
             <p className="font-display text-base font-bold text-primary">Sokoler Bazar</p>
@@ -1134,11 +1134,11 @@ function CartRow({
     <div className="flex items-center gap-3 p-3">
       <span className="min-w-0 flex-1 truncate text-sm">{bn ? l.name_bn : l.name_en}</span>
       <div className="flex items-center gap-1">
-        <Button size="icon" variant="ghost" className="size-7" onClick={() => onSet(l.qty - 1)}>
+        <Button size="icon" variant="ghost" className="size-9 sm:size-7" onClick={() => onSet(l.qty - 1)}>
           <Minus className="size-3" />
         </Button>
         <span className="w-6 text-center text-sm">{num(l.qty, lang)}</span>
-        <Button size="icon" variant="ghost" className="size-7" onClick={() => onSet(l.qty + 1)}>
+        <Button size="icon" variant="ghost" className="size-9 sm:size-7" onClick={() => onSet(l.qty + 1)}>
           <Plus className="size-3" />
         </Button>
       </div>
