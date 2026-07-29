@@ -75,10 +75,10 @@ import { checkOrderConsistency, formatIssues } from "@/lib/order-check";
 export const Route = createFileRoute("/_authenticated/pos")({
   head: () => ({
     meta: [
-      { title: "Sales counter — SokolerBazar" },
+      { title: "Sales counter — Sokoler Bazar" },
       { name: "description", content: "Ring up sales, apply coupons and print thermal receipts." },
-      { property: "og:title", content: "Sales counter — SokolerBazar" },
-      { property: "og:description", content: "Ring up sales and print receipts with SokolerBazar." },
+      { property: "og:title", content: "Sales counter — Sokoler Bazar" },
+      { property: "og:description", content: "Ring up sales and print receipts with Sokoler Bazar." },
     ],
   }),
   component: PosPage,

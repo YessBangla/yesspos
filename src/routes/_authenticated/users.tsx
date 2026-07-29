@@ -24,9 +24,9 @@ import { APP_ROLES, createAppUser, deleteAppUser, setUserPassword, type AppRole 
 export const Route = createFileRoute("/_authenticated/users")({
   head: () => ({
     meta: [
-      { title: "Users & roles — SokolerBazar" },
+      { title: "Users & roles — Sokoler Bazar" },
       { name: "description", content: "Create shop staff accounts and assign Super Admin, Admin, Manager, Cashier or Staff roles." },
-      { property: "og:title", content: "Users & roles — SokolerBazar" },
+      { property: "og:title", content: "Users & roles — Sokoler Bazar" },
       { property: "og:description", content: "Manage staff accounts and their permissions." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -51,9 +51,9 @@ import { Bike, LayoutGrid, MapPin, Megaphone, Plus, Settings2, Star, Store, Tras
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — SokolerBazar" },
+      { title: "Dashboard — Sokoler Bazar" },
       { name: "description", content: "Daily sales totals, dues, profit, cash flow and low-stock alerts." },
-      { property: "og:title", content: "Dashboard — SokolerBazar" },
+      { property: "og:title", content: "Dashboard — Sokoler Bazar" },
       { property: "og:description", content: "Sales, dues, profit, cash flow and stock at a glance." },
     ],
   }),
