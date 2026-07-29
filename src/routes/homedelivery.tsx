@@ -389,6 +389,26 @@ function ShopPage() {
         .insert(items.map((i) => ({ ...i, order_id: data.id })));
       if (itemErr) throw itemErr;
 
+      // Remember the address for signed-in shoppers (first one becomes default).
+      if (user && isCustomer) {
+        const dup = (savedAddresses.data ?? []).some(
+          (a) => a.address === parsed.data.address && a.area === parsed.data.area,
+        );
+        if (!dup) {
+          await supabase.from("customer_addresses").insert({
+            user_id: user.id,
+            label: (savedAddresses.data ?? []).length === 0 ? "Home" : parsed.data.area.slice(0, 20),
+            full_name: parsed.data.name,
+            phone: parsed.data.phone,
+            address: parsed.data.address,
+            area: parsed.data.area,
+            note: parsed.data.note || null,
+            is_default: (savedAddresses.data ?? []).length === 0,
+          });
+          void savedAddresses.refetch();
+        }
+      }
+
       cart.clear();
       setCheckout(false);
       setErrors([]);
