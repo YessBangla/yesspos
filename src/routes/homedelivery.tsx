@@ -12,7 +12,9 @@ import {
   RefreshCw,
   Search,
   ShoppingBag,
+  Home,
   ShoppingBasket,
+
   Truck,
   WifiOff,
 } from "lucide-react";
