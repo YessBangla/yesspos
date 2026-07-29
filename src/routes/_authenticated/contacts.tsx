@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useI18n } from "@/lib/i18n";
+import { registerMember } from "@/lib/loyalty";
 
 export const Route = createFileRoute("/_authenticated/contacts")({
   head: () => ({
@@ -31,6 +32,8 @@ type Contact = {
   email: string | null;
   address: string | null;
   opening_balance: number;
+  is_member?: boolean | null;
+  loyalty_points?: number | null;
 };
 
 const emptyForm = { type: "customer", name: "", phone: "", email: "", address: "", opening_balance: "0" };
@@ -97,6 +100,18 @@ function ContactsPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
+  const makeMember = useMutation({
+    mutationFn: async (c: Contact) => {
+      if (!c.phone) throw new Error(lang === "bn" ? "ফোন নম্বর প্রয়োজন" : "Phone number required");
+      await registerMember(c.phone, c.name);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      toast.success(lang === "bn" ? "সদস্য হয়ে গেছে" : "Member added");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("contacts").delete().eq("id", id);
@@ -148,6 +163,9 @@ function ContactsPage() {
               <th className="px-4 py-3">{t("name")}</th>
               <th className="px-4 py-3">{t("phone")}</th>
               <th className="px-4 py-3">{t("address")}</th>
+              {tab === "customer" && (
+                <th className="px-4 py-3">{lang === "bn" ? "সদস্যপদ" : "Membership"}</th>
+              )}
               <th className="px-4 py-3 text-right">{t("openingBalance")}</th>
               <th className="px-4 py-3" />
             </tr>
@@ -155,7 +173,7 @@ function ContactsPage() {
           <tbody>
             {contacts.isLoading && (
               <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={5}>
+                <td className="px-4 py-6 text-muted-foreground" colSpan={6}>
                   {t("loading")}
                 </td>
               </tr>
@@ -165,6 +183,26 @@ function ContactsPage() {
                 <td className="px-4 py-3 font-medium">{c.name}</td>
                 <td className="px-4 py-3 text-muted-foreground">{c.phone || "—"}</td>
                 <td className="px-4 py-3 text-muted-foreground">{c.address || "—"}</td>
+                {tab === "customer" && (
+                  <td className="px-4 py-3">
+                    {c.is_member ? (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">
+                        {lang === "bn" ? "সদস্য" : "Member"} · {Number(c.loyalty_points ?? 0)}{" "}
+                        {lang === "bn" ? "পয়েন্ট" : "pts"}
+                      </span>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs"
+                        disabled={!c.phone || makeMember.isPending}
+                        onClick={() => makeMember.mutate(c)}
+                      >
+                        {lang === "bn" ? "সদস্য করুন" : "Make member"}
+                      </Button>
+                    )}
+                  </td>
+                )}
                 <td className="px-4 py-3 text-right">{money(Number(c.opening_balance), lang)}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-1">
@@ -201,7 +239,7 @@ function ContactsPage() {
             ))}
             {!contacts.isLoading && visible.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={5}>
+                <td className="px-4 py-6 text-muted-foreground" colSpan={6}>
                   {t("noData")}
                 </td>
               </tr>
