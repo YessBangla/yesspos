@@ -71,7 +71,7 @@ function PurchaseOrdersPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("purchase_orders")
-        .select("id,po_no,supplier_id,order_date,expected_date,status,total,note")
+        .select("id,po_no,supplier_id,branch_id,order_date,expected_date,status,total,note")
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
