@@ -25,11 +25,18 @@ export function SiteContentEditor() {
   const { rows, isLoading } = useSiteContent();
   const [draft, setDraft] = useState<Record<string, { value_bn: string; value_en: string }>>({});
 
+  // Seed the draft once per loaded row set. Guarding on the row signature keeps
+  // an unstable query result from re-triggering the effect forever.
+  const signature = rows.map((r) => r.id).join(",");
   useEffect(() => {
-    setDraft(
-      Object.fromEntries(rows.map((r) => [r.id, { value_bn: r.value_bn, value_en: r.value_en }])),
+    if (!signature) return;
+    setDraft((prev) =>
+      Object.fromEntries(
+        rows.map((r) => [r.id, prev[r.id] ?? { value_bn: r.value_bn, value_en: r.value_en }]),
+      ),
     );
-  }, [rows]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature]);
 
   const groups = useMemo(() => {
     const map = new Map<string, SiteContentRow[]>();

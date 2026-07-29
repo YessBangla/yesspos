@@ -120,6 +120,9 @@ function CatalogList({ table, title }: { table: TableName; title: string }) {
                     width={24}
                     height={24}
                     className="size-6 rounded-full border border-border object-contain"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
                   />
                 ) : (
                   <span className="grid size-6 place-items-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">

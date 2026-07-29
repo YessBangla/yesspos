@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
@@ -49,7 +49,8 @@ export function useSiteContent() {
     };
   }, [queryClient]);
 
-  const rows = query.data ?? [];
+  const data = query.data;
+  const rows = useMemo(() => data ?? [], [data]);
 
   /** Text for a key in the active language, falling back to the given default. */
   const text = (key: string, fallback = "") => {

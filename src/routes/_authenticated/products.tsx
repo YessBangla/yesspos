@@ -328,6 +328,9 @@ function ProductsPage() {
                                   width={14}
                                   height={14}
                                   className="size-3.5 rounded-full object-contain"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                  }}
                                 />
                               )}
                               {p.brand}
