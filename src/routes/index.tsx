@@ -774,8 +774,11 @@ function Index() {
           <div className="text-sm">
             <p className="font-semibold">{L("সমাধান", "Solutions")}</p>
             <ul className="mt-3 space-y-2 text-muted-foreground">
+              <li><Link to="/homedelivery" className="hover:text-foreground">{L("হোম ডেলিভারি অর্ডার", "Home delivery orders")}</Link></li>
+              <li><Link to="/track" className="hover:text-foreground">{L("অর্ডার ট্র্যাক", "Track order")}</Link></li>
               <li><a href="#industries" className="hover:text-foreground">{L("ইন্ডাস্ট্রি", "Industries")}</a></li>
               <li><a href="#faq" className="hover:text-foreground">{L("প্রশ্নোত্তর", "FAQ")}</a></li>
+
             </ul>
           </div>
           <div className="text-sm">
