@@ -28,6 +28,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
@@ -393,7 +403,7 @@ function PosPage() {
     resetSale();
   }, [activeTab, captureSale, resetSale]);
 
-  const closeTab = useCallback(
+  const doCloseTab = useCallback(
     (id: string) => {
       setTabs((prev) => {
         if (prev.length <= 1) return prev;
@@ -410,6 +420,22 @@ function PosPage() {
       });
     },
     [activeTab, applySale, resetSale],
+  );
+
+  // Closing a sale tab that still holds items must be confirmed first, so an
+  // accidental click on the × never wipes a pending customer's cart.
+  const [closeAsk, setCloseAsk] = useState<string | null>(null);
+
+  const closeTab = useCallback(
+    (id: string) => {
+      const count = id === activeTab ? cart.length : (stash.current[id]?.cart.length ?? 0);
+      if (count > 0) {
+        setCloseAsk(id);
+        return;
+      }
+      doCloseTab(id);
+    },
+    [activeTab, cart.length, doCloseTab],
   );
 
   const applyCoupon = useMutation({
@@ -648,6 +674,32 @@ function PosPage() {
             {lang === "bn" ? "নতুন বিক্রয়" : "New sale"}
           </Button>
         </div>
+
+        <AlertDialog open={closeAsk !== null} onOpenChange={(o) => !o && setCloseAsk(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {lang === "bn" ? "এই বিক্রয় বন্ধ করবেন?" : "Close this sale?"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {lang === "bn"
+                  ? "এই ট্যাবে পণ্য রয়েছে। বন্ধ করলে কার্টের সব পণ্য মুছে যাবে।"
+                  : "This tab still has items. Closing it will discard the cart."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (closeAsk) doCloseTab(closeAsk);
+                  setCloseAsk(null);
+                }}
+              >
+                {lang === "bn" ? "হ্যাঁ, বন্ধ করুন" : "Yes, close"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[1fr_420px]">
         {/* Catalog */}
