@@ -14,6 +14,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { registerServiceWorker } from "@/lib/pwa";
+
 
 function NotFoundComponent() {
   return (
@@ -80,6 +82,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "theme-color", content: "#0f766e" },
+
       { title: "Yess POS — Shop Billing, Stock & Reports" },
       { name: "description", content: "SheraPOS is a browser point-of-sale for retail shops: fast billing, automatic stock updates, daily sales reports. Bengali and English." },
       { name: "author", content: "SheraPOS" },
@@ -101,6 +105,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/pwa-192.png" },
+
     ],
   }),
   shellComponent: RootShell,
@@ -126,6 +133,7 @@ function RootShell({ children }: { children: ReactNode }) {
 function AuthSync() {
   const router = useRouter();
   useEffect(() => {
+    registerServiceWorker();
     const { data } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
@@ -134,6 +142,7 @@ function AuthSync() {
   }, [router]);
   return null;
 }
+
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();

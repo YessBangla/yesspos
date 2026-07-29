@@ -43,6 +43,8 @@ import { useI18n } from "@/lib/i18n";
 import { LangToggle } from "@/components/LangToggle";
 import { QuickActions } from "@/components/QuickActions";
 import { BranchSwitcher } from "@/components/BranchSwitcher";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
+
 import { cn } from "@/lib/utils";
 import { useMyRole } from "@/lib/use-my-role";
 import { canAccess, type Feature } from "@/lib/permissions";
@@ -330,8 +332,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Button>
           <BranchSwitcher />
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-
+            <OfflineIndicator />
             <QuickActions />
+
             <LangToggle />
             <Button variant="ghost" size="sm" onClick={signOut} className="md:hidden">
               <LogOut className="size-4" />
