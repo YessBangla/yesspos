@@ -28,6 +28,8 @@ import { deliveryFeeFor, useShopCart, type ShopLine } from "@/lib/shop-cart";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { checkPackCart } from "@/lib/pack-size";
+import { useCustomerSession, normalizePhone } from "@/lib/customer-auth";
+import { CustomerAccountMenu } from "@/components/CustomerAccountMenu";
 import { checkOrderConsistency, formatIssues } from "@/lib/order-check";
 import {
   QUEUE_MAX_ATTEMPTS,
@@ -149,6 +151,36 @@ function ShopPage() {
   const [queued, setQueued] = useState<QueuedOrder[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [placing, setPlacing] = useState(false);
+  const { user, isCustomer, name: accName, phone: accPhone } = useCustomerSession();
+  const [prefilled, setPrefilled] = useState(false);
+
+  const savedAddresses = useQuery({
+    queryKey: ["shop-addresses", user?.id],
+    enabled: !!user && isCustomer,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("customer_addresses")
+        .select("id,label,full_name,phone,address,area,note,is_default")
+        .order("is_default", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Signed-in shoppers get their default address pre-filled at checkout.
+  useEffect(() => {
+    if (prefilled || !user || !isCustomer) return;
+    const a = savedAddresses.data?.[0];
+    setForm((f) => ({
+      ...f,
+      name: a?.full_name || accName || f.name,
+      phone: a?.phone || normalizePhone(accPhone) || f.phone,
+      address: a?.address || f.address,
+      area: a?.area || f.area,
+      note: a?.note || f.note,
+    }));
+    if (savedAddresses.data) setPrefilled(true);
+  }, [user, isCustomer, accName, accPhone, savedAddresses.data, prefilled]);
 
   // Keep search / category / checkout shareable and reload-safe in the URL.
   useEffect(() => {
@@ -296,6 +328,7 @@ function ShopPage() {
     }
 
     const orderRow = {
+      user_id: user && isCustomer ? user.id : null,
       customer_name: parsed.data.name,
       customer_phone: parsed.data.phone,
       address: parsed.data.address,
@@ -355,6 +388,26 @@ function ShopPage() {
         .from("delivery_order_items")
         .insert(items.map((i) => ({ ...i, order_id: data.id })));
       if (itemErr) throw itemErr;
+
+      // Remember the address for signed-in shoppers (first one becomes default).
+      if (user && isCustomer) {
+        const dup = (savedAddresses.data ?? []).some(
+          (a) => a.address === parsed.data.address && a.area === parsed.data.area,
+        );
+        if (!dup) {
+          await supabase.from("customer_addresses").insert({
+            user_id: user.id,
+            label: (savedAddresses.data ?? []).length === 0 ? "Home" : parsed.data.area.slice(0, 20),
+            full_name: parsed.data.name,
+            phone: parsed.data.phone,
+            address: parsed.data.address,
+            area: parsed.data.area,
+            note: parsed.data.note || null,
+            is_default: (savedAddresses.data ?? []).length === 0,
+          });
+          void savedAddresses.refetch();
+        }
+      }
 
       cart.clear();
       setCheckout(false);
@@ -418,6 +471,9 @@ function ShopPage() {
             <Link to="/track" className="hover:underline">
               {bn ? "অর্ডার ট্র্যাক" : "Track order"}
             </Link>
+            <Link to="/my-account" search={{ tab: "orders" }} className="hover:underline">
+              {bn ? "আমার অ্যাকাউন্ট" : "My account"}
+            </Link>
             <Link to="/auth" className="hidden hover:underline sm:inline">
               {bn ? "স্টাফ লগইন" : "Staff login"}
             </Link>
@@ -473,12 +529,60 @@ function ShopPage() {
             )}
           </div>
 
+          <div className="hidden shrink-0 sm:block">
+            <CustomerAccountMenu />
+          </div>
+
           <Button className="h-11 shrink-0 rounded-full" onClick={() => setCheckout(true)}>
             <ShoppingBag className="mr-1 size-4" />
             <span className="hidden sm:inline">{num(cart.count, lang)} · </span>
             {money(cart.subtotal, lang)}
           </Button>
         </div>
+
+        {/* ---- Portal menu ---- */}
+        <nav className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 pb-2 text-sm">
+          <Link to="/" className="whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted">
+            {bn ? "হোম" : "Home"}
+          </Link>
+          <button
+            type="button"
+            className="whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted"
+            onClick={() => {
+              setCat("");
+              setQuery("");
+              setLimit(PAGE);
+            }}
+          >
+            {bn ? "সব পণ্য" : "All products"}
+          </button>
+          {(categories.data ?? []).slice(0, 6).map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className={cn(
+                "whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted",
+                cat === c.id && "bg-primary/10 font-semibold text-primary",
+              )}
+              onClick={() => {
+                setCat(c.id);
+                setLimit(PAGE);
+              }}
+            >
+              {bn ? c.name_bn : c.name_en}
+            </button>
+          ))}
+          <Link to="/track" className="ml-auto whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted">
+            {bn ? "অর্ডার ট্র্যাক" : "Track order"}
+          </Link>
+          <Link
+            to="/my-account"
+            search={{ tab: "orders" }}
+            className="whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted sm:hidden"
+          >
+            {bn ? "অ্যাকাউন্ট" : "Account"}
+          </Link>
+        </nav>
 
         {!online && (
           <div className="flex items-center justify-center gap-2 bg-warning/20 py-1 text-xs">
@@ -711,6 +815,43 @@ function ShopPage() {
                 <p className="p-4 text-sm text-muted-foreground">{bn ? "কার্ট খালি" : "Cart is empty"}</p>
               )}
             </div>
+
+            {user && isCustomer ? (
+              (savedAddresses.data ?? []).length > 0 && (
+                <div className="space-y-2">
+                  <Label>{bn ? "সংরক্ষিত ঠিকানা" : "Saved addresses"}</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {(savedAddresses.data ?? []).map((a) => (
+                      <button
+                        key={a.id}
+                        type="button"
+                        className="rounded-xl border border-border px-3 py-2 text-left text-xs hover:border-primary"
+                        onClick={() =>
+                          setForm((f) => ({
+                            ...f,
+                            name: a.full_name,
+                            phone: a.phone,
+                            address: a.address,
+                            area: a.area,
+                            note: a.note ?? "",
+                          }))
+                        }
+                      >
+                        <span className="font-semibold">{a.label}</span>
+                        <span className="block text-muted-foreground">{a.area}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            ) : (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-dashed border-border p-3 text-sm">
+                <span className="text-muted-foreground">
+                  {bn ? "লগইন করলে ঠিকানা ও অর্ডার সংরক্ষিত থাকবে" : "Sign in to save addresses and track orders"}
+                </span>
+                <CustomerAccountMenu compact />
+              </div>
+            )}
 
             <div className="grid gap-3">
               <F label={bn ? "নাম" : "Name"} v={form.name} on={(v) => setForm({ ...form, name: v })} />

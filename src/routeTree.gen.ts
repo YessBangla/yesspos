@@ -14,6 +14,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as MyAccountRouteImport } from './routes/my-account'
 import { Route as HomedeliveryRouteImport } from './routes/homedelivery'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -73,6 +74,11 @@ const ShopRoute = ShopRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyAccountRoute = MyAccountRouteImport.update({
+  id: '/my-account',
+  path: '/my-account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HomedeliveryRoute = HomedeliveryRouteImport.update({
@@ -262,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/homedelivery': typeof HomedeliveryRoute
+  '/my-account': typeof MyAccountRoute
   '/privacy': typeof PrivacyRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -303,6 +310,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/homedelivery': typeof HomedeliveryRoute
+  '/my-account': typeof MyAccountRoute
   '/privacy': typeof PrivacyRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -346,6 +354,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/homedelivery': typeof HomedeliveryRoute
+  '/my-account': typeof MyAccountRoute
   '/privacy': typeof PrivacyRoute
   '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -389,6 +398,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/homedelivery'
+    | '/my-account'
     | '/privacy'
     | '/shop'
     | '/sitemap.xml'
@@ -430,6 +440,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/homedelivery'
+    | '/my-account'
     | '/privacy'
     | '/shop'
     | '/sitemap.xml'
@@ -472,6 +483,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/homedelivery'
+    | '/my-account'
     | '/privacy'
     | '/shop'
     | '/sitemap.xml'
@@ -515,6 +527,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   HomedeliveryRoute: typeof HomedeliveryRoute
+  MyAccountRoute: typeof MyAccountRoute
   PrivacyRoute: typeof PrivacyRoute
   ShopRoute: typeof ShopRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -557,6 +570,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-account': {
+      id: '/my-account'
+      path: '/my-account'
+      fullPath: '/my-account'
+      preLoaderRoute: typeof MyAccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/homedelivery': {
@@ -883,6 +903,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   HomedeliveryRoute: HomedeliveryRoute,
+  MyAccountRoute: MyAccountRoute,
   PrivacyRoute: PrivacyRoute,
   ShopRoute: ShopRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
