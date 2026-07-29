@@ -37,6 +37,8 @@ type QuickProduct = {
   stock: number;
   unit: string;
   category_id: string | null;
+  image_url: string | null;
+  pack_size: string | null;
 };
 
 /** [+] Quick-create a customer straight from the POS screen. */
@@ -138,6 +140,8 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (product: QuickProd
     stock: "",
     unit: "pcs",
     category_id: "",
+    pack_size: "",
+    image_url: "",
   });
 
   const categories = useQuery({
@@ -165,9 +169,11 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (product: QuickProd
           cost: Number(form.cost) || 0,
           unit: form.unit.trim() || "pcs",
           category_id: form.category_id || null,
+          pack_size: form.pack_size.trim() || null,
+          image_url: form.image_url.trim() || null,
           is_active: true,
         })
-        .select("id,name_en,name_bn,sku,barcode,price,stock,unit,category_id")
+        .select("id,name_en,name_bn,sku,seq,barcode,price,stock,unit,category_id,image_url,pack_size")
         .single();
       if (error) throw error;
 
@@ -199,7 +205,7 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (product: QuickProd
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["branch-stock"] });
       onCreated?.(product);
-      setForm({ name_en: "", name_bn: "", sku: "", barcode: "", price: "", cost: "", stock: "", unit: "pcs", category_id: "" });
+      setForm({ name_en: "", name_bn: "", sku: "", barcode: "", price: "", cost: "", stock: "", unit: "pcs", category_id: "", pack_size: "", image_url: "" });
       setOpen(false);
       toast.success(t("saved"));
     },
@@ -261,6 +267,23 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (product: QuickProd
           <div className="space-y-1.5">
             <Label>{t("unit")}</Label>
             <Input value={form.unit} maxLength={20} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>{t("packSize")}</Label>
+            <Input
+              value={form.pack_size}
+              maxLength={40}
+              placeholder="1 kg / 500 ml"
+              onChange={(e) => setForm({ ...form, pack_size: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>{t("imageUrl")}</Label>
+            <Input
+              value={form.image_url}
+              maxLength={500}
+              onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+            />
           </div>
         </div>
         <div className="flex justify-end gap-2">
