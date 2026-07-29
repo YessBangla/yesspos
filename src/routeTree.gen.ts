@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrackRouteImport } from './routes/track'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ShopRouteImport } from './routes/shop'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as HomedeliveryRouteImport } from './routes/homedelivery'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -62,6 +63,11 @@ const TermsRoute = TermsRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopRoute = ShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -257,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/homedelivery': typeof HomedeliveryRoute
   '/privacy': typeof PrivacyRoute
+  '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
@@ -297,6 +304,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/homedelivery': typeof HomedeliveryRoute
   '/privacy': typeof PrivacyRoute
+  '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
@@ -339,6 +347,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/homedelivery': typeof HomedeliveryRoute
   '/privacy': typeof PrivacyRoute
+  '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
@@ -381,6 +390,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/homedelivery'
     | '/privacy'
+    | '/shop'
     | '/sitemap.xml'
     | '/terms'
     | '/track'
@@ -421,6 +431,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/homedelivery'
     | '/privacy'
+    | '/shop'
     | '/sitemap.xml'
     | '/terms'
     | '/track'
@@ -462,6 +473,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/homedelivery'
     | '/privacy'
+    | '/shop'
     | '/sitemap.xml'
     | '/terms'
     | '/track'
@@ -504,6 +516,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   HomedeliveryRoute: typeof HomedeliveryRoute
   PrivacyRoute: typeof PrivacyRoute
+  ShopRoute: typeof ShopRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   TrackRoute: typeof TrackRoute
@@ -530,6 +543,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop': {
+      id: '/shop'
+      path: '/shop'
+      fullPath: '/shop'
+      preLoaderRoute: typeof ShopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -864,6 +884,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   HomedeliveryRoute: HomedeliveryRoute,
   PrivacyRoute: PrivacyRoute,
+  ShopRoute: ShopRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   TrackRoute: TrackRoute,
