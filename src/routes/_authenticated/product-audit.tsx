@@ -112,7 +112,7 @@ function ProductAuditPage() {
 
   const repair = useMutation({
     mutationFn: async () => {
-      const patch: Record<string, string> = {};
+      const patch: { image_url?: string; pack_size?: string } = {};
       if (imageUrl.trim()) patch.image_url = imageUrl.trim().slice(0, 500);
       if (packSize.trim()) {
         if (!parsePackSize(packSize.trim())) throw new Error(bn ? "প্যাক সাইজ ভুল (যেমন 500g, 1kg, 12 pcs)" : "Invalid pack size (e.g. 500g, 1kg, 12 pcs)");
@@ -124,7 +124,7 @@ function ProductAuditPage() {
 
       const { error } = await supabase.from("products").update(patch).in("id", selectedIds);
       if (error) throw error;
-      await logAudit("update", {
+      await logAudit("product_update", {
         entity: "product",
         details: `Bulk repaired ${selectedIds.length} product(s): ${Object.keys(patch).join(", ")}`,
       });
