@@ -40,7 +40,26 @@ import {
   type QueuedOrder,
 } from "@/lib/delivery-queue";
 
+const SITE = "https://yesspos.lovable.app";
+
+/** Deep-linkable portal state: ?q=rice&cat=<id>&checkout=1 */
+const searchSchema = z.object({
+  q: z.string().trim().max(60).optional(),
+  cat: z.string().trim().max(64).optional(),
+  checkout: z.boolean().optional(),
+});
+
 export const Route = createFileRoute("/homedelivery")({
+  validateSearch: (input: Record<string, unknown>) => {
+    const truthy = input.checkout === true || input.checkout === 1 || input.checkout === "1" || input.checkout === "true";
+    const parsed = searchSchema.safeParse({
+      q: typeof input.q === "string" && input.q.trim() ? input.q : undefined,
+      cat: typeof input.cat === "string" && input.cat.trim() ? input.cat : undefined,
+      checkout: truthy ? true : undefined,
+    });
+    return parsed.success ? parsed.data : {};
+  },
+
   head: () => ({
     meta: [
       { title: "Online grocery & home delivery — Yess Shop" },
@@ -51,11 +70,14 @@ export const Route = createFileRoute("/homedelivery")({
       { property: "og:title", content: "Online grocery & home delivery — Yess Shop" },
       { property: "og:description", content: "Fresh groceries delivered to your door, free above ৳1000." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: `${SITE}/homedelivery` },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: `${SITE}/homedelivery` }],
   }),
   component: ShopPage,
 });
+
 
 type P = {
   id: string;
@@ -111,10 +133,13 @@ function ShopPage() {
   const { lang } = useI18n();
   const bn = lang === "bn";
   const cart = useShopCart();
-  const [query, setQuery] = useState("");
-  const [cat, setCat] = useState<string>("");
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [query, setQuery] = useState(search.q ?? "");
+  const [cat, setCat] = useState<string>(search.cat ?? "");
   const [limit, setLimit] = useState(PAGE);
-  const [checkout, setCheckout] = useState(false);
+  const [checkout, setCheckout] = useState(!!search.checkout);
+
   const [online, setOnline] = useState(true);
   const [form, setForm] = useState({ name: "", phone: "", address: "", area: "", note: "", payment: "cod" });
   const [placed, setPlaced] = useState<number | null>(null);
@@ -124,6 +149,24 @@ function ShopPage() {
   const [queued, setQueued] = useState<QueuedOrder[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [placing, setPlacing] = useState(false);
+
+  // Keep search / category / checkout shareable and reload-safe in the URL.
+  useEffect(() => {
+    const q = query.trim() || undefined;
+    const c = cat || undefined;
+    const ck = checkout;
+    if (search.q === q && search.cat === c && (search.checkout ?? false) === ck) return;
+    void navigate({ search: { q, cat: c, checkout: ck || undefined }, replace: true });
+  }, [query, cat, checkout, navigate, search.q, search.cat, search.checkout]);
+
+  // Back/forward navigation should move the portal too.
+  useEffect(() => {
+    setQuery(search.q ?? "");
+    setCat(search.cat ?? "");
+    setCheckout(!!search.checkout);
+  }, [search.q, search.cat, search.checkout]);
+
+
 
   const refreshQueue = useCallback(async () => setQueued(await listQueuedOrders()), []);
 

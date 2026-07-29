@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
-import { shopPortalHref } from "@/lib/shop-portal";
 import { LangToggle } from "@/components/LangToggle";
 import heroShade from "@/assets/hero-shade.jpg";
 import cardShade from "@/assets/card-shade.jpg";
@@ -399,10 +398,10 @@ function Index() {
           <div className="flex items-center gap-2">
             <LangToggle />
             <Button asChild variant="accent" size="sm">
-              <a href={shopPortalHref()} target="_blank" rel="noreferrer">
+              <Link to="/homedelivery">
                 <ShoppingBag className="mr-1 size-4" />
                 {L("হোম ডেলিভারি অর্ডার দিন", "Order home delivery")}
-              </a>
+              </Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
               <Link to="/auth">{t("signIn")}</Link>
@@ -457,10 +456,10 @@ function Index() {
                     </Link>
                   </Button>
                   <Button asChild size="lg" variant="accent">
-                    <a href={shopPortalHref()} target="_blank" rel="noreferrer">
+                    <Link to="/homedelivery">
                       <ShoppingBag className="mr-1 size-4" />
                       {L("হোম ডেলিভারি অর্ডার দিন", "Order home delivery")}
-                    </a>
+                    </Link>
                   </Button>
                   <Button asChild size="lg" variant="outline">
                     <Link to="/auth">{t("signIn")}</Link>
@@ -775,8 +774,11 @@ function Index() {
           <div className="text-sm">
             <p className="font-semibold">{L("সমাধান", "Solutions")}</p>
             <ul className="mt-3 space-y-2 text-muted-foreground">
+              <li><Link to="/homedelivery" className="hover:text-foreground">{L("হোম ডেলিভারি অর্ডার", "Home delivery orders")}</Link></li>
+              <li><Link to="/track" className="hover:text-foreground">{L("অর্ডার ট্র্যাক", "Track order")}</Link></li>
               <li><a href="#industries" className="hover:text-foreground">{L("ইন্ডাস্ট্রি", "Industries")}</a></li>
               <li><a href="#faq" className="hover:text-foreground">{L("প্রশ্নোত্তর", "FAQ")}</a></li>
+
             </ul>
           </div>
           <div className="text-sm">
