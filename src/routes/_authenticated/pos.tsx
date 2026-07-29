@@ -353,18 +353,19 @@ function PosPage() {
         .single();
       if (error) throw error;
 
-      if (status === "final") {
-        const items = cart.map((l) => ({
-          sale_id: sale.id,
-          product_id: l.product.id,
-          name_snapshot: lang === "bn" ? l.product.name_bn : l.product.name_en,
-          unit_price: Number(l.product.price),
-          quantity: l.qty,
-          line_total: Number(l.product.price) * l.qty,
-        }));
-        const { error: itemsError } = await supabase.from("sale_items").insert(items);
-        if (itemsError) throw itemsError;
-      }
+      // Items are stored for every status. The database only moves stock when
+      // the sale is final (or when a hold/quotation is later converted).
+      const items = cart.map((l) => ({
+        sale_id: sale.id,
+        product_id: l.product.id,
+        name_snapshot: lang === "bn" ? l.product.name_bn : l.product.name_en,
+        unit_price: Number(l.product.price),
+        quantity: l.qty,
+        line_total: Number(l.product.price) * l.qty,
+      }));
+      const { error: itemsError } = await supabase.from("sale_items").insert(items);
+      if (itemsError) throw itemsError;
+
 
       const s = settings.data;
       return {
