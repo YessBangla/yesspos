@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Download, Printer } from "lucide-react";
+import { Download, MessageCircle, Printer, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { downloadCsv } from "@/lib/audit";
 import { printHtml } from "@/lib/print";
+import { buildDueReminder, shareOnSms, shareOnWhatsApp } from "@/lib/share-invoice";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
@@ -46,7 +47,7 @@ function ReportsPage() {
       const [salesRes, purchasesRes, expensesRes, returnsRes, purchaseReturnsRes, productsRes] = await Promise.all([
         supabase
           .from("sales")
-          .select("id,invoice_no,customer_name,total,paid,status,created_at")
+          .select("id,invoice_no,customer_name,customer_phone,total,paid,status,created_at")
           .gte("created_at", startIso)
           .lte("created_at", endIso),
         supabase.from("purchases").select("total,paid,purchased_on").gte("purchased_on", from).lte("purchased_on", to),
@@ -129,7 +130,17 @@ function ReportsPage() {
     },
   });
 
+  const shop = useQuery({
+    queryKey: ["business-settings"],
+    staleTime: 300_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("business_settings").select("shop_name").maybeSingle();
+      return data;
+    },
+  });
+
   const expiring = useQuery({
+
     queryKey: ["expiring"],
     queryFn: async () => {
       const limit = new Date();
@@ -320,6 +331,59 @@ function ReportsPage() {
           </table>
         </div>
       </div>
+
+      {tab === "due" && (report.data?.dueSales.length ?? 0) > 0 && (
+        <>
+          <h2 className="mt-8 font-display text-lg font-bold">
+            {lang === "bn" ? "বাকি আদায়ের রিমাইন্ডার" : "Due collection reminders"}
+          </h2>
+          <div className="surface-panel mt-3 grid gap-2 p-3 sm:grid-cols-2">
+            {(report.data?.dueSales ?? []).slice(0, 20).map((s) => {
+              const due = Number(s.total) - Number(s.paid);
+              const msg = buildDueReminder(
+                {
+                  shopName: shop.data?.shop_name ?? "SheraPOS",
+                  customer: s.customer_name ?? "",
+                  invoice: Number(s.invoice_no),
+                  due,
+                },
+                lang,
+              );
+              return (
+                <div
+                  key={s.id}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      #{num(Number(s.invoice_no), lang)} · {s.customer_name || t("walkIn")}
+                    </p>
+                    <p className="truncate text-xs text-destructive">{money(due, lang)}</p>
+                  </div>
+                  <div className="flex shrink-0 gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => shareOnWhatsApp(s.customer_phone ?? "", msg)}
+                    >
+                      <MessageCircle className="size-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={!s.customer_phone}
+                      onClick={() => shareOnSms(s.customer_phone ?? "", msg)}
+                    >
+                      <Smartphone className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
 
       <h2 className="mt-8 font-display text-lg font-bold">{t("expiringSoon")}</h2>
       <div className="surface-panel mt-3 overflow-x-auto">
