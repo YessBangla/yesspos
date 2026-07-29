@@ -367,6 +367,7 @@ const dict = {
   invoices: { bn: "ইনভয়েস", en: "Invoices" },
   avgSale: { bn: "গড় বিক্রি", en: "Average sale" },
   cogs: { bn: "বিক্রীত পণ্যের ব্যয়", en: "Cost of goods sold" },
+  aiAssistant: { bn: "AI সহকারী", en: "AI Assistant" },
   apiHub: { bn: "API হাব", en: "API Hub" },
   apiHubHint: {
     bn: "SMS, ইমেইল, পেমেন্ট গেটওয়ে ও অন্যান্য সব API কনফিগার করুন",
