@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { logAudit } from "@/lib/audit";
+import { getPrinterSize, PRINTER_SIZES, setPrinterSize, type PrinterSize } from "@/lib/print";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -57,7 +58,7 @@ function SettingsPage() {
     },
     onSuccess: () => {
       setNewPassword("");
-      void logAudit("password_change", { entity: "user" });
+      void logAudit("password_reset", { entity: "user", details: "self" });
       toast.success(t("passwordChanged"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
@@ -80,6 +81,7 @@ function SettingsPage() {
       shop_name: s.shop_name ?? "",
       address: s.address ?? "",
       phone: s.phone ?? "",
+      currency_symbol: s.currency_symbol ?? "৳",
       default_tax_pct: String(s.default_tax_pct ?? 0),
       receipt_footer: s.receipt_footer ?? "",
     });
@@ -91,6 +93,7 @@ function SettingsPage() {
         shop_name: form.shop_name.trim().slice(0, 80) || "SheraPOS",
         address: form.address.trim().slice(0, 200) || null,
         phone: form.phone.trim().slice(0, 20) || null,
+        currency_symbol: form.currency_symbol.trim().slice(0, 4) || "৳",
         default_tax_pct: Math.min(Math.max(Number(form.default_tax_pct) || 0, 0), 100),
         receipt_footer: form.receipt_footer.trim().slice(0, 200) || null,
       };
@@ -144,6 +147,14 @@ function SettingsPage() {
               onChange={(e) => setForm({ ...form, default_tax_pct: e.target.value })}
             />
           </div>
+          <div className="space-y-1.5">
+            <Label>{t("currencySymbol")}</Label>
+            <Input
+              value={form.currency_symbol}
+              maxLength={4}
+              onChange={(e) => setForm({ ...form, currency_symbol: e.target.value })}
+            />
+          </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label>{t("receiptFooter")}</Label>
             <Input
@@ -156,6 +167,44 @@ function SettingsPage() {
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
           {t("save")}
         </Button>
+      </div>
+
+      <div className="surface-panel mt-4 max-w-2xl space-y-3 p-5">
+        <h2 className="font-display text-lg font-semibold">{t("defaultPrinter")}</h2>
+        <div className="flex flex-wrap gap-2">
+          {PRINTER_SIZES.map((size) => (
+            <Button
+              key={size}
+              size="sm"
+              variant={printer === size ? "default" : "outline"}
+              onClick={() => {
+                setPrinterSize(size);
+                setPrinter(size);
+                toast.success(t("save"));
+              }}
+            >
+              {size === "58mm" ? t("thermal58") : size === "80mm" ? t("thermal80") : t("a4Print")}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="surface-panel mt-4 max-w-2xl space-y-3 p-5">
+        <h2 className="font-display text-lg font-semibold">{t("changePassword")}</h2>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[220px] flex-1 space-y-1.5">
+            <Label>{t("newPassword")}</Label>
+            <Input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+          </div>
+          <Button onClick={() => changePassword.mutate()} disabled={changePassword.isPending}>
+            {t("save")}
+          </Button>
+        </div>
       </div>
     </div>
   );
