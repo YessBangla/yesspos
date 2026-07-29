@@ -145,6 +145,24 @@ function ShopPage() {
   const [syncing, setSyncing] = useState(false);
   const [placing, setPlacing] = useState(false);
 
+  // Keep search / category / checkout shareable and reload-safe in the URL.
+  useEffect(() => {
+    const q = query.trim() || undefined;
+    const c = cat || undefined;
+    const ck = checkout || undefined;
+    if (search.q === q && search.cat === c && search.checkout === ck) return;
+    void navigate({ search: { q, cat: c, checkout: ck }, replace: true });
+  }, [query, cat, checkout, navigate, search.q, search.cat, search.checkout]);
+
+  // Back/forward navigation should move the portal too.
+  useEffect(() => {
+    setQuery(search.q ?? "");
+    setCat(search.cat ?? "");
+    setCheckout(!!search.checkout);
+  }, [search.q, search.cat, search.checkout]);
+
+
+
   const refreshQueue = useCallback(async () => setQueued(await listQueuedOrders()), []);
 
   const runSync = useCallback(
