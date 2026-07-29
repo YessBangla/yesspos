@@ -19,6 +19,7 @@ import {
   FileText,
   HandCoins,
   History,
+  ImageOff,
   LogOut,
   Menu,
   PanelLeftClose,
@@ -103,6 +104,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       icon: Boxes,
       items: [
         { to: "/products", feature: "products", label: t("products"), icon: Boxes },
+        {
+          to: "/product-audit",
+          feature: "product-audit",
+          label: lang === "bn" ? "ছবি অডিট" : "Image audit",
+          icon: ImageOff,
+        },
         { to: "/catalog", feature: "catalog", label: t("catalog"), icon: Tags },
         { to: "/stock-adjustments", feature: "stock-adjustments", label: t("stockAdjust"), icon: SlidersHorizontal },
         { to: "/stock-count", feature: "stock-count", label: t("stockCount"), icon: ClipboardList },
