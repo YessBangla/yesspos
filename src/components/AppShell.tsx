@@ -1,4 +1,5 @@
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import {
+  Smartphone, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRightLeft,
@@ -122,6 +123,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       items: [
         { to: "/payments", feature: "payments", label: t("paymentsLedger"), icon: HandCoins },
         { to: "/expenses", feature: "expenses", label: t("expenses"), icon: Wallet },
+        {
+          to: "/mobile-payments",
+          feature: "mobile-payments",
+          label: lang === "bn" ? "মোবাইল পেমেন্ট" : "Mobile payments",
+          icon: Smartphone,
+        },
       ],
     },
     {
