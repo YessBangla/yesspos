@@ -268,7 +268,9 @@ function DashboardPage() {
     { to: "/pos", feature: "pos", label: t("pos"), icon: ShoppingCart },
     { to: "/sales", feature: "sales", label: t("sales"), icon: Receipt },
     { to: "/products", feature: "products", label: t("products"), icon: Boxes },
+    { to: "/product-audit", feature: "product-audit", label: lang === "bn" ? "ছবি অডিট" : "Image audit", icon: Boxes },
     { to: "/catalog", feature: "catalog", label: t("catalog"), icon: Boxes },
+
     { to: "/stock-adjustments", feature: "stock-adjustments", label: t("stockAdjust"), icon: Boxes },
     { to: "/stock-count", feature: "stock-count", label: t("stockCount"), icon: Boxes },
     { to: "/labels", feature: "labels", label: t("labels"), icon: Receipt },
