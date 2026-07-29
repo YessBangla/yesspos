@@ -25,6 +25,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { LangToggle } from "@/components/LangToggle";
+import { TextSizeToggle } from "@/components/TextSizeToggle";
+import { useSiteContent } from "@/lib/site-content";
 import heroShade from "@/assets/hero-shade.jpg";
 import cardShade from "@/assets/card-shade.jpg";
 
@@ -80,6 +82,7 @@ function Index() {
   const { t, lang } = useI18n();
   const bn = lang === "bn";
   const L = (b: string, e: string) => (bn ? b : e);
+  const { text: sc } = useSiteContent();
 
   const heroMetrics = [
     { icon: Boxes, label: L("স্টক আইটেম", "Stock items"), value: L("১,২৪০", "1,240") },
@@ -385,7 +388,7 @@ function Index() {
             <span className="gradient-brand flex size-9 items-center justify-center rounded-lg text-primary-foreground">
               <ReceiptText className="size-5" />
             </span>
-            <span className="font-display text-lg font-bold">{t("appName")}</span>
+            <span className="font-display text-lg font-bold">{sc("brand.name", t("appName"))}</span>
           </div>
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground lg:flex">
             <a href="#platform" className="hover:text-foreground">{L("প্ল্যাটফর্ম", "Platform")}</a>
@@ -396,11 +399,12 @@ function Index() {
             <a href="#faq" className="hover:text-foreground">{L("প্রশ্নোত্তর", "FAQ")}</a>
           </nav>
           <div className="flex items-center gap-2">
+            <TextSizeToggle className="hidden sm:inline-flex" />
             <LangToggle />
             <Button asChild variant="accent" size="sm">
               <Link to="/homedelivery">
                 <ShoppingBag className="mr-1 size-4" />
-                {L("হোম ডেলিভারি অর্ডার দিন", "Order home delivery")}
+                {sc("home.cta_primary", L("হোম ডেলিভারি অর্ডার দিন", "Order home delivery"))}
               </Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
@@ -430,12 +434,14 @@ function Index() {
               <div className="rise-in">
                 <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/80 px-3 py-1 text-xs font-semibold tracking-wide text-secondary-foreground backdrop-blur">
                   <span className="size-1.5 rounded-full bg-primary" />
-                  POS • Inventory • Accounting • Analytics
+                  {sc("home.hero_badge", "POS • Inventory • Accounting • Analytics")}
                 </p>
-                <h1 className="font-display text-4xl font-bold leading-[1.1] tracking-tight md:text-5xl">
-                  {t("tagline")}
+                <h1 className="font-display text-3xl font-bold leading-[1.15] tracking-tight sm:text-4xl md:text-5xl">
+                  {sc("home.hero_title", t("tagline"))}
                 </h1>
-                <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground">{t("heroSub")}</p>
+                <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground">
+                  {sc("home.hero_subtitle", t("heroSub"))}
+                </p>
                 <ul className="mt-6 grid gap-2 text-sm sm:grid-cols-2">
                   {[
                     L("এক স্ক্রিনে বিলিং, স্টক আর হিসাব", "Billing, stock and accounts on one screen"),
@@ -458,11 +464,11 @@ function Index() {
                   <Button asChild size="lg" variant="accent">
                     <Link to="/homedelivery">
                       <ShoppingBag className="mr-1 size-4" />
-                      {L("হোম ডেলিভারি অর্ডার দিন", "Order home delivery")}
+                      {sc("home.cta_primary", L("হোম ডেলিভারি অর্ডার দিন", "Order home delivery"))}
                     </Link>
                   </Button>
                   <Button asChild size="lg" variant="outline">
-                    <Link to="/auth">{t("signIn")}</Link>
+                    <Link to="/auth">{sc("home.cta_secondary", t("signIn"))}</Link>
                   </Button>
                 </div>
                 <p className="mt-4 text-xs text-muted-foreground">
@@ -753,13 +759,19 @@ function Index() {
               <span className="gradient-brand flex size-8 items-center justify-center rounded-lg text-primary-foreground">
                 <ReceiptText className="size-4" />
               </span>
-              <span className="font-display font-bold">{t("appName")}</span>
+              <span className="font-display font-bold">{sc("brand.name", t("appName"))}</span>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              {L(
-                "রিটেইল ব্যবসার জন্য বিলিং, ইনভেন্টরি ও হিসাব ব্যবস্থাপনা — বাংলা ও ইংরেজিতে।",
-                "Billing, inventory and accounting for retail businesses — in Bengali and English.",
+              {sc(
+                "footer.about",
+                L(
+                  "রিটেইল ব্যবসার জন্য বিলিং, ইনভেন্টরি ও হিসাব ব্যবস্থাপনা — বাংলা ও ইংরেজিতে।",
+                  "Billing, inventory and accounting for retail businesses — in Bengali and English.",
+                ),
               )}
+            </p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {sc("brand.support_phone", "")} {sc("brand.support_email", "")}
             </p>
           </div>
           <div className="text-sm">
@@ -796,7 +808,7 @@ function Index() {
         </div>
         <div className="border-t border-border">
           <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-5 py-5 text-sm text-muted-foreground sm:flex-row">
-            <p>© {new Date().getFullYear()} {t("appName")}</p>
+            <p>{sc("footer.copyright", `© ${new Date().getFullYear()} ${t("appName")}`)}</p>
             <p>{L("বাংলাদেশের রিটেইল ব্যবসার জন্য তৈরি", "Built for retail businesses")}</p>
           </div>
         </div>
