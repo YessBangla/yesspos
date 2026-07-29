@@ -78,6 +78,22 @@ type Product = {
 
 type CartLine = { product: Product; qty: number };
 
+type SaleSnapshot = {
+  cart: CartLine[];
+  discount: string;
+  discountMode: "flat" | "percent";
+  couponCode: string;
+  coupon: Coupon | null;
+  taxPct: string;
+  paid: string;
+  method: string;
+  customer: string;
+  phone: string;
+  email: string;
+  contactId: string;
+  changeGiven: boolean;
+};
+
 type Coupon = {
   id: string;
   code: string;
@@ -142,6 +158,9 @@ function PosPage() {
   const [scan, setScan] = useState("");
   const [changeGiven, setChangeGiven] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [tabs, setTabs] = useState<{ id: string; name: string }[]>([{ id: "t1", name: "1" }]);
+  const [activeTab, setActiveTab] = useState("t1");
+  const stash = useRef<Record<string, SaleSnapshot>>({});
   const scanRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const paidRef = useRef<HTMLInputElement>(null);
@@ -318,6 +337,80 @@ function PosPage() {
     setContactId("");
     setMethod("");
   }, [settings.data?.default_tax_pct]);
+
+  const captureSale = useCallback(
+    (): SaleSnapshot => ({
+      cart,
+      discount,
+      discountMode,
+      couponCode,
+      coupon,
+      taxPct,
+      paid,
+      method,
+      customer,
+      phone,
+      email,
+      contactId,
+      changeGiven,
+    }),
+    [cart, discount, discountMode, couponCode, coupon, taxPct, paid, method, customer, phone, email, contactId, changeGiven],
+  );
+
+  const applySale = useCallback((s: SaleSnapshot) => {
+    setCart(s.cart);
+    setDiscount(s.discount);
+    setDiscountMode(s.discountMode);
+    setCouponCode(s.couponCode);
+    setCoupon(s.coupon);
+    setTaxPct(s.taxPct);
+    setPaid(s.paid);
+    setMethod(s.method);
+    setCustomer(s.customer);
+    setPhone(s.phone);
+    setEmail(s.email);
+    setContactId(s.contactId);
+    setChangeGiven(s.changeGiven);
+  }, []);
+
+  const switchTab = useCallback(
+    (id: string) => {
+      if (id === activeTab) return;
+      stash.current[activeTab] = captureSale();
+      const next = stash.current[id];
+      if (next) applySale(next);
+      else resetSale();
+      setActiveTab(id);
+    },
+    [activeTab, applySale, captureSale, resetSale],
+  );
+
+  const newTab = useCallback(() => {
+    stash.current[activeTab] = captureSale();
+    const id = `t${Date.now()}`;
+    setTabs((prev) => [...prev, { id, name: String(prev.length + 1) }]);
+    setActiveTab(id);
+    resetSale();
+  }, [activeTab, captureSale, resetSale]);
+
+  const closeTab = useCallback(
+    (id: string) => {
+      setTabs((prev) => {
+        if (prev.length <= 1) return prev;
+        const rest = prev.filter((x) => x.id !== id);
+        delete stash.current[id];
+        if (id === activeTab) {
+          const fallback = rest[rest.length - 1];
+          setActiveTab(fallback.id);
+          const snap = stash.current[fallback.id];
+          if (snap) applySale(snap);
+          else resetSale();
+        }
+        return rest;
+      });
+    },
+    [activeTab, applySale, resetSale],
+  );
 
   const applyCoupon = useMutation({
     mutationFn: async (code: string) => {
@@ -528,6 +621,33 @@ function PosPage() {
             </span>
           </div>
         </header>
+
+        <div className="flex items-center gap-1 overflow-x-auto border-b border-border bg-muted/40 px-2 py-1.5">
+          {tabs.map((tb) => (
+            <div
+              key={tb.id}
+              className={cn(
+                "flex shrink-0 items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors",
+                tb.id === activeTab ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground",
+              )}
+            >
+              <button type="button" onClick={() => switchTab(tb.id)} className="whitespace-nowrap">
+                {lang === "bn" ? `বিক্রয় ${tb.name}` : `Sale ${tb.name}`}
+                {(tb.id === activeTab ? cart.length : (stash.current[tb.id]?.cart.length ?? 0)) > 0 &&
+                  ` · ${num(tb.id === activeTab ? cart.length : (stash.current[tb.id]?.cart.length ?? 0), lang)}`}
+              </button>
+              {tabs.length > 1 && (
+                <button type="button" onClick={() => closeTab(tb.id)} aria-label="close" className="opacity-70 hover:opacity-100">
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
+          ))}
+          <Button size="sm" variant="ghost" className="h-7 shrink-0 px-2 text-xs" onClick={newTab}>
+            <Plus className="mr-1 size-3.5" />
+            {lang === "bn" ? "নতুন বিক্রয়" : "New sale"}
+          </Button>
+        </div>
 
         <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[1fr_420px]">
         {/* Catalog */}
