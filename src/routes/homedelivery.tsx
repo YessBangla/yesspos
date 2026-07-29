@@ -143,6 +143,7 @@ function ShopPage() {
   const [cat, setCat] = useState<string>(search.cat ?? "");
   const [limit, setLimit] = useState(PAGE);
   const [checkout, setCheckout] = useState(!!search.checkout);
+  const [cartOpen, setCartOpen] = useState(false);
 
   const [online, setOnline] = useState(true);
   const [form, setForm] = useState({ name: "", phone: "", address: "", area: "", note: "", payment: "cod" });
@@ -767,7 +768,7 @@ function ShopPage() {
         </aside>
       </div>
 
-      <footer className="mt-12 border-t border-border bg-card">
+      <footer className="mt-12 border-t border-border bg-card pb-24 lg:pb-0">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 text-sm sm:grid-cols-3">
           <div>
             <p className="font-display text-base font-bold text-primary">Sokoler Bazar</p>
@@ -800,14 +801,65 @@ function ShopPage() {
 
       {cart.count > 0 && !checkout && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card p-3 lg:hidden">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
-            <span className="text-sm">
-              {num(cart.count, lang)} {bn ? "পণ্য" : "items"} · <b>{money(total, lang)}</b>
-            </span>
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => setCartOpen(true)}
+              className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm"
+            >
+              <ShoppingBasket className="size-5 shrink-0 text-primary" />
+              <span className="truncate">
+                {num(cart.count, lang)} {bn ? "পণ্য" : "items"} · <b>{money(total, lang)}</b>
+                <span className="block text-xs text-primary">{bn ? "কার্ট দেখুন / পরিমাণ বদলান" : "View cart / edit qty"}</span>
+              </span>
+            </button>
+            <Button variant="outline" onClick={() => setCartOpen(true)}>
+              {bn ? "কার্ট" : "Cart"}
+            </Button>
             <Button onClick={() => setCheckout(true)}>{bn ? "চেকআউট" : "Checkout"}</Button>
           </div>
         </div>
       )}
+
+      {cartOpen && !checkout && (
+        <div className="fixed inset-0 z-40 flex flex-col justify-end bg-foreground/40 lg:hidden" onClick={() => setCartOpen(false)}>
+          <div
+            className="max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-border bg-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card px-4 py-3">
+              <span className="font-display font-bold">{bn ? "আপনার কার্ট" : "Your cart"}</span>
+              <Button variant="ghost" size="sm" onClick={() => setCartOpen(false)}>
+                ✕
+              </Button>
+            </div>
+            <div className="divide-y divide-border">
+              {cart.lines.map((l) => (
+                <CartRow key={l.id} l={l} bn={bn} lang={lang} onSet={(q) => cart.setQty(l.id, q)} />
+              ))}
+              {cart.lines.length === 0 && (
+                <p className="p-6 text-center text-sm text-muted-foreground">{bn ? "কার্ট খালি" : "Cart is empty"}</p>
+              )}
+            </div>
+            <div className="space-y-1 border-t border-border p-4 text-sm">
+              <Row label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
+              <Row label={bn ? "ডেলিভারি" : "Delivery"} value={money(fee, lang)} />
+              <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
+              <Button
+                className="mt-2 w-full"
+                disabled={cart.lines.length === 0}
+                onClick={() => {
+                  setCartOpen(false);
+                  setCheckout(true);
+                }}
+              >
+                {bn ? "চেকআউট" : "Checkout"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {checkout && (
         <div className="fixed inset-0 z-40 overflow-y-auto bg-background/95 p-4 backdrop-blur">
@@ -1082,11 +1134,11 @@ function CartRow({
     <div className="flex items-center gap-3 p-3">
       <span className="min-w-0 flex-1 truncate text-sm">{bn ? l.name_bn : l.name_en}</span>
       <div className="flex items-center gap-1">
-        <Button size="icon" variant="ghost" className="size-7" onClick={() => onSet(l.qty - 1)}>
+        <Button size="icon" variant="ghost" className="size-9 sm:size-7" onClick={() => onSet(l.qty - 1)}>
           <Minus className="size-3" />
         </Button>
         <span className="w-6 text-center text-sm">{num(l.qty, lang)}</span>
-        <Button size="icon" variant="ghost" className="size-7" onClick={() => onSet(l.qty + 1)}>
+        <Button size="icon" variant="ghost" className="size-9 sm:size-7" onClick={() => onSet(l.qty + 1)}>
           <Plus className="size-3" />
         </Button>
       </div>
