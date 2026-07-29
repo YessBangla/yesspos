@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Minus, Plus, Search, ShoppingBag, Truck, WifiOff } from "lucide-react";
+import { CloudUpload, Loader2, Minus, Plus, RefreshCw, Search, ShoppingBag, Truck, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { deliveryFeeFor, useShopCart, type ShopLine } from "@/lib/shop-cart";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { checkPackCart } from "@/lib/pack-size";
+import { checkOrderConsistency, formatIssues } from "@/lib/order-check";
+import {
+  QUEUE_MAX_ATTEMPTS,
+  dropQueuedOrder,
+  isQueueSupported,
+  listQueuedOrders,
+  queueOrder,
+  subscribeQueue,
+  syncQueuedOrders,
+  type QueuedOrder,
+} from "@/lib/delivery-queue";
 
 export const Route = createFileRoute("/shop")({
   head: () => ({
@@ -42,13 +54,41 @@ type P = {
 };
 
 const PAGE = 24;
-const PENDING_KEY = "shop-pending-order";
+
+/** Chaldal-style delivery windows. */
+const TIME_SLOTS = [
+  { id: "08:00-11:00", bn: "সকাল ৮টা - ১১টা", en: "8:00 AM - 11:00 AM" },
+  { id: "11:00-14:00", bn: "সকাল ১১টা - দুপুর ২টা", en: "11:00 AM - 2:00 PM" },
+  { id: "14:00-17:00", bn: "দুপুর ২টা - বিকাল ৫টা", en: "2:00 PM - 5:00 PM" },
+  { id: "17:00-20:00", bn: "বিকাল ৫টা - রাত ৮টা", en: "5:00 PM - 8:00 PM" },
+] as const;
+
+function nextDays(count: number) {
+  return Array.from({ length: count }, (_, i) => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+}
+
+/** A slot is only bookable if it ends at least 1 hour from now. */
+function slotAvailable(date: Date, slotId: string) {
+  const [, end] = slotId.split("-");
+  const [h, m] = end.split(":").map(Number);
+  const endsAt = new Date(date);
+  endsAt.setHours(h, m, 0, 0);
+  return endsAt.getTime() - Date.now() > 60 * 60 * 1000;
+}
 
 const checkoutSchema = z.object({
-  name: z.string().trim().min(2).max(60),
-  phone: z.string().trim().min(6).max(20),
-  address: z.string().trim().min(6).max(300),
-  area: z.string().trim().max(80),
+  name: z.string().trim().min(2, "name").max(60),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^(?:\+?88)?01[3-9]\d{8}$/, "phone"),
+  address: z.string().trim().min(10, "address").max(300),
+  area: z.string().trim().min(2, "area").max(80),
   note: z.string().trim().max(200),
 });
 
