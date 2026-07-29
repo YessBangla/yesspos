@@ -412,6 +412,22 @@ function PosPage() {
     [activeTab, applySale, resetSale],
   );
 
+  // Closing a sale tab that still holds items must be confirmed first, so an
+  // accidental click on the × never wipes a pending customer's cart.
+  const [closeAsk, setCloseAsk] = useState<string | null>(null);
+
+  const closeTab = useCallback(
+    (id: string) => {
+      const count = id === activeTab ? cart.length : (stash.current[id]?.cart.length ?? 0);
+      if (count > 0) {
+        setCloseAsk(id);
+        return;
+      }
+      doCloseTab(id);
+    },
+    [activeTab, cart.length, doCloseTab],
+  );
+
   const applyCoupon = useMutation({
     mutationFn: async (code: string) => {
       const { data, error } = await supabase
