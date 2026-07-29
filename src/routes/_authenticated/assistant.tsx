@@ -13,9 +13,9 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/assistant")({
   head: () => ({
     meta: [
-      { title: "AI business assistant — SokolerBazar" },
+      { title: "AI business assistant — Sokoler Bazar" },
       { name: "description", content: "Ask about sales, dues, stock and profit in Bengali and get instant answers." },
-      { property: "og:title", content: "AI business assistant — SokolerBazar" },
+      { property: "og:title", content: "AI business assistant — Sokoler Bazar" },
       { property: "og:description", content: "Live shop insights on sales, dues and stock, in Bengali or English." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -36,15 +36,15 @@ const SITE = "https://yesspos.lovable.app";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "SokolerBazar — Retail Billing, Inventory & Accounting Platform" },
+      { title: "Sokoler Bazar — Retail Billing, Inventory & Accounting Platform" },
       {
         name: "description",
         content:
-          "SokolerBazar is an enterprise-grade browser POS and ERP for retail: fast billing, multi-branch inventory, dues, double-entry accounting and reports in Bengali and English.",
+          "Sokoler Bazar is an enterprise-grade browser POS and ERP for retail: fast billing, multi-branch inventory, dues, double-entry accounting and reports in Bengali and English.",
       },
       {
         property: "og:title",
-        content: "SokolerBazar — Retail Billing, Inventory & Accounting Platform",
+        content: "Sokoler Bazar — Retail Billing, Inventory & Accounting Platform",
       },
       {
         property: "og:description",
@@ -62,7 +62,7 @@ export const Route = createFileRoute("/")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "SokolerBazar",
+          name: "Sokoler Bazar",
           applicationCategory: "BusinessApplication",
           operatingSystem: "Web",
           description:

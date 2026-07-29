@@ -92,7 +92,7 @@ export const getReportInsight = createServerFn({ method: "POST" })
     ].join("\n");
 
     const system = [
-      "You are the business analyst inside SokolerBazar, a POS/ERP app for shops in Bangladesh.",
+      "You are the business analyst inside Sokoler Bazar, a POS/ERP app for shops in Bangladesh.",
       data.lang === "en" ? "Write in clear, simple English." : "সহজ বাংলায় লিখুন (সংখ্যা ইংরেজি অঙ্কে)।",
       "Currency is Bangladeshi Taka (৳).",
       "Write a short report read-out with exactly these markdown sections:",

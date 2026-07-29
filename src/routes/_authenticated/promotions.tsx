@@ -13,9 +13,9 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/_authenticated/promotions")({
   head: () => ({
     meta: [
-      { title: "Promotions & banners — SokolerBazar" },
+      { title: "Promotions & banners — Sokoler Bazar" },
       { name: "description", content: "Create storefront hero banners, campaign strips and seasonal offers." },
-      { property: "og:title", content: "Promotions & banners — SokolerBazar" },
+      { property: "og:title", content: "Promotions & banners — Sokoler Bazar" },
       { property: "og:description", content: "Manage home delivery marketing banners and campaigns." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

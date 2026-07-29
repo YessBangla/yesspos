@@ -16,9 +16,9 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/_authenticated/accounts")({
   head: () => ({
     meta: [
-      { title: "Cash & bank accounts — SokolerBazar" },
+      { title: "Cash & bank accounts — Sokoler Bazar" },
       { name: "description", content: "Manage cash boxes, bank and mobile banking accounts with deposits, withdrawals and transfers." },
-      { property: "og:title", content: "Cash & bank accounts — SokolerBazar" },
+      { property: "og:title", content: "Cash & bank accounts — Sokoler Bazar" },
       { property: "og:description", content: "Deposits, withdrawals and account transfers in one place." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
