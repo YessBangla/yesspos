@@ -1346,6 +1346,98 @@ function PosPage() {
 }
 
 
+function MemberPanel({
+  lang,
+  member,
+  phone,
+  customer,
+  redeemPoints,
+  redeemCap,
+  onRedeemChange,
+  onMember,
+}: {
+  lang: "bn" | "en";
+  member: { id: string; name: string; isMember: boolean; points: number } | null;
+  phone: string;
+  customer: string;
+  redeemPoints: string;
+  redeemCap: number;
+  onRedeemChange: (v: string) => void;
+  onMember: (m: { id: string; name: string; phone: string | null }) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const bn = lang === "bn";
+
+  async function join() {
+    const p = phone.trim();
+    if (p.length < 6) {
+      toast.error(bn ? "সদস্য করতে ফোন নম্বর দিন" : "Enter a phone number to enrol");
+      return;
+    }
+    setBusy(true);
+    try {
+      const m = await registerMember(p, customer.trim() || p);
+      onMember({ id: m.id, name: m.name, phone: m.phone });
+      toast.success(bn ? "সদস্য হয়ে গেছে" : "Member added");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!member?.isMember) {
+    return (
+      <div className="flex items-center justify-between gap-2 rounded-xl border border-dashed border-border bg-muted/30 px-3 py-2">
+        <p className="min-w-0 text-xs text-muted-foreground">
+          {bn ? "ফোন নম্বর দিয়ে সদস্য করুন — প্রতি ১০৳-এ ১ পয়েন্ট" : "Enrol by phone — 1 point per ৳10"}
+        </p>
+        <Button size="sm" variant="outline" className="h-8 shrink-0 text-xs" disabled={busy} onClick={join}>
+          {bn ? "সদস্য করুন" : "Make member"}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2">
+      <div className="flex items-center justify-between gap-2 text-xs font-semibold">
+        <span className="truncate text-primary">
+          {bn ? "সদস্য" : "Member"} · {member.name}
+        </span>
+        <span className="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-primary">
+          {num(member.points, lang)} {bn ? "পয়েন্ট" : "pts"}
+        </span>
+      </div>
+      {redeemCap > 0 ? (
+        <div className="flex items-center gap-2">
+          <Input
+            inputMode="numeric"
+            value={redeemPoints}
+            placeholder={bn ? "পয়েন্ট ব্যবহার" : "Redeem points"}
+            onChange={(e) => onRedeemChange(e.target.value)}
+            className="h-9 rounded-lg bg-card text-sm"
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-9 shrink-0 text-xs"
+            onClick={() => onRedeemChange(String(redeemCap))}
+          >
+            {bn ? "সর্বোচ্চ" : "Max"} {num(redeemCap, lang)}
+          </Button>
+        </div>
+      ) : (
+        <p className="text-[11px] text-muted-foreground">
+          {bn
+            ? `${num(REDEEM_MIN_POINTS, lang)} পয়েন্ট হলে ব্যবহার করা যাবে (১০ পয়েন্ট = ১৳)`
+            : `Redeemable from ${REDEEM_MIN_POINTS} points (10 points = ৳1)`}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function Row({ label, value, tone }: { label: string; value: string; tone?: "success" }) {
   return (
     <div className="flex items-center justify-between gap-2 text-muted-foreground">
