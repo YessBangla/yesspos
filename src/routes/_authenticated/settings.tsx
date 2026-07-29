@@ -206,6 +206,12 @@ function SettingsPage() {
           </Button>
         </div>
       </div>
+
+      {isAdmin && (
+        <div className="surface-panel mt-4 max-w-4xl p-5">
+          <SiteContentEditor />
+        </div>
+      )}
     </div>
   );
 }
