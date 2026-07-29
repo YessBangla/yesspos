@@ -130,7 +130,17 @@ function ReportsPage() {
     },
   });
 
+  const shop = useQuery({
+    queryKey: ["business-settings"],
+    staleTime: 300_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("business_settings").select("shop_name").maybeSingle();
+      return data;
+    },
+  });
+
   const expiring = useQuery({
+
     queryKey: ["expiring"],
     queryFn: async () => {
       const limit = new Date();
