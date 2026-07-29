@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Download, MessageCircle, Search, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -279,8 +279,8 @@ export function DueCollection({ sales, shopName }: { sales: DueSale[]; shopName:
               const allUnpaid = c.items.every((i) => i.status === "unpaid");
               const msg = reminderFor(c.name, Number(c.items[0]?.invoice_no ?? 0), c.due);
               return (
-                <>
-                  <tr key={c.key} className="border-b border-border">
+                <Fragment key={c.key}>
+                  <tr className="border-b border-border">
                     <td className="px-4 py-3">
                       <button
                         className="flex items-center gap-1 font-medium"
@@ -356,7 +356,7 @@ export function DueCollection({ sales, shopName }: { sales: DueSale[]; shopName:
                         </td>
                       </tr>
                     ))}
-                </>
+                </Fragment>
               );
             })}
             {customers.length === 0 && (
