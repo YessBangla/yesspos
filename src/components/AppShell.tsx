@@ -74,6 +74,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const groups: NavGroup[] = [
     {
+      id: "home",
+      label: t("dashboard"),
+      icon: BarChart3,
+      items: [{ to: "/dashboard", feature: "dashboard", label: t("dashboard"), icon: BarChart3 }],
+    },
+    {
+
       id: "sale",
       label: t("grpSale"),
       icon: ShoppingCart,
