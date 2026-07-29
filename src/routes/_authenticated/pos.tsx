@@ -383,6 +383,26 @@ function PosPage() {
     setChangeGiven(s.changeGiven);
   }, []);
 
+  // Restore any sale tabs left open before the seller navigated to another menu.
+  const hydrated = useRef(false);
+  useEffect(() => {
+    if (hydrated.current) return;
+    hydrated.current = true;
+    const saved = loadPosTabs<SaleSnapshot>();
+    if (!saved) return;
+    stash.current = saved.stash;
+    setTabs(saved.tabs);
+    setActiveTab(saved.activeTab);
+    const snap = saved.stash[saved.activeTab];
+    if (snap) applySale(snap);
+  }, [applySale]);
+
+  const snapshot = captureSale();
+  useEffect(() => {
+    if (!hydrated.current) return;
+    savePosTabs({ tabs, activeTab, stash: { ...stash.current, [activeTab]: snapshot } });
+  }, [tabs, activeTab, snapshot]);
+
   const switchTab = useCallback(
     (id: string) => {
       if (id === activeTab) return;
