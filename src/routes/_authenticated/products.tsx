@@ -206,7 +206,7 @@ function ProductsPage() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={t("search")}
+              placeholder={lang === "bn" ? "নাম, সিরিয়াল বা SKU" : "Name, serial or SKU"}
               maxLength={60}
               className="w-56 pl-9"
             />
@@ -224,7 +224,7 @@ function ProductsPage() {
       </div>
 
       <div className="surface-panel mt-4 overflow-x-auto">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-[820px] text-sm">
           <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
             <tr>
               <th className="px-4 py-3">{lang === "bn" ? "পণ্য" : "Product"}</th>
@@ -240,7 +240,7 @@ function ProductsPage() {
           <tbody>
             {products.isLoading && (
               <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={7}>
+                <td className="px-4 py-6 text-muted-foreground" colSpan={8}>
                   {t("loading")}
                 </td>
               </tr>
@@ -294,7 +294,7 @@ function ProductsPage() {
             })}
             {!products.isLoading && visible.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={7}>
+                <td className="px-4 py-6 text-muted-foreground" colSpan={8}>
                   {t("noData")}
                 </td>
               </tr>
