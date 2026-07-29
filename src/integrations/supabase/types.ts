@@ -326,6 +326,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          loyalty_points: number
           name: string
           opening_balance: number
           phone: string | null
@@ -337,6 +338,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          loyalty_points?: number
           name: string
           opening_balance?: number
           phone?: string | null
@@ -348,6 +350,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          loyalty_points?: number
           name?: string
           opening_balance?: number
           phone?: string | null
@@ -866,6 +869,117 @@ export type Database = {
           },
         ]
       }
+      purchase_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          line_total: number
+          name_snapshot: string
+          order_id: string
+          product_id: string | null
+          quantity: number
+          received_qty: number
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          line_total?: number
+          name_snapshot: string
+          order_id: string
+          product_id?: string | null
+          quantity?: number
+          received_qty?: number
+          unit_cost?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          line_total?: number
+          name_snapshot?: string
+          order_id?: string
+          product_id?: string | null
+          quantity?: number
+          received_qty?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          expected_date: string | null
+          id: string
+          note: string | null
+          order_date: string
+          po_no: number
+          status: string
+          supplier_id: string | null
+          total: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          expected_date?: string | null
+          id?: string
+          note?: string | null
+          order_date?: string
+          po_no?: number
+          status?: string
+          supplier_id?: string | null
+          total?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          expected_date?: string | null
+          id?: string
+          note?: string | null
+          order_date?: string
+          po_no?: number
+          status?: string
+          supplier_id?: string | null
+          total?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_return_items: {
         Row: {
           created_at: string
@@ -1280,6 +1394,92 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_count_items: {
+        Row: {
+          count_id: string
+          counted_qty: number
+          created_at: string
+          id: string
+          name_snapshot: string
+          product_id: string | null
+          system_qty: number
+        }
+        Insert: {
+          count_id: string
+          counted_qty?: number
+          created_at?: string
+          id?: string
+          name_snapshot: string
+          product_id?: string | null
+          system_qty?: number
+        }
+        Update: {
+          count_id?: string
+          counted_qty?: number
+          created_at?: string
+          id?: string
+          name_snapshot?: string
+          product_id?: string | null
+          system_qty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_count_items_count_id_fkey"
+            columns: ["count_id"]
+            isOneToOne: false
+            referencedRelation: "stock_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_counts: {
+        Row: {
+          branch_id: string | null
+          count_date: string
+          created_at: string
+          id: string
+          note: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          count_date?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          count_date?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_counts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
             referencedColumns: ["id"]
           },
         ]

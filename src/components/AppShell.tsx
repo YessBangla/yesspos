@@ -8,6 +8,8 @@ import {
   Boxes,
   Building2,
   CalendarDays,
+  ClipboardList,
+  ClipboardCheck,
   FileSpreadsheet,
   Landmark,
   ListTree,
@@ -28,6 +30,7 @@ import {
   ShieldCheck,
   ShoppingCart,
   SlidersHorizontal,
+  Sparkles,
   Tags,
   Truck,
   Users,
@@ -44,6 +47,7 @@ import { cn } from "@/lib/utils";
 import { useMyRole } from "@/lib/use-my-role";
 import { canAccess, type Feature } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
+import { SIMPLE_ROUTES, useSimpleMode } from "@/lib/simple-mode";
 
 type NavItem = {
   to: string;
@@ -63,6 +67,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const { simple, toggle: toggleSimple } = useSimpleMode();
 
   const groups: NavGroup[] = [
     {
@@ -84,6 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         { to: "/products", feature: "products", label: t("products"), icon: Boxes },
         { to: "/catalog", feature: "catalog", label: t("catalog"), icon: Tags },
         { to: "/stock-adjustments", feature: "stock-adjustments", label: t("stockAdjust"), icon: SlidersHorizontal },
+        { to: "/stock-count", feature: "stock-count", label: t("stockCount"), icon: ClipboardList },
         { to: "/labels", feature: "labels", label: t("labels"), icon: Barcode },
       ],
     },
@@ -102,7 +108,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       id: "purchase",
       label: t("grpPurchase"),
       icon: Truck,
-      items: [{ to: "/purchases", feature: "purchases", label: t("purchases"), icon: Truck }],
+      items: [
+        { to: "/purchases", feature: "purchases", label: t("purchases"), icon: Truck },
+        { to: "/purchase-orders", feature: "purchase-orders", label: t("purchaseOrders"), icon: ClipboardCheck },
+      ],
     },
     {
       id: "finance",
@@ -159,7 +168,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   ];
 
   const visibleGroups = groups
-    .map((g) => ({ ...g, items: g.items.filter((i) => canAccess(me.data?.role, i.feature)) }))
+    .map((g) => ({
+      ...g,
+      items: g.items.filter(
+        (i) =>
+          canAccess(me.data?.role, i.feature) &&
+          (!simple || (SIMPLE_ROUTES as readonly string[]).includes(i.to)),
+      ),
+    }))
     .filter((g) => g.items.length > 0);
 
   const allItems = groups.flatMap((g) => g.items);
@@ -253,6 +269,16 @@ export function AppShell({ children }: { children: ReactNode }) {
       </nav>
 
       <div className="space-y-1 p-2">
+        <Button
+          variant={simple ? "secondary" : "ghost"}
+          size="sm"
+          title={t("simpleModeHint")}
+          className={cn("w-full text-sidebar-foreground/80", collapsed ? "justify-center" : "justify-start")}
+          onClick={toggleSimple}
+        >
+          <Sparkles className={cn("size-4", !collapsed && "mr-2")} />
+          {!collapsed && (simple ? t("fullMode") : t("simpleMode"))}
+        </Button>
         <Button
           variant="ghost"
           size="sm"
