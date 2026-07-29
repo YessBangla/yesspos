@@ -18,6 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useBranchStock } from "@/lib/use-branch";
 import { useActiveBranch } from "@/lib/active-branch";
+import { matchesSerial, productSerial } from "@/lib/serial";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,7 @@ type Row = {
   name_en: string;
   name_bn: string;
   sku: string;
+  seq: number | null;
   price: number;
   cost: number;
   stock: number;
@@ -88,6 +90,7 @@ function ProductsPage() {
   });
 
   const myBranch = useActiveBranch();
+  const branchCode = myBranch.branch?.code ?? null;
   const branchStock = useBranchStock(myBranch.branchId);
 
   const products = useQuery({
@@ -109,9 +112,10 @@ function ProductsPage() {
           !q ||
           p.name_en.toLowerCase().includes(q) ||
           p.name_bn.includes(query.trim()) ||
-          p.sku.toLowerCase().includes(q),
+          p.sku.toLowerCase().includes(q) ||
+          matchesSerial(query, branchCode, p.seq),
       );
-  }, [products.data, branchStock.data, query]);
+  }, [products.data, branchStock.data, query, branchCode]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -224,6 +228,7 @@ function ProductsPage() {
           <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
             <tr>
               <th className="px-4 py-3">{lang === "bn" ? "পণ্য" : "Product"}</th>
+              <th className="px-4 py-3">{lang === "bn" ? "সিরিয়াল" : "Serial"}</th>
               <th className="px-4 py-3">{t("sku")}</th>
               <th className="px-4 py-3">{t("category")}</th>
               <th className="px-4 py-3 text-right">{t("cost")}</th>
@@ -246,6 +251,9 @@ function ProductsPage() {
               return (
                 <tr key={p.id} className="border-b border-border last:border-0">
                   <td className="px-4 py-3 font-medium">{lang === "bn" ? p.name_bn : p.name_en}</td>
+                  <td className="px-4 py-3 font-mono text-xs font-semibold text-primary">
+                    {productSerial(branchCode, p.seq)}
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">{p.sku}</td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {cat ? (lang === "bn" ? cat.name_bn : cat.name_en) : "—"}
