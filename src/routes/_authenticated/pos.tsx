@@ -49,6 +49,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useBranchStock } from "@/lib/use-branch";
 import { matchesSerial, productSerial } from "@/lib/serial";
+import { loadPosTabs, savePosTabs } from "@/lib/pos-tabs";
 import { useActiveBranch } from "@/lib/active-branch";
 import { useMyRole } from "@/lib/use-my-role";
 import { money, num, useI18n, type TKey } from "@/lib/i18n";
@@ -382,6 +383,26 @@ function PosPage() {
     setContactId(s.contactId);
     setChangeGiven(s.changeGiven);
   }, []);
+
+  // Restore any sale tabs left open before the seller navigated to another menu.
+  const hydrated = useRef(false);
+  useEffect(() => {
+    if (hydrated.current) return;
+    hydrated.current = true;
+    const saved = loadPosTabs<SaleSnapshot>();
+    if (!saved) return;
+    stash.current = saved.stash;
+    setTabs(saved.tabs);
+    setActiveTab(saved.activeTab);
+    const snap = saved.stash[saved.activeTab];
+    if (snap) applySale(snap);
+  }, [applySale]);
+
+  const snapshot = captureSale();
+  useEffect(() => {
+    if (!hydrated.current) return;
+    savePosTabs({ tabs, activeTab, stash: { ...stash.current, [activeTab]: snapshot } });
+  }, [tabs, activeTab, snapshot]);
 
   const switchTab = useCallback(
     (id: string) => {
