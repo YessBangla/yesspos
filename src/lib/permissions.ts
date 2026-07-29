@@ -33,6 +33,11 @@ export const FEATURES = [
   "assistant",
   "mobile-payments",
   "delivery-orders",
+  "commerce",
+  "delivery-zones",
+  "riders",
+  "promotions",
+  "reviews",
 ] as const;
 
 
@@ -67,9 +72,14 @@ export const ROLE_FEATURES: Record<AppRole, readonly Feature[]> = {
     "purchase-orders",
     "assistant",
     "delivery-orders",
+    "commerce",
+    "delivery-zones",
+    "riders",
+    "promotions",
+    "reviews",
   ],
 
-  cashier: ["pos", "sales", "products", "contacts", "payments", "assistant", "mobile-payments", "delivery-orders"],
+  cashier: ["pos", "sales", "products", "contacts", "payments", "assistant", "mobile-payments", "delivery-orders", "commerce"],
   staff: ["pos", "products", "labels"],
 };
 

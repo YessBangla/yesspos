@@ -2,6 +2,11 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRightLeft,
+  Bike,
+  MapPin,
+  Megaphone,
+  Star,
+  Store,
   Smartphone,
   BarChart3,
   Barcode,
@@ -114,6 +119,39 @@ export function AppShell({ children }: { children: ReactNode }) {
         { to: "/stock-adjustments", feature: "stock-adjustments", label: t("stockAdjust"), icon: SlidersHorizontal },
         { to: "/stock-count", feature: "stock-count", label: t("stockCount"), icon: ClipboardList },
         { to: "/labels", feature: "labels", label: t("labels"), icon: Barcode },
+      ],
+    },
+    {
+      id: "ecom",
+      label: lang === "bn" ? "ই-কমার্স" : "E-commerce",
+      icon: Store,
+      items: [
+        {
+          to: "/commerce",
+          feature: "commerce",
+          label: lang === "bn" ? "ই-কমার্স ড্যাশবোর্ড" : "Commerce dashboard",
+          icon: Store,
+        },
+        {
+          to: "/delivery-orders",
+          feature: "delivery-orders",
+          label: lang === "bn" ? "ডেলিভারি অর্ডার" : "Delivery orders",
+          icon: Truck,
+        },
+        { to: "/riders", feature: "riders", label: lang === "bn" ? "রাইডার" : "Riders", icon: Bike },
+        {
+          to: "/delivery-zones",
+          feature: "delivery-zones",
+          label: lang === "bn" ? "ডেলিভারি এলাকা" : "Delivery zones",
+          icon: MapPin,
+        },
+        {
+          to: "/promotions",
+          feature: "promotions",
+          label: lang === "bn" ? "প্রোমোশন" : "Promotions",
+          icon: Megaphone,
+        },
+        { to: "/reviews", feature: "reviews", label: lang === "bn" ? "রিভিউ" : "Reviews", icon: Star },
       ],
     },
     {

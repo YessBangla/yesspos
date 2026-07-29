@@ -39,6 +39,7 @@ type Order = {
   status: string;
   sale_id: string | null;
   branch_id: string | null;
+  rider_id: string | null;
   created_at: string;
 };
 
@@ -85,6 +86,20 @@ function DeliveryOrdersPage() {
     },
   });
 
+  const riders = useQuery({
+    queryKey: ["riders"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("delivery_riders")
+        .select("id,name,is_active")
+        .eq("is_active", true)
+        .order("name");
+      if (error) throw error;
+      return data as { id: string; name: string; is_active: boolean }[];
+    },
+  });
+
   const items = useQuery({
     queryKey: ["delivery-order-items"],
     staleTime: 15_000,
@@ -94,6 +109,20 @@ function DeliveryOrdersPage() {
       return data as unknown as Item[];
     },
   });
+
+  const assignRider = useMutation({
+    mutationFn: async ({ id, riderId }: { id: string; riderId: string | null }) => {
+      const { error } = await supabase.from("delivery_orders").update({ rider_id: riderId }).eq("id", id);
+      if (error) throw error;
+      await logAudit("delivery_order", { entity: "delivery_orders", entityId: id, details: `rider:${riderId ?? "none"}` });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["delivery-orders"] });
+      toast.success(bn ? "রাইডার নির্ধারণ হয়েছে" : "Rider assigned");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
 
   const byOrder = useMemo(() => {
     const map = new Map<string, Item[]>();
@@ -261,6 +290,22 @@ function DeliveryOrdersPage() {
                   {o.payment_method.toUpperCase()}
                 </span>
                 <span className="font-bold">{money(Number(o.total), lang)}</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">{bn ? "রাইডার" : "Rider"}</span>
+                <select
+                  value={o.rider_id ?? ""}
+                  onChange={(e) => assignRider.mutate({ id: o.id, riderId: e.target.value || null })}
+                  className="h-9 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+                >
+                  <option value="">{bn ? "নির্ধারিত নয়" : "Unassigned"}</option>
+                  {(riders.data ?? []).map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex flex-wrap gap-2">

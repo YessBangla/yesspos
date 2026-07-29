@@ -25,7 +25,17 @@ export type AuditAction =
   | "branch_update"
   | "stock_transfer"
   | "contact_create"
-  | "delivery_order";
+  | "delivery_order"
+  | "zone_create"
+  | "zone_update"
+  | "zone_delete"
+  | "rider_create"
+  | "rider_update"
+  | "rider_delete"
+  | "promotion_create"
+  | "promotion_update"
+  | "promotion_delete"
+  | "review_moderate";
 
 /** Fire-and-forget audit trail entry. Never blocks or breaks the calling flow. */
 export async function logAudit(
