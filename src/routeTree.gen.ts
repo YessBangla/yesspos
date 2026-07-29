@@ -36,6 +36,7 @@ import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedFinancialsRouteImport } from './routes/_authenticated/financials'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
+import { Route as AuthenticatedDeliveryOrdersRouteImport } from './routes/_authenticated/delivery-orders'
 import { Route as AuthenticatedDayBookRouteImport } from './routes/_authenticated/day-book'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
@@ -186,6 +187,12 @@ const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
   path: '/expenses',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDeliveryOrdersRoute =
+  AuthenticatedDeliveryOrdersRouteImport.update({
+    id: '/delivery-orders',
+    path: '/delivery-orders',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDayBookRoute = AuthenticatedDayBookRouteImport.update({
   id: '/day-book',
   path: '/day-book',
@@ -256,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/day-book': typeof AuthenticatedDayBookRoute
+  '/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/financials': typeof AuthenticatedFinancialsRoute
   '/inventory': typeof AuthenticatedInventoryRoute
@@ -294,6 +302,7 @@ export interface FileRoutesByTo {
   '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/day-book': typeof AuthenticatedDayBookRoute
+  '/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/financials': typeof AuthenticatedFinancialsRoute
   '/inventory': typeof AuthenticatedInventoryRoute
@@ -334,6 +343,7 @@ export interface FileRoutesById {
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/day-book': typeof AuthenticatedDayBookRoute
+  '/_authenticated/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
   '/_authenticated/financials': typeof AuthenticatedFinancialsRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
@@ -374,6 +384,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/dashboard'
     | '/day-book'
+    | '/delivery-orders'
     | '/expenses'
     | '/financials'
     | '/inventory'
@@ -412,6 +423,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/dashboard'
     | '/day-book'
+    | '/delivery-orders'
     | '/expenses'
     | '/financials'
     | '/inventory'
@@ -451,6 +463,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contacts'
     | '/_authenticated/dashboard'
     | '/_authenticated/day-book'
+    | '/_authenticated/delivery-orders'
     | '/_authenticated/expenses'
     | '/_authenticated/financials'
     | '/_authenticated/inventory'
@@ -674,6 +687,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedExpensesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/delivery-orders': {
+      id: '/_authenticated/delivery-orders'
+      path: '/delivery-orders'
+      fullPath: '/delivery-orders'
+      preLoaderRoute: typeof AuthenticatedDeliveryOrdersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/day-book': {
       id: '/_authenticated/day-book'
       path: '/day-book'
@@ -758,6 +778,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDayBookRoute: typeof AuthenticatedDayBookRoute
+  AuthenticatedDeliveryOrdersRoute: typeof AuthenticatedDeliveryOrdersRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
   AuthenticatedFinancialsRoute: typeof AuthenticatedFinancialsRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
@@ -790,6 +811,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDayBookRoute: AuthenticatedDayBookRoute,
+  AuthenticatedDeliveryOrdersRoute: AuthenticatedDeliveryOrdersRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
   AuthenticatedFinancialsRoute: AuthenticatedFinancialsRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
