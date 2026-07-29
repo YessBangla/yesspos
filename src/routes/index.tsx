@@ -17,12 +17,14 @@ import {
   Quote,
   ReceiptText,
   ShieldCheck,
+  ShoppingBag,
   ShoppingCart,
   Truck,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
+import { shopPortalHref } from "@/lib/shop-portal";
 import { LangToggle } from "@/components/LangToggle";
 import heroShade from "@/assets/hero-shade.jpg";
 import cardShade from "@/assets/card-shade.jpg";
@@ -396,8 +398,11 @@ function Index() {
           </nav>
           <div className="flex items-center gap-2">
             <LangToggle />
-            <Button asChild variant="outline" size="sm">
-              <Link to="/shop">{L("অনলাইন শপ", "Online shop")}</Link>
+            <Button asChild variant="accent" size="sm">
+              <a href={shopPortalHref()} target="_blank" rel="noreferrer">
+                <ShoppingBag className="mr-1 size-4" />
+                {L("হোম ডেলিভারি অর্ডার দিন", "Order home delivery")}
+              </a>
             </Button>
             <Button asChild variant="ghost" size="sm">
               <Link to="/auth">{t("signIn")}</Link>
@@ -450,6 +455,12 @@ function Index() {
                     <Link to="/auth">
                       {t("getStarted")} <ArrowRight className="ml-1 size-4" />
                     </Link>
+                  </Button>
+                  <Button asChild size="lg" variant="accent">
+                    <a href={shopPortalHref()} target="_blank" rel="noreferrer">
+                      <ShoppingBag className="mr-1 size-4" />
+                      {L("হোম ডেলিভারি অর্ডার দিন", "Order home delivery")}
+                    </a>
                   </Button>
                   <Button asChild size="lg" variant="outline">
                     <Link to="/auth">{t("signIn")}</Link>

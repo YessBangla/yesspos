@@ -1,7 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CloudUpload, Loader2, Minus, Plus, RefreshCw, Search, ShoppingBag, Truck, WifiOff } from "lucide-react";
+import {
+  BadgePercent,
+  Clock,
+  CloudUpload,
+  Loader2,
+  Minus,
+  Phone,
+  Plus,
+  RefreshCw,
+  Search,
+  ShoppingBag,
+  ShoppingBasket,
+  Truck,
+  WifiOff,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -318,14 +333,66 @@ function ShopPage() {
     }
   }
 
+  const suggestions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return (products.data ?? [])
+      .filter((p) => p.name_en.toLowerCase().includes(q) || p.name_bn.includes(query.trim()))
+      .slice(0, 6);
+  }, [products.data, query]);
+
+  const catCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    (products.data ?? []).forEach((p) => {
+      if (p.category_id) m.set(p.category_id, (m.get(p.category_id) ?? 0) + 1);
+    });
+    return m;
+  }, [products.data]);
+
+  const addToCart = (p: P) =>
+    cart.add({
+      id: p.id,
+      name_en: p.name_en,
+      name_bn: p.name_bn,
+      price: Number(p.price),
+      pack_size: p.pack_size,
+      image_url: p.image_url,
+    });
+
   return (
-    <main className="min-h-screen bg-background pb-32">
-      <header className="sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
-          <Link to="/" className="font-display text-lg font-bold text-primary">
-            Yess Shop
+    <main className="min-h-screen bg-muted/30 pb-28 lg:pb-10">
+      {/* ---- Top utility bar ---- */}
+      <div className="bg-primary text-primary-foreground">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-1.5 text-xs">
+          <span className="flex items-center gap-1.5">
+            <Truck className="size-3.5" />
+            {bn ? "ঢাকায় ১ ঘণ্টায় ডেলিভারি · ৳১০০০+ অর্ডারে ফ্রি" : "1-hour delivery in Dhaka · Free above ৳1000"}
+          </span>
+          <span className="flex items-center gap-3">
+            <a href="tel:16710" className="flex items-center gap-1 hover:underline">
+              <Phone className="size-3.5" /> 16710
+            </a>
+            <Link to="/track" className="hover:underline">
+              {bn ? "অর্ডার ট্র্যাক" : "Track order"}
+            </Link>
+            <Link to="/auth" className="hidden hover:underline sm:inline">
+              {bn ? "স্টাফ লগইন" : "Staff login"}
+            </Link>
+          </span>
+        </div>
+      </div>
+
+      {/* ---- Header ---- */}
+      <header className="sticky top-0 z-30 border-b border-border bg-card/95 shadow-sm backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
+          <Link to="/" className="flex shrink-0 items-center gap-2">
+            <span className="gradient-brand grid size-9 place-items-center rounded-xl text-primary-foreground">
+              <ShoppingBasket className="size-5" />
+            </span>
+            <span className="hidden font-display text-lg font-bold text-primary sm:block">Yess Shop</span>
           </Link>
-          <div className="relative min-w-[180px] flex-1">
+
+          <div className="relative min-w-[160px] flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
@@ -334,18 +401,42 @@ function ShopPage() {
                 setLimit(PAGE);
               }}
               maxLength={60}
-              placeholder={bn ? "পণ্য খুঁজুন" : "Search products"}
-              className="pl-9"
+              placeholder={bn ? "চাল, তেল, ডিম… খুঁজুন" : "Search rice, oil, eggs…"}
+              className="h-11 rounded-full pl-9"
             />
+            {suggestions.length > 0 && (
+              <div className="absolute inset-x-0 top-12 z-40 overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
+                {suggestions.map((sug) => (
+                  <button
+                    key={sug.id}
+                    type="button"
+                    className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-muted"
+                    onClick={() => {
+                      addToCart(sug);
+                      setQuery("");
+                      toast.success(bn ? "কার্টে যোগ হয়েছে" : "Added to cart");
+                    }}
+                  >
+                    {sug.image_url ? (
+                      <img src={sug.image_url} alt="" loading="lazy" className="size-8 rounded object-cover" />
+                    ) : (
+                      <span className="size-8 rounded bg-muted" />
+                    )}
+                    <span className="min-w-0 flex-1 truncate text-sm">{bn ? sug.name_bn : sug.name_en}</span>
+                    <span className="text-xs font-semibold text-primary">{money(Number(sug.price), lang)}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          <Link to="/track" className="text-sm text-muted-foreground underline">
-            {bn ? "অর্ডার ট্র্যাক" : "Track order"}
-          </Link>
-          <Button variant="outline" className="shrink-0" onClick={() => setCheckout(true)}>
+
+          <Button className="h-11 shrink-0 rounded-full" onClick={() => setCheckout(true)}>
             <ShoppingBag className="mr-1 size-4" />
-            {num(cart.count, lang)} · {money(cart.subtotal, lang)}
+            <span className="hidden sm:inline">{num(cart.count, lang)} · </span>
+            {money(cart.subtotal, lang)}
           </Button>
         </div>
+
         {!online && (
           <div className="flex items-center justify-center gap-2 bg-warning/20 py-1 text-xs">
             <WifiOff className="size-3" />
@@ -356,9 +447,7 @@ function ShopPage() {
           <div className="flex flex-wrap items-center justify-center gap-2 bg-primary/10 px-3 py-1.5 text-xs">
             <CloudUpload className="size-3.5 text-primary" />
             <span>
-              {bn
-                ? `${num(queued.length, lang)}টি অর্ডার সিঙ্কের অপেক্ষায়`
-                : `${queued.length} order(s) waiting to sync`}
+              {bn ? `${num(queued.length, lang)}টি অর্ডার সিঙ্কের অপেক্ষায়` : `${queued.length} order(s) waiting to sync`}
               {queued.some((q) => q.attempts > 0) &&
                 ` · ${bn ? "পুনঃচেষ্টা" : "retry"} ${queued[0].attempts}/${QUEUE_MAX_ATTEMPTS}`}
             </span>
@@ -372,9 +461,7 @@ function ShopPage() {
                 variant="ghost"
                 className="h-6 px-2 text-[11px] text-destructive"
                 onClick={() =>
-                  queued
-                    .filter((q) => q.attempts >= QUEUE_MAX_ATTEMPTS)
-                    .forEach((q) => void dropQueuedOrder(q.id))
+                  queued.filter((q) => q.attempts >= QUEUE_MAX_ATTEMPTS).forEach((q) => void dropQueuedOrder(q.id))
                 }
               >
                 {bn ? "ব্যর্থগুলো মুছুন" : "Discard failed"}
@@ -384,65 +471,176 @@ function ShopPage() {
         )}
       </header>
 
-      <div className="mx-auto max-w-6xl px-4">
-        <section className="mt-5 flex items-center gap-3 rounded-2xl bg-primary/10 p-4">
-          <Truck className="size-5 shrink-0 text-primary" />
-          <p className="text-sm">
-            {bn
-              ? "৳১০০০ টাকার উপরে অর্ডারে ফ্রি হোম ডেলিভারি, নিচে ৳৬০ ডেলিভারি চার্জ।"
-              : "Free home delivery above ৳1000, otherwise a flat ৳60 delivery fee."}
-          </p>
-        </section>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <CatChip active={!cat} onClick={() => setCat("")} label={bn ? "সব" : "All"} />
-          {(categories.data ?? []).map((c) => (
-            <CatChip
-              key={c.id}
-              active={cat === c.id}
-              onClick={() => {
-                setCat(c.id);
-                setLimit(PAGE);
-              }}
-              label={bn ? c.name_bn : c.name_en}
-            />
-          ))}
-        </div>
-
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {shown.map((p) => (
-            <ProductCard
-              key={p.id}
-              p={p}
-              bn={bn}
-              qty={cart.lines.find((l) => l.id === p.id)?.qty ?? 0}
-              onAdd={() =>
-                cart.add({
-                  id: p.id,
-                  name_en: p.name_en,
-                  name_bn: p.name_bn,
-                  price: Number(p.price),
-                  pack_size: p.pack_size,
-                  image_url: p.image_url,
-                })
-              }
-              onSet={(q) => cart.setQty(p.id, q)}
-            />
-          ))}
-        </div>
-
-        {products.isLoading && <p className="py-10 text-center text-muted-foreground">…</p>}
-        {shown.length < visible.length && (
-          <div className="py-6 text-center">
-            <Button variant="outline" onClick={() => setLimit((n) => n + PAGE * 2)}>
-              {bn ? "আরও দেখুন" : "Load more"} ({num(visible.length - shown.length, lang)})
-            </Button>
+      <div className="mx-auto max-w-7xl gap-5 px-4 lg:grid lg:grid-cols-[220px_minmax(0,1fr)_310px]">
+        {/* ---- Category sidebar ---- */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-24 mt-5 max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl border border-border bg-card p-2">
+            <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {bn ? "ক্যাটাগরি" : "Categories"}
+            </p>
+            <SideCat active={!cat} onClick={() => setCat("")} label={bn ? "সব পণ্য" : "All products"} count={products.data?.length ?? 0} />
+            {(categories.data ?? []).map((c) => (
+              <SideCat
+                key={c.id}
+                active={cat === c.id}
+                onClick={() => {
+                  setCat(c.id);
+                  setLimit(PAGE);
+                }}
+                label={bn ? c.name_bn : c.name_en}
+                count={catCounts.get(c.id) ?? 0}
+              />
+            ))}
           </div>
-        )}
+        </aside>
+
+        {/* ---- Main column ---- */}
+        <div>
+          <section className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="gradient-brand col-span-full rounded-2xl p-5 text-primary-foreground sm:col-span-2">
+              <p className="text-xs opacity-80">{bn ? "অনলাইন সুপারশপ" : "Online supershop"}</p>
+              <h1 className="font-display text-2xl font-bold leading-tight">
+                {bn ? "বাজার এখন দরজায়, ১ ঘণ্টায় ডেলিভারি" : "Your daily bazar, delivered in 1 hour"}
+              </h1>
+              <p className="mt-1 text-sm opacity-90">
+                {bn ? "৳১০০০+ অর্ডারে ফ্রি ডেলিভারি · ক্যাশ অন ডেলিভারি" : "Free delivery above ৳1000 · Cash on delivery"}
+              </p>
+            </div>
+            <div className="grid gap-3">
+              <Perk icon={Clock} title={bn ? "সময় বেছে নিন" : "Pick your slot"} sub={bn ? "সকাল ৮টা - রাত ৮টা" : "8 AM – 8 PM"} />
+              <Perk icon={BadgePercent} title={bn ? "মেম্বার পয়েন্ট" : "Member points"} sub={bn ? "১০ টাকায় ১ পয়েন্ট" : "1 point per ৳10"} />
+            </div>
+          </section>
+
+          <div className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+            <CatChip active={!cat} onClick={() => setCat("")} label={bn ? "সব" : "All"} />
+            {(categories.data ?? []).map((c) => (
+              <CatChip
+                key={c.id}
+                active={cat === c.id}
+                onClick={() => {
+                  setCat(c.id);
+                  setLimit(PAGE);
+                }}
+                label={bn ? c.name_bn : c.name_en}
+              />
+            ))}
+          </div>
+
+          <div className="mt-4 flex items-baseline justify-between">
+            <h2 className="font-display text-lg font-bold">
+              {cat
+                ? (bn
+                    ? categories.data?.find((c) => c.id === cat)?.name_bn
+                    : categories.data?.find((c) => c.id === cat)?.name_en) ?? ""
+                : bn
+                  ? "সব পণ্য"
+                  : "All products"}
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              {num(visible.length, lang)} {bn ? "পণ্য" : "items"}
+            </span>
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+            {shown.map((p) => (
+              <ProductCard
+                key={p.id}
+                p={p}
+                bn={bn}
+                qty={cart.lines.find((l) => l.id === p.id)?.qty ?? 0}
+                onAdd={() => addToCart(p)}
+                onSet={(q) => cart.setQty(p.id, q)}
+              />
+            ))}
+          </div>
+
+          {products.isLoading && <p className="py-10 text-center text-muted-foreground">…</p>}
+          {!products.isLoading && visible.length === 0 && (
+            <p className="py-12 text-center text-sm text-muted-foreground">
+              {bn ? "কোনো পণ্য পাওয়া যায়নি" : "No products found"}
+            </p>
+          )}
+          {shown.length < visible.length && (
+            <div className="py-6 text-center">
+              <Button variant="outline" onClick={() => setLimit((n) => n + PAGE * 2)}>
+                {bn ? "আরও দেখুন" : "Load more"} ({num(visible.length - shown.length, lang)})
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* ---- Desktop cart rail ---- */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-24 mt-5 rounded-2xl border border-border bg-card">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <span className="font-display font-bold">{bn ? "আপনার কার্ট" : "Your cart"}</span>
+              <span className="text-xs text-muted-foreground">
+                {num(cart.count, lang)} {bn ? "পণ্য" : "items"}
+              </span>
+            </div>
+            <div className="max-h-[45vh] divide-y divide-border overflow-y-auto">
+              {cart.lines.map((l) => (
+                <CartRow key={l.id} l={l} bn={bn} lang={lang} onSet={(q) => cart.setQty(l.id, q)} />
+              ))}
+              {cart.lines.length === 0 && (
+                <p className="p-6 text-center text-sm text-muted-foreground">
+                  {bn ? "কার্ট খালি — পণ্য যোগ করুন" : "Cart is empty — add some products"}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1 border-t border-border p-4 text-sm">
+              <Row label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
+              <Row label={bn ? "ডেলিভারি" : "Delivery"} value={money(fee, lang)} />
+              <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
+              {cart.subtotal > 0 && cart.subtotal < 1000 && (
+                <p className="pt-1 text-xs text-primary">
+                  {bn
+                    ? `আর ${money(1000 - cart.subtotal, lang)} কিনলে ডেলিভারি ফ্রি`
+                    : `Add ${money(1000 - cart.subtotal, lang)} more for free delivery`}
+                </p>
+              )}
+              <Button className="mt-2 w-full" disabled={cart.lines.length === 0} onClick={() => setCheckout(true)}>
+                {bn ? "চেকআউট" : "Checkout"}
+              </Button>
+            </div>
+          </div>
+        </aside>
       </div>
 
+      <footer className="mt-12 border-t border-border bg-card">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 text-sm sm:grid-cols-3">
+          <div>
+            <p className="font-display text-base font-bold text-primary">Yess Shop</p>
+            <p className="mt-1 text-muted-foreground">
+              {bn
+                ? "সুপারশপের সব পণ্য অনলাইনে — অর্ডার করুন, ঘরে বসে বুঝে নিন।"
+                : "Every supershop aisle online — order now, receive at home."}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="font-semibold">{bn ? "সেবা" : "Service"}</p>
+            <Link to="/track" className="block text-muted-foreground hover:text-foreground">
+              {bn ? "অর্ডার ট্র্যাক" : "Track order"}
+            </Link>
+            <a href="tel:16710" className="block text-muted-foreground hover:text-foreground">
+              {bn ? "কল করুন ১৬৭১০" : "Call 16710"}
+            </a>
+          </div>
+          <div className="space-y-1">
+            <p className="font-semibold">{bn ? "তথ্য" : "Information"}</p>
+            <Link to="/privacy" className="block text-muted-foreground hover:text-foreground">
+              {bn ? "প্রাইভেসি পলিসি" : "Privacy policy"}
+            </Link>
+            <Link to="/terms" className="block text-muted-foreground hover:text-foreground">
+              {bn ? "শর্তাবলি" : "Terms of service"}
+            </Link>
+          </div>
+        </div>
+      </footer>
+
       {cart.count > 0 && !checkout && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card p-3">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card p-3 lg:hidden">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
             <span className="text-sm">
               {num(cart.count, lang)} {bn ? "পণ্য" : "items"} · <b>{money(total, lang)}</b>
@@ -715,6 +913,34 @@ function F({ label, v, on }: { label: string; v: string; on: (v: string) => void
     <div className="space-y-1.5">
       <Label>{label}</Label>
       <Input value={v} maxLength={120} onChange={(e) => on(e.target.value)} />
+    </div>
+  );
+}
+
+function SideCat({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm",
+        active ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground hover:bg-muted",
+      )}
+    >
+      <span className="truncate">{label}</span>
+      <span className="text-[11px]">{count}</span>
+    </button>
+  );
+}
+
+function Perk({ icon: Icon, title, sub }: { icon: LucideIcon; title: string; sub: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+      <Icon className="size-5 shrink-0 text-primary" />
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold">{title}</p>
+        <p className="truncate text-xs text-muted-foreground">{sub}</p>
+      </div>
     </div>
   );
 }
