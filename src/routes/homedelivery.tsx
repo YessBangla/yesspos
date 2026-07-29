@@ -51,7 +51,7 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/homedelivery")({
   validateSearch: (input: Record<string, unknown>) => {
-    const truthy = input.checkout === true || input.checkout === "1" || input.checkout === "true";
+    const truthy = input.checkout === true || input.checkout === 1 || input.checkout === "1" || input.checkout === "true";
     const parsed = searchSchema.safeParse({
       q: typeof input.q === "string" && input.q.trim() ? input.q : undefined,
       cat: typeof input.cat === "string" && input.cat.trim() ? input.cat : undefined,
