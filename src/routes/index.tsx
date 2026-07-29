@@ -396,6 +396,9 @@ function Index() {
           </nav>
           <div className="flex items-center gap-2">
             <LangToggle />
+            <Button asChild variant="outline" size="sm">
+              <Link to="/shop">{L("অনলাইন শপ", "Online shop")}</Link>
+            </Button>
             <Button asChild variant="ghost" size="sm">
               <Link to="/auth">{t("signIn")}</Link>
             </Button>

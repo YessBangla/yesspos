@@ -9,8 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrackRouteImport } from './routes/track'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ShopRouteImport } from './routes/shop'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -34,6 +36,7 @@ import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedFinancialsRouteImport } from './routes/_authenticated/financials'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
+import { Route as AuthenticatedDeliveryOrdersRouteImport } from './routes/_authenticated/delivery-orders'
 import { Route as AuthenticatedDayBookRouteImport } from './routes/_authenticated/day-book'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
@@ -45,6 +48,11 @@ import { Route as AuthenticatedAssistantRouteImport } from './routes/_authentica
 import { Route as AuthenticatedApiHubRouteImport } from './routes/_authenticated/api-hub'
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
 
+const TrackRoute = TrackRouteImport.update({
+  id: '/track',
+  path: '/track',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -53,6 +61,11 @@ const TermsRoute = TermsRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopRoute = ShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -174,6 +187,12 @@ const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
   path: '/expenses',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDeliveryOrdersRoute =
+  AuthenticatedDeliveryOrdersRouteImport.update({
+    id: '/delivery-orders',
+    path: '/delivery-orders',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDayBookRoute = AuthenticatedDayBookRouteImport.update({
   id: '/day-book',
   path: '/day-book',
@@ -230,8 +249,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
+  '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/track': typeof TrackRoute
   '/accounts': typeof AuthenticatedAccountsRoute
   '/api-hub': typeof AuthenticatedApiHubRoute
   '/assistant': typeof AuthenticatedAssistantRoute
@@ -242,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/day-book': typeof AuthenticatedDayBookRoute
+  '/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/financials': typeof AuthenticatedFinancialsRoute
   '/inventory': typeof AuthenticatedInventoryRoute
@@ -266,8 +288,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
+  '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/track': typeof TrackRoute
   '/accounts': typeof AuthenticatedAccountsRoute
   '/api-hub': typeof AuthenticatedApiHubRoute
   '/assistant': typeof AuthenticatedAssistantRoute
@@ -278,6 +302,7 @@ export interface FileRoutesByTo {
   '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/day-book': typeof AuthenticatedDayBookRoute
+  '/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/financials': typeof AuthenticatedFinancialsRoute
   '/inventory': typeof AuthenticatedInventoryRoute
@@ -304,8 +329,10 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
+  '/shop': typeof ShopRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/track': typeof TrackRoute
   '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
   '/_authenticated/api-hub': typeof AuthenticatedApiHubRoute
   '/_authenticated/assistant': typeof AuthenticatedAssistantRoute
@@ -316,6 +343,7 @@ export interface FileRoutesById {
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/day-book': typeof AuthenticatedDayBookRoute
+  '/_authenticated/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
   '/_authenticated/financials': typeof AuthenticatedFinancialsRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
@@ -342,8 +370,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/privacy'
+    | '/shop'
     | '/sitemap.xml'
     | '/terms'
+    | '/track'
     | '/accounts'
     | '/api-hub'
     | '/assistant'
@@ -354,6 +384,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/dashboard'
     | '/day-book'
+    | '/delivery-orders'
     | '/expenses'
     | '/financials'
     | '/inventory'
@@ -378,8 +409,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/privacy'
+    | '/shop'
     | '/sitemap.xml'
     | '/terms'
+    | '/track'
     | '/accounts'
     | '/api-hub'
     | '/assistant'
@@ -390,6 +423,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/dashboard'
     | '/day-book'
+    | '/delivery-orders'
     | '/expenses'
     | '/financials'
     | '/inventory'
@@ -415,8 +449,10 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/privacy'
+    | '/shop'
     | '/sitemap.xml'
     | '/terms'
+    | '/track'
     | '/_authenticated/accounts'
     | '/_authenticated/api-hub'
     | '/_authenticated/assistant'
@@ -427,6 +463,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contacts'
     | '/_authenticated/dashboard'
     | '/_authenticated/day-book'
+    | '/_authenticated/delivery-orders'
     | '/_authenticated/expenses'
     | '/_authenticated/financials'
     | '/_authenticated/inventory'
@@ -453,12 +490,21 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   PrivacyRoute: typeof PrivacyRoute
+  ShopRoute: typeof ShopRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
+  TrackRoute: typeof TrackRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/track': {
+      id: '/track'
+      path: '/track'
+      fullPath: '/track'
+      preLoaderRoute: typeof TrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -471,6 +517,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop': {
+      id: '/shop'
+      path: '/shop'
+      fullPath: '/shop'
+      preLoaderRoute: typeof ShopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -634,6 +687,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedExpensesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/delivery-orders': {
+      id: '/_authenticated/delivery-orders'
+      path: '/delivery-orders'
+      fullPath: '/delivery-orders'
+      preLoaderRoute: typeof AuthenticatedDeliveryOrdersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/day-book': {
       id: '/_authenticated/day-book'
       path: '/day-book'
@@ -718,6 +778,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDayBookRoute: typeof AuthenticatedDayBookRoute
+  AuthenticatedDeliveryOrdersRoute: typeof AuthenticatedDeliveryOrdersRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
   AuthenticatedFinancialsRoute: typeof AuthenticatedFinancialsRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
@@ -750,6 +811,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDayBookRoute: AuthenticatedDayBookRoute,
+  AuthenticatedDeliveryOrdersRoute: AuthenticatedDeliveryOrdersRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
   AuthenticatedFinancialsRoute: AuthenticatedFinancialsRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
@@ -779,8 +841,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   PrivacyRoute: PrivacyRoute,
+  ShopRoute: ShopRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
+  TrackRoute: TrackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

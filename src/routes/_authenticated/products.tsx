@@ -86,6 +86,7 @@ function ProductsPage() {
   const { t, lang } = useI18n();
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
+  const [limit, setLimit] = useState(50);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Row | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
@@ -122,8 +123,15 @@ function ProductsPage() {
 
   const products = useQuery({
     queryKey: ["products-all"],
+    staleTime: 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*").order("name_en");
+      const { data, error } = await supabase
+        .from("products")
+        .select(
+          "id,name_en,name_bn,sku,seq,price,cost,stock,low_stock_at,unit,is_active,category_id,image_url,pack_size,brand",
+        )
+        .order("name_en")
+        .limit(2000);
       if (error) throw error;
       return data as unknown as Row[];
     },
@@ -243,7 +251,10 @@ function ProductsPage() {
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setLimit(50);
+              }}
               placeholder={lang === "bn" ? "নাম, সিরিয়াল বা SKU" : "Name, serial or SKU"}
               maxLength={60}
               className="w-56 pl-9"
@@ -283,7 +294,7 @@ function ProductsPage() {
                 </td>
               </tr>
             )}
-            {visible.map((p) => {
+            {visible.slice(0, limit).map((p) => {
               const cat = categories.data?.find((c) => c.id === p.category_id);
               const low = p.branch_stock <= p.low_stock_at;
               return (
@@ -369,6 +380,15 @@ function ProductsPage() {
                 </tr>
               );
             })}
+            {visible.length > limit && (
+              <tr>
+                <td className="px-4 py-4" colSpan={8}>
+                  <Button variant="outline" size="sm" onClick={() => setLimit((n) => n + 100)}>
+                    {lang === "bn" ? "আরও দেখুন" : "Load more"} ({num(visible.length - limit, lang)})
+                  </Button>
+                </td>
+              </tr>
+            )}
             {!products.isLoading && visible.length === 0 && (
               <tr>
                 <td className="px-4 py-6 text-muted-foreground" colSpan={8}>

@@ -1,0 +1,81 @@
+/** Offline-friendly storefront cart, persisted in localStorage. */
+import { useCallback, useEffect, useState } from "react";
+
+export type ShopLine = {
+  id: string;
+  name_en: string;
+  name_bn: string;
+  price: number;
+  pack_size: string | null;
+  image_url: string | null;
+  qty: number;
+};
+
+const KEY = "shop-cart-v1";
+
+function read(): ShopLine[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? (parsed as ShopLine[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function write(lines: ShopLine[]) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(lines));
+  } catch {
+    /* storage full or blocked — cart stays in memory */
+  }
+}
+
+export function useShopCart() {
+  const [lines, setLines] = useState<ShopLine[]>([]);
+
+  useEffect(() => {
+    setLines(read());
+  }, []);
+
+  const update = useCallback((next: ShopLine[]) => {
+    setLines(next);
+    write(next);
+  }, []);
+
+  const add = useCallback(
+    (p: Omit<ShopLine, "qty">, qty = 1) => {
+      const current = read();
+      const found = current.find((l) => l.id === p.id);
+      const next = found
+        ? current.map((l) => (l.id === p.id ? { ...l, qty: Math.min(l.qty + qty, 999) } : l))
+        : [...current, { ...p, qty }];
+      update(next);
+    },
+    [update],
+  );
+
+  const setQty = useCallback(
+    (id: string, qty: number) => {
+      const next = read()
+        .map((l) => (l.id === id ? { ...l, qty } : l))
+        .filter((l) => l.qty > 0);
+      update(next);
+    },
+    [update],
+  );
+
+  const clear = useCallback(() => update([]), [update]);
+
+  const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
+  const count = lines.reduce((s, l) => s + l.qty, 0);
+
+  return { lines, add, setQty, clear, subtotal, count };
+}
+
+/** Free delivery above ৳1000, otherwise a flat fee. */
+export function deliveryFeeFor(subtotal: number) {
+  if (subtotal <= 0) return 0;
+  return subtotal >= 1000 ? 0 : 60;
+}
