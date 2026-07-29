@@ -31,6 +31,7 @@ type Order = {
   address: string;
   area: string | null;
   note: string | null;
+  slot: string | null;
   payment_method: string;
   subtotal: number;
   delivery_fee: number;
@@ -235,6 +236,11 @@ function DeliveryOrdersPage() {
                   {o.area ? `${o.area}, ` : ""}
                   {o.address}
                 </p>
+                {o.slot && (
+                  <p className="mt-1 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                    {lang === "bn" ? "স্লট" : "Slot"}: {o.slot}
+                  </p>
+                )}
                 {o.note && <p className="text-xs italic text-muted-foreground">{o.note}</p>}
               </div>
 

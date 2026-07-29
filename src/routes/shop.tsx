@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Minus, Plus, Search, ShoppingBag, Truck, WifiOff } from "lucide-react";
+import { CloudUpload, Loader2, Minus, Plus, RefreshCw, Search, ShoppingBag, Truck, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { deliveryFeeFor, useShopCart, type ShopLine } from "@/lib/shop-cart";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { checkPackCart } from "@/lib/pack-size";
+import { checkOrderConsistency, formatIssues } from "@/lib/order-check";
+import {
+  QUEUE_MAX_ATTEMPTS,
+  dropQueuedOrder,
+  isQueueSupported,
+  listQueuedOrders,
+  queueOrder,
+  subscribeQueue,
+  syncQueuedOrders,
+  type QueuedOrder,
+} from "@/lib/delivery-queue";
 
 export const Route = createFileRoute("/shop")({
   head: () => ({
@@ -42,13 +54,41 @@ type P = {
 };
 
 const PAGE = 24;
-const PENDING_KEY = "shop-pending-order";
+
+/** Chaldal-style delivery windows. */
+const TIME_SLOTS = [
+  { id: "08:00-11:00", bn: "সকাল ৮টা - ১১টা", en: "8:00 AM - 11:00 AM" },
+  { id: "11:00-14:00", bn: "সকাল ১১টা - দুপুর ২টা", en: "11:00 AM - 2:00 PM" },
+  { id: "14:00-17:00", bn: "দুপুর ২টা - বিকাল ৫টা", en: "2:00 PM - 5:00 PM" },
+  { id: "17:00-20:00", bn: "বিকাল ৫টা - রাত ৮টা", en: "5:00 PM - 8:00 PM" },
+] as const;
+
+function nextDays(count: number) {
+  return Array.from({ length: count }, (_, i) => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+}
+
+/** A slot is only bookable if it ends at least 1 hour from now. */
+function slotAvailable(date: Date, slotId: string) {
+  const [, end] = slotId.split("-");
+  const [h, m] = end.split(":").map(Number);
+  const endsAt = new Date(date);
+  endsAt.setHours(h, m, 0, 0);
+  return endsAt.getTime() - Date.now() > 60 * 60 * 1000;
+}
 
 const checkoutSchema = z.object({
-  name: z.string().trim().min(2).max(60),
-  phone: z.string().trim().min(6).max(20),
-  address: z.string().trim().min(6).max(300),
-  area: z.string().trim().max(80),
+  name: z.string().trim().min(2, "name").max(60),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^(?:\+?88)?01[3-9]\d{8}$/, "phone"),
+  address: z.string().trim().min(10, "address").max(300),
+  area: z.string().trim().min(2, "area").max(80),
   note: z.string().trim().max(200),
 });
 
@@ -63,6 +103,50 @@ function ShopPage() {
   const [online, setOnline] = useState(true);
   const [form, setForm] = useState({ name: "", phone: "", address: "", area: "", note: "", payment: "cod" });
   const [placed, setPlaced] = useState<number | null>(null);
+  const [slotDay, setSlotDay] = useState(() => nextDays(1)[0].toISOString().slice(0, 10));
+  const [slotTime, setSlotTime] = useState<string>("");
+  const [errors, setErrors] = useState<string[]>([]);
+  const [queued, setQueued] = useState<QueuedOrder[]>([]);
+  const [syncing, setSyncing] = useState(false);
+  const [placing, setPlacing] = useState(false);
+
+  const refreshQueue = useCallback(async () => setQueued(await listQueuedOrders()), []);
+
+  const runSync = useCallback(
+    async (force = false) => {
+      if (!isQueueSupported()) return;
+      setSyncing(true);
+      try {
+        const res = await syncQueuedOrders(force);
+        if (res.synced > 0)
+          toast.success(
+            bn
+              ? `${res.synced}টি অপেক্ষমাণ অর্ডার পাঠানো হয়েছে (#${res.placed.join(", #")})`
+              : `${res.synced} queued order(s) sent (#${res.placed.join(", #")})`,
+          );
+        if (res.failed > 0)
+          toast.error(bn ? "কিছু অর্ডার পাঠানো যায়নি — আবার চেষ্টা হবে" : "Some orders failed — will retry");
+      } finally {
+        setSyncing(false);
+        await refreshQueue();
+      }
+    },
+    [bn, refreshQueue],
+  );
+
+  useEffect(() => {
+    refreshQueue();
+    const unsub = subscribeQueue(() => void refreshQueue());
+    void runSync();
+    const onOnline = () => void runSync(true);
+    window.addEventListener("online", onOnline);
+    const timer = window.setInterval(() => void runSync(), 30_000);
+    return () => {
+      unsub();
+      window.removeEventListener("online", onOnline);
+      window.clearInterval(timer);
+    };
+  }, [refreshQueue, runSync]);
 
   useEffect(() => {
     const sync = () => setOnline(navigator.onLine);
@@ -116,61 +200,122 @@ function ShopPage() {
   const fee = deliveryFeeFor(cart.subtotal);
   const total = cart.subtotal + fee;
 
-  async function placeOrder() {
+  const slotLabel = useMemo(() => {
+    if (!slotTime) return "";
+    const t = TIME_SLOTS.find((x) => x.id === slotTime);
+    return `${slotDay} ${t ? (bn ? t.bn : t.en) : slotTime}`;
+  }, [slotDay, slotTime, bn]);
+
+  function validate() {
+    const found: string[] = [];
     const parsed = checkoutSchema.safeParse(form);
     if (!parsed.success) {
-      toast.error(bn ? "নাম, ফোন ও ঠিকানা সঠিকভাবে দিন" : "Enter a valid name, phone and address");
+      const codes = new Set(parsed.error.issues.map((i) => String(i.message)));
+      if (codes.has("name")) found.push(bn ? "পুরো নাম লিখুন (কমপক্ষে ২ অক্ষর)" : "Enter your full name (min 2 characters)");
+      if (codes.has("phone")) found.push(bn ? "সঠিক বাংলাদেশি মোবাইল নম্বর দিন (01XXXXXXXXX)" : "Enter a valid Bangladeshi mobile number (01XXXXXXXXX)");
+      if (codes.has("address")) found.push(bn ? "সম্পূর্ণ ঠিকানা দিন — বাসা/রোড/এলাকা (কমপক্ষে ১০ অক্ষর)" : "Enter a full address — house/road/area (min 10 characters)");
+      if (codes.has("area")) found.push(bn ? "এলাকা লিখুন" : "Enter your area");
+      if (parsed.error.issues.some((i) => i.path[0] === "note")) found.push(bn ? "নোট সর্বোচ্চ ২০০ অক্ষর" : "Note can be at most 200 characters");
+    }
+    if (!slotTime) found.push(bn ? "ডেলিভারির সময় বেছে নিন" : "Choose a delivery slot");
+    else if (!slotAvailable(new Date(slotDay), slotTime))
+      found.push(bn ? "এই স্লটটি আর নেওয়া যাবে না, অন্যটি বেছে নিন" : "That slot has passed — pick another one");
+    if (cart.lines.length === 0) found.push(bn ? "কার্ট খালি" : "Cart is empty");
+
+    checkPackCart(
+      cart.lines.map((l) => ({ name: bn ? l.name_bn : l.name_en, pack_size: l.pack_size, qty: l.qty })),
+    ).forEach((i) => found.push(bn ? i.bn : i.en));
+
+    return { ok: found.length === 0, found, parsed };
+  }
+
+  async function placeOrder() {
+    const { ok, found, parsed } = validate();
+    setErrors(found);
+    if (!ok || !parsed.success) {
+      toast.error(found[0] ?? (bn ? "তথ্য ঠিক করুন" : "Please fix the highlighted fields"));
       return;
     }
-    if (cart.lines.length === 0) return;
 
-    const payload = {
-      order: {
-        customer_name: parsed.data.name,
-        customer_phone: parsed.data.phone,
-        address: parsed.data.address,
-        area: parsed.data.area || null,
-        note: parsed.data.note || null,
-        payment_method: form.payment,
-        subtotal: cart.subtotal,
-        delivery_fee: fee,
-        total,
-      },
-      lines: cart.lines,
+    const orderRow = {
+      customer_name: parsed.data.name,
+      customer_phone: parsed.data.phone,
+      address: parsed.data.address,
+      area: parsed.data.area,
+      note: parsed.data.note || null,
+      slot: slotLabel,
+      payment_method: form.payment,
+      subtotal: cart.subtotal,
+      delivery_fee: fee,
+      total,
     };
-
-    if (!navigator.onLine) {
-      localStorage.setItem(PENDING_KEY, JSON.stringify(payload));
-      toast.success(bn ? "অফলাইন — অনলাইনে এলে অর্ডার পাঠানো হবে" : "Offline — order will be sent once you reconnect");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("delivery_orders")
-      .insert(payload.order)
-      .select("id,order_no")
-      .single();
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
     const items = cart.lines.map((l) => ({
-      order_id: data.id,
       product_id: l.id,
       name_snapshot: bn ? l.name_bn : l.name_en,
       unit_price: l.price,
       quantity: l.qty,
       line_total: l.price * l.qty,
     }));
-    const { error: itemErr } = await supabase.from("delivery_order_items").insert(items);
-    if (itemErr) {
-      toast.error(itemErr.message);
+
+    // Offline → queue with retry, nothing is lost.
+    if (!navigator.onLine) {
+      await queueOrder(orderRow, items);
+      cart.clear();
+      setCheckout(false);
+      toast.success(bn ? "অফলাইন — অনলাইনে এলে অর্ডার স্বয়ংক্রিয়ভাবে যাবে" : "Offline — your order will be sent automatically when you reconnect");
       return;
     }
-    localStorage.removeItem(PENDING_KEY);
-    cart.clear();
-    setCheckout(false);
-    setPlaced(Number(data.order_no));
+
+    setPlacing(true);
+    try {
+      // Backend consistency check: price, pack size and stock across all branches.
+      const issues = await checkOrderConsistency(
+        cart.lines.map((l) => ({
+          product_id: l.id,
+          name: bn ? l.name_bn : l.name_en,
+          price: l.price,
+          pack_size: l.pack_size,
+          quantity: l.qty,
+        })),
+      );
+      if (issues.length > 0) {
+        const msgs = formatIssues(issues, bn).split("\n");
+        setErrors(msgs);
+        toast.error(bn ? "অর্ডার দেওয়া যাবে না — পণ্যের তথ্য মেলেনি" : "Cannot place order — product data mismatch");
+        void products.refetch();
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("delivery_orders")
+        .insert(orderRow)
+        .select("id,order_no")
+        .single();
+      if (error) throw error;
+
+      const { error: itemErr } = await supabase
+        .from("delivery_order_items")
+        .insert(items.map((i) => ({ ...i, order_id: data.id })));
+      if (itemErr) throw itemErr;
+
+      cart.clear();
+      setCheckout(false);
+      setErrors([]);
+      setPlaced(Number(data.order_no));
+    } catch (e) {
+      // Network/server hiccup → queue it instead of losing the order.
+      await queueOrder(orderRow, items);
+      cart.clear();
+      setCheckout(false);
+      toast.warning(
+        bn
+          ? "অর্ডার পাঠানো যায়নি — সারিতে রাখা হয়েছে, স্বয়ংক্রিয়ভাবে আবার চেষ্টা হবে"
+          : "Could not reach the server — order queued and will retry automatically",
+      );
+      console.error(e);
+    } finally {
+      setPlacing(false);
+    }
   }
 
   return (
@@ -205,6 +350,36 @@ function ShopPage() {
           <div className="flex items-center justify-center gap-2 bg-warning/20 py-1 text-xs">
             <WifiOff className="size-3" />
             {bn ? "অফলাইন মোড — ব্রাউজ ও কার্ট কাজ করবে" : "Offline mode — browsing and cart still work"}
+          </div>
+        )}
+        {queued.length > 0 && (
+          <div className="flex flex-wrap items-center justify-center gap-2 bg-primary/10 px-3 py-1.5 text-xs">
+            <CloudUpload className="size-3.5 text-primary" />
+            <span>
+              {bn
+                ? `${num(queued.length, lang)}টি অর্ডার সিঙ্কের অপেক্ষায়`
+                : `${queued.length} order(s) waiting to sync`}
+              {queued.some((q) => q.attempts > 0) &&
+                ` · ${bn ? "পুনঃচেষ্টা" : "retry"} ${queued[0].attempts}/${QUEUE_MAX_ATTEMPTS}`}
+            </span>
+            <Button size="sm" variant="outline" className="h-6 px-2 text-[11px]" disabled={syncing} onClick={() => runSync(true)}>
+              {syncing ? <Loader2 className="mr-1 size-3 animate-spin" /> : <RefreshCw className="mr-1 size-3" />}
+              {bn ? "এখনই পাঠান" : "Sync now"}
+            </Button>
+            {queued.some((q) => q.attempts >= QUEUE_MAX_ATTEMPTS) && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[11px] text-destructive"
+                onClick={() =>
+                  queued
+                    .filter((q) => q.attempts >= QUEUE_MAX_ATTEMPTS)
+                    .forEach((q) => void dropQueuedOrder(q.id))
+                }
+              >
+                {bn ? "ব্যর্থগুলো মুছুন" : "Discard failed"}
+              </Button>
+            )}
           </div>
         )}
       </header>
@@ -308,7 +483,54 @@ function ShopPage() {
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                 />
               </div>
-              <F label={bn ? "নোট" : "Note"} v={form.note} on={(v) => setForm({ ...form, note: v })} />
+              <F label={bn ? "নোট (ঐচ্ছিক)" : "Note (optional)"} v={form.note} on={(v) => setForm({ ...form, note: v })} />
+
+              <div className="space-y-2">
+                <Label>{bn ? "ডেলিভারির দিন" : "Delivery day"}</Label>
+                <div className="flex flex-wrap gap-2">
+                  {nextDays(5).map((d) => {
+                    const key = d.toISOString().slice(0, 10);
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          setSlotDay(key);
+                          if (slotTime && !slotAvailable(d, slotTime)) setSlotTime("");
+                        }}
+                        className={cn(
+                          "rounded-xl border px-3 py-2 text-xs",
+                          slotDay === key ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border",
+                        )}
+                      >
+                        {d.toLocaleDateString(bn ? "bn-BD" : "en-GB", { weekday: "short", day: "numeric", month: "short" })}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Label>{bn ? "ডেলিভারির সময়" : "Delivery time"}</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {TIME_SLOTS.map((t) => {
+                    const ok = slotAvailable(new Date(slotDay), t.id);
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        disabled={!ok}
+                        onClick={() => setSlotTime(t.id)}
+                        className={cn(
+                          "rounded-xl border px-3 py-2 text-xs",
+                          !ok && "cursor-not-allowed opacity-40",
+                          slotTime === t.id ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border",
+                        )}
+                      >
+                        {bn ? t.bn : t.en}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="space-y-1.5">
                 <Label>{bn ? "পেমেন্ট" : "Payment"}</Label>
                 <div className="flex flex-wrap gap-2">
@@ -340,7 +562,21 @@ function ShopPage() {
               <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
             </div>
 
-            <Button className="w-full" size="lg" disabled={cart.lines.length === 0} onClick={placeOrder}>
+            {errors.length > 0 && (
+              <ul className="space-y-1 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+                {errors.map((e) => (
+                  <li key={e}>• {e}</li>
+                ))}
+              </ul>
+            )}
+
+            <Button
+              className="w-full"
+              size="lg"
+              disabled={cart.lines.length === 0 || placing}
+              onClick={placeOrder}
+            >
+              {placing && <Loader2 className="mr-2 size-4 animate-spin" />}
               {bn ? "অর্ডার কনফার্ম করুন" : "Place order"}
             </Button>
           </div>

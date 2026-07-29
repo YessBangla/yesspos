@@ -1848,6 +1848,15 @@ export type Database = {
         Returns: number
       }
       can_see_branch: { Args: { _branch_id: string }; Returns: boolean }
+      check_order_consistency: {
+        Args: { _lines: Json }
+        Returns: {
+          detail: string
+          issue: string
+          name: string
+          product_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -27,6 +27,7 @@ import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedPurchasesRouteImport } from './routes/_authenticated/purchases'
 import { Route as AuthenticatedPurchaseOrdersRouteImport } from './routes/_authenticated/purchase-orders'
 import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
+import { Route as AuthenticatedProductAuditRouteImport } from './routes/_authenticated/product-audit'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
 import { Route as AuthenticatedPartyStatementRouteImport } from './routes/_authenticated/party-statement'
@@ -140,6 +141,12 @@ const AuthenticatedProductsRoute = AuthenticatedProductsRouteImport.update({
   path: '/products',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProductAuditRoute =
+  AuthenticatedProductAuditRouteImport.update({
+    id: '/product-audit',
+    path: '/product-audit',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPosRoute = AuthenticatedPosRouteImport.update({
   id: '/pos',
   path: '/pos',
@@ -273,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/party-statement': typeof AuthenticatedPartyStatementRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/pos': typeof AuthenticatedPosRoute
+  '/product-audit': typeof AuthenticatedProductAuditRoute
   '/products': typeof AuthenticatedProductsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/purchases': typeof AuthenticatedPurchasesRoute
@@ -312,6 +320,7 @@ export interface FileRoutesByTo {
   '/party-statement': typeof AuthenticatedPartyStatementRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/pos': typeof AuthenticatedPosRoute
+  '/product-audit': typeof AuthenticatedProductAuditRoute
   '/products': typeof AuthenticatedProductsRoute
   '/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/purchases': typeof AuthenticatedPurchasesRoute
@@ -353,6 +362,7 @@ export interface FileRoutesById {
   '/_authenticated/party-statement': typeof AuthenticatedPartyStatementRoute
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
+  '/_authenticated/product-audit': typeof AuthenticatedProductAuditRoute
   '/_authenticated/products': typeof AuthenticatedProductsRoute
   '/_authenticated/purchase-orders': typeof AuthenticatedPurchaseOrdersRoute
   '/_authenticated/purchases': typeof AuthenticatedPurchasesRoute
@@ -394,6 +404,7 @@ export interface FileRouteTypes {
     | '/party-statement'
     | '/payments'
     | '/pos'
+    | '/product-audit'
     | '/products'
     | '/purchase-orders'
     | '/purchases'
@@ -433,6 +444,7 @@ export interface FileRouteTypes {
     | '/party-statement'
     | '/payments'
     | '/pos'
+    | '/product-audit'
     | '/products'
     | '/purchase-orders'
     | '/purchases'
@@ -473,6 +485,7 @@ export interface FileRouteTypes {
     | '/_authenticated/party-statement'
     | '/_authenticated/payments'
     | '/_authenticated/pos'
+    | '/_authenticated/product-audit'
     | '/_authenticated/products'
     | '/_authenticated/purchase-orders'
     | '/_authenticated/purchases'
@@ -622,6 +635,13 @@ declare module '@tanstack/react-router' {
       path: '/products'
       fullPath: '/products'
       preLoaderRoute: typeof AuthenticatedProductsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/product-audit': {
+      id: '/_authenticated/product-audit'
+      path: '/product-audit'
+      fullPath: '/product-audit'
+      preLoaderRoute: typeof AuthenticatedProductAuditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/pos': {
@@ -788,6 +808,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPartyStatementRoute: typeof AuthenticatedPartyStatementRoute
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
+  AuthenticatedProductAuditRoute: typeof AuthenticatedProductAuditRoute
   AuthenticatedProductsRoute: typeof AuthenticatedProductsRoute
   AuthenticatedPurchaseOrdersRoute: typeof AuthenticatedPurchaseOrdersRoute
   AuthenticatedPurchasesRoute: typeof AuthenticatedPurchasesRoute
@@ -821,6 +842,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPartyStatementRoute: AuthenticatedPartyStatementRoute,
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
+  AuthenticatedProductAuditRoute: AuthenticatedProductAuditRoute,
   AuthenticatedProductsRoute: AuthenticatedProductsRoute,
   AuthenticatedPurchaseOrdersRoute: AuthenticatedPurchaseOrdersRoute,
   AuthenticatedPurchasesRoute: AuthenticatedPurchasesRoute,
