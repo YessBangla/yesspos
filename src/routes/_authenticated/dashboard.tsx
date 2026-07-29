@@ -294,7 +294,9 @@ function DashboardPage() {
     { to: "/audit-logs", feature: "audit-logs", label: t("auditLog"), icon: Receipt },
     { to: "/assistant", feature: "assistant", label: t("aiAssistant"), icon: Trophy },
     { to: "/settings", feature: "settings", label: t("settings"), icon: Settings2 },
+    { to: "/site-content", feature: "site-content", label: t("websiteContent"), icon: Settings2 },
     { to: "/api-hub", feature: "api-hub", label: t("apiHub"), icon: Settings2 },
+
     {
       to: "/commerce",
       feature: "commerce",
