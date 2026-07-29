@@ -244,7 +244,10 @@ function ProductsPage() {
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setLimit(50);
+              }}
               placeholder={lang === "bn" ? "নাম, সিরিয়াল বা SKU" : "Name, serial or SKU"}
               maxLength={60}
               className="w-56 pl-9"
@@ -284,7 +287,7 @@ function ProductsPage() {
                 </td>
               </tr>
             )}
-            {visible.map((p) => {
+            {visible.slice(0, limit).map((p) => {
               const cat = categories.data?.find((c) => c.id === p.category_id);
               const low = p.branch_stock <= p.low_stock_at;
               return (
