@@ -47,6 +47,8 @@ type Row = {
   unit: string;
   is_active: boolean;
   category_id: string | null;
+  image_url: string | null;
+  pack_size: string | null;
 };
 
 const emptyForm = {
@@ -59,6 +61,8 @@ const emptyForm = {
   low_stock_at: "5",
   unit: "pcs",
   category_id: "",
+  image_url: "",
+  pack_size: "",
 };
 
 const schema = z.object({
@@ -70,7 +74,10 @@ const schema = z.object({
   stock: z.number().int().min(0).max(1_000_000),
   low_stock_at: z.number().int().min(0).max(10_000),
   unit: z.string().trim().min(1).max(12),
+  image_url: z.string().trim().max(500),
+  pack_size: z.string().trim().max(40),
 });
+
 
 function ProductsPage() {
   const { t, lang } = useI18n();
