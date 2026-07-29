@@ -8,6 +8,8 @@ import {
   Boxes,
   Building2,
   CalendarDays,
+  ClipboardList,
+  ClipboardCheck,
   FileSpreadsheet,
   Landmark,
   ListTree,
