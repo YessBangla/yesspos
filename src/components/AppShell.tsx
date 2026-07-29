@@ -30,6 +30,7 @@ import {
   ShieldCheck,
   ShoppingCart,
   SlidersHorizontal,
+  Sparkles,
   Tags,
   Truck,
   Users,
