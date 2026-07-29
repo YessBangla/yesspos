@@ -17,12 +17,12 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/_authenticated/api-hub")({
   head: () => ({
     meta: [
-      { title: "API Hub — SheraPOS" },
+      { title: "API Hub — SokolerBazar" },
       {
         name: "description",
         content: "Configure SMS, email, payment gateway and other API integrations for your POS from one place.",
       },
-      { property: "og:title", content: "API Hub — SheraPOS" },
+      { property: "og:title", content: "API Hub — SokolerBazar" },
       { property: "og:description", content: "Edit and configure every API integration used by your shop." },
     ],
   }),

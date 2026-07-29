@@ -13,9 +13,9 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/_authenticated/delivery-zones")({
   head: () => ({
     meta: [
-      { title: "Delivery zones & fees — Yess POS" },
+      { title: "Delivery zones & fees — SokolerBazar" },
       { name: "description", content: "Configure home delivery areas, charges, free-delivery limits and ETA." },
-      { property: "og:title", content: "Delivery zones & fees — Yess POS" },
+      { property: "og:title", content: "Delivery zones & fees — SokolerBazar" },
       { property: "og:description", content: "Manage delivery coverage, fees and minimum order value per area." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -15,9 +15,9 @@ import { registerMember } from "@/lib/loyalty";
 export const Route = createFileRoute("/_authenticated/contacts")({
   head: () => ({
     meta: [
-      { title: "Customers & suppliers — SheraPOS" },
+      { title: "Customers & suppliers — SokolerBazar" },
       { name: "description", content: "Keep customer and supplier records with balances in one place." },
-      { property: "og:title", content: "Customers & suppliers — SheraPOS" },
+      { property: "og:title", content: "Customers & suppliers — SokolerBazar" },
       { property: "og:description", content: "Customer and supplier records with balances." },
     ],
   }),

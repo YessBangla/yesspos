@@ -36,15 +36,15 @@ const SITE = "https://yesspos.lovable.app";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Yess POS — Retail Billing, Inventory & Accounting Platform" },
+      { title: "SokolerBazar — Retail Billing, Inventory & Accounting Platform" },
       {
         name: "description",
         content:
-          "Yess POS is an enterprise-grade browser POS and ERP for retail: fast billing, multi-branch inventory, dues, double-entry accounting and reports in Bengali and English.",
+          "SokolerBazar is an enterprise-grade browser POS and ERP for retail: fast billing, multi-branch inventory, dues, double-entry accounting and reports in Bengali and English.",
       },
       {
         property: "og:title",
-        content: "Yess POS — Retail Billing, Inventory & Accounting Platform",
+        content: "SokolerBazar — Retail Billing, Inventory & Accounting Platform",
       },
       {
         property: "og:description",
@@ -62,7 +62,7 @@ export const Route = createFileRoute("/")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "Yess POS",
+          name: "SokolerBazar",
           applicationCategory: "BusinessApplication",
           operatingSystem: "Web",
           description:

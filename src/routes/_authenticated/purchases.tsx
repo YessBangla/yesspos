@@ -21,9 +21,9 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/_authenticated/purchases")({
   head: () => ({
     meta: [
-      { title: "Purchases & stock-in — SheraPOS" },
+      { title: "Purchases & stock-in — SokolerBazar" },
       { name: "description", content: "Record supplier purchases and increase stock automatically." },
-      { property: "og:title", content: "Purchases & stock-in — SheraPOS" },
+      { property: "og:title", content: "Purchases & stock-in — SokolerBazar" },
       { property: "og:description", content: "Record supplier purchases and stock-in." },
     ],
   }),

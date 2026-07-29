@@ -16,9 +16,9 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/_authenticated/chart-of-accounts")({
   head: () => ({
     meta: [
-      { title: "Chart of accounts — SheraPOS" },
+      { title: "Chart of accounts — SokolerBazar" },
       { name: "description", content: "Maintain asset, liability, income, expense and equity heads for your shop accounting." },
-      { property: "og:title", content: "Chart of accounts — SheraPOS" },
+      { property: "og:title", content: "Chart of accounts — SokolerBazar" },
       { property: "og:description", content: "Asset, liability, income, expense and equity heads." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

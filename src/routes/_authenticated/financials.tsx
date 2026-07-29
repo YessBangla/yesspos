@@ -13,9 +13,9 @@ import { printHtml } from "@/lib/print";
 export const Route = createFileRoute("/_authenticated/financials")({
   head: () => ({
     meta: [
-      { title: "Financial statements — SheraPOS" },
+      { title: "Financial statements — SokolerBazar" },
       { name: "description", content: "Trial balance, profit & loss and balance sheet generated from your shop transactions." },
-      { property: "og:title", content: "Financial statements — SheraPOS" },
+      { property: "og:title", content: "Financial statements — SokolerBazar" },
       { property: "og:description", content: "Trial balance, profit & loss and balance sheet." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
