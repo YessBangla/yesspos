@@ -84,6 +84,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         { to: "/products", feature: "products", label: t("products"), icon: Boxes },
         { to: "/catalog", feature: "catalog", label: t("catalog"), icon: Tags },
         { to: "/stock-adjustments", feature: "stock-adjustments", label: t("stockAdjust"), icon: SlidersHorizontal },
+        { to: "/stock-count", feature: "stock-count", label: t("stockCount"), icon: ClipboardList },
         { to: "/labels", feature: "labels", label: t("labels"), icon: Barcode },
       ],
     },
