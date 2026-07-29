@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { downloadCsv } from "@/lib/audit";
 import { printHtml } from "@/lib/print";
 import { DueCollection } from "@/components/DueCollection";
+import { ReportInsight } from "@/components/ReportInsight";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
@@ -283,6 +284,8 @@ function ReportsPage() {
         />
         <Stat label={t("paid")} value={money(r?.salePaid ?? 0, lang)} />
       </div>
+
+      <ReportInsight from={from} to={to} />
 
       <div className="surface-panel mt-6 overflow-hidden p-0">
         <div className="flex flex-wrap gap-1 border-b border-border px-3">

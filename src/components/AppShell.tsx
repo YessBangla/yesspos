@@ -2,6 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRightLeft,
+  Smartphone,
   BarChart3,
   Barcode,
   BookOpenCheck,
@@ -61,7 +62,7 @@ type NavItem = {
 type NavGroup = { id: string; label: string; icon: ComponentType<{ className?: string }>; items: NavItem[] };
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -122,6 +123,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       items: [
         { to: "/payments", feature: "payments", label: t("paymentsLedger"), icon: HandCoins },
         { to: "/expenses", feature: "expenses", label: t("expenses"), icon: Wallet },
+        {
+          to: "/mobile-payments",
+          feature: "mobile-payments",
+          label: lang === "bn" ? "মোবাইল পেমেন্ট" : "Mobile payments",
+          icon: Smartphone,
+        },
       ],
     },
     {

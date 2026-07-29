@@ -28,6 +28,7 @@ import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
 import { Route as AuthenticatedPartyStatementRouteImport } from './routes/_authenticated/party-statement'
+import { Route as AuthenticatedMobilePaymentsRouteImport } from './routes/_authenticated/mobile-payments'
 import { Route as AuthenticatedLabelsRouteImport } from './routes/_authenticated/labels'
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
@@ -142,6 +143,12 @@ const AuthenticatedPartyStatementRoute =
     path: '/party-statement',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMobilePaymentsRoute =
+  AuthenticatedMobilePaymentsRouteImport.update({
+    id: '/mobile-payments',
+    path: '/mobile-payments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLabelsRoute = AuthenticatedLabelsRouteImport.update({
   id: '/labels',
   path: '/labels',
@@ -240,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof AuthenticatedInventoryRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/labels': typeof AuthenticatedLabelsRoute
+  '/mobile-payments': typeof AuthenticatedMobilePaymentsRoute
   '/party-statement': typeof AuthenticatedPartyStatementRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/pos': typeof AuthenticatedPosRoute
@@ -275,6 +283,7 @@ export interface FileRoutesByTo {
   '/inventory': typeof AuthenticatedInventoryRoute
   '/journal': typeof AuthenticatedJournalRoute
   '/labels': typeof AuthenticatedLabelsRoute
+  '/mobile-payments': typeof AuthenticatedMobilePaymentsRoute
   '/party-statement': typeof AuthenticatedPartyStatementRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/pos': typeof AuthenticatedPosRoute
@@ -312,6 +321,7 @@ export interface FileRoutesById {
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/journal': typeof AuthenticatedJournalRoute
   '/_authenticated/labels': typeof AuthenticatedLabelsRoute
+  '/_authenticated/mobile-payments': typeof AuthenticatedMobilePaymentsRoute
   '/_authenticated/party-statement': typeof AuthenticatedPartyStatementRoute
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
@@ -349,6 +359,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/journal'
     | '/labels'
+    | '/mobile-payments'
     | '/party-statement'
     | '/payments'
     | '/pos'
@@ -384,6 +395,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/journal'
     | '/labels'
+    | '/mobile-payments'
     | '/party-statement'
     | '/payments'
     | '/pos'
@@ -420,6 +432,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventory'
     | '/_authenticated/journal'
     | '/_authenticated/labels'
+    | '/_authenticated/mobile-payments'
     | '/_authenticated/party-statement'
     | '/_authenticated/payments'
     | '/_authenticated/pos'
@@ -579,6 +592,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPartyStatementRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/mobile-payments': {
+      id: '/_authenticated/mobile-payments'
+      path: '/mobile-payments'
+      fullPath: '/mobile-payments'
+      preLoaderRoute: typeof AuthenticatedMobilePaymentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/labels': {
       id: '/_authenticated/labels'
       path: '/labels'
@@ -703,6 +723,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedJournalRoute: typeof AuthenticatedJournalRoute
   AuthenticatedLabelsRoute: typeof AuthenticatedLabelsRoute
+  AuthenticatedMobilePaymentsRoute: typeof AuthenticatedMobilePaymentsRoute
   AuthenticatedPartyStatementRoute: typeof AuthenticatedPartyStatementRoute
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
@@ -734,6 +755,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedJournalRoute: AuthenticatedJournalRoute,
   AuthenticatedLabelsRoute: AuthenticatedLabelsRoute,
+  AuthenticatedMobilePaymentsRoute: AuthenticatedMobilePaymentsRoute,
   AuthenticatedPartyStatementRoute: AuthenticatedPartyStatementRoute,
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
