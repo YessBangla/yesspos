@@ -143,6 +143,7 @@ function ShopPage() {
   const [cat, setCat] = useState<string>(search.cat ?? "");
   const [limit, setLimit] = useState(PAGE);
   const [checkout, setCheckout] = useState(!!search.checkout);
+  const [cartOpen, setCartOpen] = useState(false);
 
   const [online, setOnline] = useState(true);
   const [form, setForm] = useState({ name: "", phone: "", address: "", area: "", note: "", payment: "cod" });
