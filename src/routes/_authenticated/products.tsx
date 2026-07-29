@@ -47,6 +47,8 @@ type Row = {
   unit: string;
   is_active: boolean;
   category_id: string | null;
+  image_url: string | null;
+  pack_size: string | null;
 };
 
 const emptyForm = {
@@ -59,6 +61,8 @@ const emptyForm = {
   low_stock_at: "5",
   unit: "pcs",
   category_id: "",
+  image_url: "",
+  pack_size: "",
 };
 
 const schema = z.object({
@@ -70,7 +74,10 @@ const schema = z.object({
   stock: z.number().int().min(0).max(1_000_000),
   low_stock_at: z.number().int().min(0).max(10_000),
   unit: z.string().trim().min(1).max(12),
+  image_url: z.string().trim().max(500),
+  pack_size: z.string().trim().max(40),
 });
+
 
 function ProductsPage() {
   const { t, lang } = useI18n();
@@ -129,7 +136,13 @@ function ProductsPage() {
       if (!parsed.success) throw new Error(parsed.error.issues[0].message);
       const branchId = myBranch.branchId ?? null;
       const { stock, ...rest } = parsed.data;
-      const payload = { ...rest, category_id: form.category_id || null };
+      const payload = {
+        ...rest,
+        category_id: form.category_id || null,
+        image_url: rest.image_url || null,
+        pack_size: rest.pack_size || null,
+      };
+
       let productId = editing?.id ?? null;
       if (editing) {
         const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
@@ -192,7 +205,10 @@ function ProductsPage() {
       low_stock_at: String(p.low_stock_at),
       unit: p.unit,
       category_id: p.category_id ?? "",
+      image_url: p.image_url ?? "",
+      pack_size: p.pack_size ?? "",
     });
+
     setOpen(true);
   }
 
@@ -250,7 +266,31 @@ function ProductsPage() {
               const low = p.branch_stock <= p.low_stock_at;
               return (
                 <tr key={p.id} className="border-b border-border last:border-0">
-                  <td className="px-4 py-3 font-medium">{lang === "bn" ? p.name_bn : p.name_en}</td>
+                  <td className="px-4 py-3 font-medium">
+                    <div className="flex items-center gap-3">
+                      {p.image_url ? (
+                        <img
+                          src={p.image_url}
+                          alt={lang === "bn" ? p.name_bn : p.name_en}
+                          loading="lazy"
+                          width={40}
+                          height={40}
+                          className="size-10 shrink-0 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-muted text-[10px] text-muted-foreground">
+                          —
+                        </span>
+                      )}
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate">{lang === "bn" ? p.name_bn : p.name_en}</span>
+                        {p.pack_size && (
+                          <span className="text-xs font-normal text-muted-foreground">{p.pack_size}</span>
+                        )}
+                      </span>
+                    </div>
+                  </td>
+
                   <td className="px-4 py-3 font-mono text-xs font-semibold text-primary">
                     {productSerial(branchCode, p.seq)}
                   </td>
@@ -332,7 +372,32 @@ function ProductsPage() {
             <Field label={t("stock")} value={form.stock} onChange={(v) => setForm({ ...form, stock: v })} />
             <Field label={t("lowStock")} value={form.low_stock_at} onChange={(v) => setForm({ ...form, low_stock_at: v })} />
             <Field label={t("unit")} value={form.unit} onChange={(v) => setForm({ ...form, unit: v })} />
+            <Field
+              label={lang === "bn" ? "পরিমাণ / ওজন (যেমন ১ কেজি)" : "Pack size / weight"}
+              value={form.pack_size}
+              onChange={(v) => setForm({ ...form, pack_size: v })}
+            />
+            <div className="sm:col-span-2">
+              <Field
+                label={lang === "bn" ? "ছবির লিংক" : "Image URL"}
+                value={form.image_url}
+                onChange={(v) => setForm({ ...form, image_url: v })}
+                maxLength={500}
+              />
+
+            </div>
+            {form.image_url && (
+              <img
+                src={form.image_url}
+                alt=""
+                loading="lazy"
+                width={80}
+                height={80}
+                className="size-20 rounded-xl border border-border object-cover"
+              />
+            )}
           </div>
+
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>
               {t("cancel")}
@@ -351,15 +416,18 @@ function Field({
   label,
   value,
   onChange,
+  maxLength = 80,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  maxLength?: number;
 }) {
   return (
     <div className="space-y-1.5">
       <Label>{label}</Label>
-      <Input value={value} maxLength={80} onChange={(e) => onChange(e.target.value)} />
+      <Input value={value} maxLength={maxLength} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
+

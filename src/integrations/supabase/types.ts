@@ -736,10 +736,12 @@ export type Database = {
           created_at: string
           expiry_date: string | null
           id: string
+          image_url: string | null
           is_active: boolean
           low_stock_at: number
           name_bn: string
           name_en: string
+          pack_size: string | null
           price: number
           seq: number | null
           sku: string
@@ -755,10 +757,12 @@ export type Database = {
           created_at?: string
           expiry_date?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           low_stock_at?: number
           name_bn: string
           name_en: string
+          pack_size?: string | null
           price?: number
           seq?: number | null
           sku: string
@@ -774,10 +778,12 @@ export type Database = {
           created_at?: string
           expiry_date?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           low_stock_at?: number
           name_bn?: string
           name_en?: string
+          pack_size?: string | null
           price?: number
           seq?: number | null
           sku?: string

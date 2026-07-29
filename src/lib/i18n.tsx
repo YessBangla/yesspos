@@ -489,6 +489,8 @@ const dict = {
   multiBranch: { bn: "মাল্টি ব্রাঞ্চ", en: "Multi branch" },
   newCustomer: { bn: "নতুন কাস্টমার", en: "New customer" },
   newProduct: { bn: "নতুন পণ্য", en: "New product" },
+  packSize: { bn: "পরিমাণ / ওজন", en: "Pack size" },
+  imageUrl: { bn: "ছবির লিংক", en: "Image URL" },
   cashReceived: { bn: "নগদ গ্রহণ", en: "Cash received" },
   changeReturn: { bn: "ফেরত দিতে হবে", en: "Change to return" },
   selectPaymentFirst: { bn: "আগে পেমেন্ট মাধ্যম সিলেক্ট করুন", en: "Select a payment method first" },
