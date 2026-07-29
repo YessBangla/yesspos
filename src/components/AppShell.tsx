@@ -229,6 +229,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       icon: SettingsIcon,
       items: [
         { to: "/settings", feature: "settings", label: t("settings"), icon: SettingsIcon },
+        { to: "/site-content", feature: "site-content", label: t("websiteContent"), icon: FileText },
       ],
     },
     {

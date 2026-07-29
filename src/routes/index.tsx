@@ -25,7 +25,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { LangToggle } from "@/components/LangToggle";
-import { TextSizeToggle } from "@/components/TextSizeToggle";
 import { useSiteContent } from "@/lib/site-content";
 import heroShade from "@/assets/hero-shade.jpg";
 import cardShade from "@/assets/card-shade.jpg";
@@ -399,7 +398,6 @@ function Index() {
             <a href="#faq" className="hover:text-foreground">{L("প্রশ্নোত্তর", "FAQ")}</a>
           </nav>
           <div className="flex items-center gap-2">
-            <TextSizeToggle className="hidden sm:inline-flex" />
             <LangToggle />
             <Button asChild variant="accent" size="sm">
               <Link to="/homedelivery">

@@ -23,7 +23,6 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { TextSizeToggle } from "@/components/TextSizeToggle";
 import { useSiteContent } from "@/lib/site-content";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -541,7 +540,6 @@ function ShopPage() {
           </div>
 
           <div className="hidden shrink-0 items-center gap-2 sm:flex">
-            <TextSizeToggle />
             <CustomerAccountMenu />
           </div>
 
