@@ -37,6 +37,8 @@ type Settings = {
 function SettingsPage() {
   const { t } = useI18n();
   const queryClient = useQueryClient();
+  const me = useMyRole();
+  const isAdmin = me.data?.role === "admin" || me.data?.role === "super_admin";
   const [form, setForm] = useState({
     shop_name: "",
     address: "",
