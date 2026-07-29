@@ -407,6 +407,145 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          line_total: number
+          name_snapshot: string
+          order_id: string
+          product_id: string | null
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          line_total?: number
+          name_snapshot: string
+          order_id: string
+          product_id?: string | null
+          quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          line_total?: number
+          name_snapshot?: string
+          order_id?: string
+          product_id?: string | null
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_orders: {
+        Row: {
+          address: string
+          area: string | null
+          assigned_to: string | null
+          branch_id: string | null
+          contact_id: string | null
+          created_at: string
+          customer_name: string
+          customer_phone: string
+          delivery_fee: number
+          discount: number
+          id: string
+          note: string | null
+          order_no: number
+          payment_method: string
+          sale_id: string | null
+          slot: string | null
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          area?: string | null
+          assigned_to?: string | null
+          branch_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          customer_name: string
+          customer_phone: string
+          delivery_fee?: number
+          discount?: number
+          id?: string
+          note?: string | null
+          order_no?: number
+          payment_method?: string
+          sale_id?: string | null
+          slot?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          area?: string | null
+          assigned_to?: string | null
+          branch_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string
+          delivery_fee?: number
+          discount?: number
+          id?: string
+          note?: string | null
+          order_no?: number
+          payment_method?: string
+          sale_id?: string | null
+          slot?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_orders_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_orders_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_categories: {
         Row: {
           created_at: string
@@ -1740,6 +1879,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      track_delivery_order: {
+        Args: { _order_no: number; _phone: string }
+        Returns: {
+          created_at: string
+          order_no: number
+          status: string
+          total: number
+        }[]
       }
     }
     Enums: {
