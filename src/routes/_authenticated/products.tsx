@@ -366,7 +366,30 @@ function ProductsPage() {
             <Field label={t("stock")} value={form.stock} onChange={(v) => setForm({ ...form, stock: v })} />
             <Field label={t("lowStock")} value={form.low_stock_at} onChange={(v) => setForm({ ...form, low_stock_at: v })} />
             <Field label={t("unit")} value={form.unit} onChange={(v) => setForm({ ...form, unit: v })} />
+            <Field
+              label={lang === "bn" ? "পরিমাণ / ওজন (যেমন ১ কেজি)" : "Pack size / weight"}
+              value={form.pack_size}
+              onChange={(v) => setForm({ ...form, pack_size: v })}
+            />
+            <div className="sm:col-span-2">
+              <Field
+                label={lang === "bn" ? "ছবির লিংক" : "Image URL"}
+                value={form.image_url}
+                onChange={(v) => setForm({ ...form, image_url: v })}
+              />
+            </div>
+            {form.image_url && (
+              <img
+                src={form.image_url}
+                alt=""
+                loading="lazy"
+                width={80}
+                height={80}
+                className="size-20 rounded-xl border border-border object-cover"
+              />
+            )}
           </div>
+
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>
               {t("cancel")}
