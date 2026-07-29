@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Download, MessageCircle, Printer, Smartphone } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,7 @@ import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { downloadCsv } from "@/lib/audit";
 import { printHtml } from "@/lib/print";
-import { buildDueReminder, shareOnSms, shareOnWhatsApp } from "@/lib/share-invoice";
+import { DueCollection } from "@/components/DueCollection";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
@@ -299,90 +299,44 @@ function ReportsPage() {
             </button>
           ))}
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[520px] text-sm">
-            <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-              <tr>
-                {currentTable().headers.map((h, i) => (
-                  <th key={h} className={cn("px-4 py-3", i > 0 && "text-right")}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {currentTable().rows.map((row, ri) => (
-                <tr key={ri} className="border-b border-border last:border-0">
-                  {row.map((c, ci) => (
-                    <td key={ci} className={cn("px-4 py-2.5", ci > 0 ? "text-right font-medium" : "font-medium")}>
-                      {typeof c === "number" ? num(c, lang) : c}
-                    </td>
+        {tab === "due" ? (
+          <div className="p-3">
+            <DueCollection sales={report.data?.dueSales ?? []} shopName={shop.data?.shop_name ?? "SheraPOS"} />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] text-sm">
+              <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+                <tr>
+                  {currentTable().headers.map((h, i) => (
+                    <th key={h} className={cn("px-4 py-3", i > 0 && "text-right")}>
+                      {h}
+                    </th>
                   ))}
                 </tr>
-              ))}
-              {currentTable().rows.length === 0 && (
-                <tr>
-                  <td className="px-4 py-6 text-muted-foreground" colSpan={6}>
-                    {report.isLoading ? t("loading") : t("noData")}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {tab === "due" && (report.data?.dueSales.length ?? 0) > 0 && (
-        <>
-          <h2 className="mt-8 font-display text-lg font-bold">
-            {lang === "bn" ? "বাকি আদায়ের রিমাইন্ডার" : "Due collection reminders"}
-          </h2>
-          <div className="surface-panel mt-3 grid gap-2 p-3 sm:grid-cols-2">
-            {(report.data?.dueSales ?? []).slice(0, 20).map((s) => {
-              const due = Number(s.total) - Number(s.paid);
-              const msg = buildDueReminder(
-                {
-                  shopName: shop.data?.shop_name ?? "SheraPOS",
-                  customer: s.customer_name ?? "",
-                  invoice: Number(s.invoice_no),
-                  due,
-                },
-                lang,
-              );
-              return (
-                <div
-                  key={s.id}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      #{num(Number(s.invoice_no), lang)} · {s.customer_name || t("walkIn")}
-                    </p>
-                    <p className="truncate text-xs text-destructive">{money(due, lang)}</p>
-                  </div>
-                  <div className="flex shrink-0 gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => shareOnWhatsApp(s.customer_phone ?? "", msg)}
-                    >
-                      <MessageCircle className="size-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={!s.customer_phone}
-                      onClick={() => shareOnSms(s.customer_phone ?? "", msg)}
-                    >
-                      <Smartphone className="size-4" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+              </thead>
+              <tbody>
+                {currentTable().rows.map((row, ri) => (
+                  <tr key={ri} className="border-b border-border last:border-0">
+                    {row.map((c, ci) => (
+                      <td key={ci} className={cn("px-4 py-2.5", ci > 0 ? "text-right font-medium" : "font-medium")}>
+                        {typeof c === "number" ? num(c, lang) : c}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+                {currentTable().rows.length === 0 && (
+                  <tr>
+                    <td className="px-4 py-6 text-muted-foreground" colSpan={6}>
+                      {report.isLoading ? t("loading") : t("noData")}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-        </>
-      )}
+        )}
+      </div>
 
 
       <h2 className="mt-8 font-display text-lg font-bold">{t("expiringSoon")}</h2>
