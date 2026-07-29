@@ -45,6 +45,8 @@ import { cn } from "@/lib/utils";
 import { logAudit } from "@/lib/audit";
 import { getPrinterSize, printHtml, setPrinterSize, type PrinterSize } from "@/lib/print";
 import { QuickAddCustomer, QuickAddProduct } from "@/components/QuickAddDialogs";
+import { isOfflineSupported, queueSale } from "@/lib/offline-queue";
+
 
 export const Route = createFileRoute("/_authenticated/pos")({
   head: () => ({
