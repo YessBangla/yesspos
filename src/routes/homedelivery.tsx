@@ -46,7 +46,7 @@ const SITE = "https://yesspos.lovable.app";
 const searchSchema = z.object({
   q: z.string().trim().max(60).optional(),
   cat: z.string().trim().max(64).optional(),
-  checkout: z.boolean().optional(),
+  checkout: z.literal("1").optional(),
 });
 
 export const Route = createFileRoute("/homedelivery")({
@@ -55,7 +55,7 @@ export const Route = createFileRoute("/homedelivery")({
     const parsed = searchSchema.safeParse({
       q: typeof input.q === "string" && input.q.trim() ? input.q : undefined,
       cat: typeof input.cat === "string" && input.cat.trim() ? input.cat : undefined,
-      checkout: truthy ? true : undefined,
+      checkout: truthy ? ("1" as const) : undefined,
     });
     return parsed.success ? parsed.data : {};
   },
@@ -138,7 +138,7 @@ function ShopPage() {
   const [query, setQuery] = useState(search.q ?? "");
   const [cat, setCat] = useState<string>(search.cat ?? "");
   const [limit, setLimit] = useState(PAGE);
-  const [checkout, setCheckout] = useState(!!search.checkout);
+  const [checkout, setCheckout] = useState(search.checkout === "1");
 
   const [online, setOnline] = useState(true);
   const [form, setForm] = useState({ name: "", phone: "", address: "", area: "", note: "", payment: "cod" });
@@ -154,16 +154,16 @@ function ShopPage() {
   useEffect(() => {
     const q = query.trim() || undefined;
     const c = cat || undefined;
-    const ck = checkout || undefined;
-    if (search.q === q && search.cat === c && search.checkout === ck) return;
-    void navigate({ search: { q, cat: c, checkout: ck }, replace: true });
+    const ck = checkout;
+    if (search.q === q && search.cat === c && (search.checkout === "1") === ck) return;
+    void navigate({ search: { q, cat: c, checkout: ck ? ("1" as const) : undefined }, replace: true });
   }, [query, cat, checkout, navigate, search.q, search.cat, search.checkout]);
 
   // Back/forward navigation should move the portal too.
   useEffect(() => {
     setQuery(search.q ?? "");
     setCat(search.cat ?? "");
-    setCheckout(!!search.checkout);
+    setCheckout(search.checkout === "1");
   }, [search.q, search.cat, search.checkout]);
 
 
