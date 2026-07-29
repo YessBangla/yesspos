@@ -280,6 +280,15 @@ export function QuickAddProduct({ onCreated }: { onCreated?: (product: QuickProd
               onChange={(e) => setForm({ ...form, pack_size: e.target.value })}
             />
           </div>
+          <div className="space-y-1.5">
+            <Label>{t("brand")}</Label>
+            <Input
+              value={form.brand}
+              maxLength={60}
+              placeholder="Pran / Teer"
+              onChange={(e) => setForm({ ...form, brand: e.target.value })}
+            />
+          </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label>{t("imageUrl")}</Label>
             <Input
