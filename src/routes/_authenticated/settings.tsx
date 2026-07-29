@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { logAudit } from "@/lib/audit";
 import { getPrinterSize, PRINTER_SIZES, setPrinterSize, type PrinterSize } from "@/lib/print";
+import { SiteContentEditor } from "@/components/SiteContentEditor";
+import { useMyRole } from "@/lib/use-my-role";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
