@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useBranchStock } from "@/lib/use-branch";
+import { matchesSerial, productSerial } from "@/lib/serial";
 import { useActiveBranch } from "@/lib/active-branch";
 import { useMyRole } from "@/lib/use-my-role";
 import { money, num, useI18n, type TKey } from "@/lib/i18n";
@@ -67,6 +68,7 @@ type Product = {
   name_en: string;
   name_bn: string;
   sku: string;
+  seq: number | null;
   barcode: string | null;
   price: number;
   stock: number;
@@ -138,6 +140,7 @@ function PosPage() {
   const [email, setEmail] = useState("");
   const [contactId, setContactId] = useState("");
   const [scan, setScan] = useState("");
+  const [changeGiven, setChangeGiven] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const scanRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -178,7 +181,7 @@ function PosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id,name_en,name_bn,sku,barcode,price,stock,unit,category_id")
+        .select("id,name_en,name_bn,sku,seq,barcode,price,stock,unit,category_id")
         .eq("is_active", true)
         .order("name_en");
       if (error) throw error;
@@ -230,9 +233,10 @@ function PosPage() {
             p.name_en.toLowerCase().includes(q) ||
             p.name_bn.includes(query.trim()) ||
             p.sku.toLowerCase().includes(q) ||
-            (p.barcode ?? "").toLowerCase().includes(q)),
+            (p.barcode ?? "").toLowerCase().includes(q) ||
+            matchesSerial(query, branchCode, p.seq)),
       );
-  }, [products.data, branchStock.data, query, cat]);
+  }, [products.data, branchStock.data, query, cat, branchCode]);
 
 
   const subtotal = cart.reduce((s, l) => s + Number(l.product.price) * l.qty, 0);
@@ -275,7 +279,12 @@ function PosPage() {
     if (!code) return;
     const list = products.data ?? [];
     const p =
-      list.find((x) => (x.barcode ?? "").toLowerCase() === code || x.sku.toLowerCase() === code) ??
+      list.find(
+        (x) =>
+          (x.barcode ?? "").toLowerCase() === code ||
+          x.sku.toLowerCase() === code ||
+          productSerial(branchCode, x.seq).toLowerCase() === code,
+      ) ??
       list.find(
         (x) => x.name_en.toLowerCase().includes(code) || x.name_bn.includes(scan.trim()),
       );
@@ -301,6 +310,7 @@ function PosPage() {
     setCouponCode("");
     setTaxPct(String(settings.data?.default_tax_pct ?? 0));
     setPaid("");
+    setChangeGiven(false);
     setCustomer("");
     setPhone("");
     setEmail("");
@@ -440,7 +450,10 @@ function PosPage() {
   // ---- Keyboard shortcuts ----
   const checkoutMutate = checkout.mutate;
   const canCheckout = cart.length > 0 && !checkout.isPending;
-  const canPay = canCheckout && !!method;
+  const paidEntered = paid.trim() !== "" && Number.isFinite(Number(paid));
+  const fullyPaid = paidEntered && Number(paid) + 0.009 >= total;
+  const changeSettled = method !== "cash" || changeVal <= 0.009 || changeGiven;
+  const canPay = canCheckout && !!method && fullyPaid && changeSettled;
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const key = e.key;
@@ -947,7 +960,10 @@ function PosPage() {
                   value={paid}
                   disabled={!method}
                   placeholder={total.toFixed(2)}
-                  onChange={(e) => setPaid(e.target.value)}
+                  onChange={(e) => {
+                    setPaid(e.target.value);
+                    setChangeGiven(false);
+                  }}
                   className="h-12 rounded-xl bg-success/10 text-lg font-bold"
                 />
               </div>
@@ -966,6 +982,22 @@ function PosPage() {
               </div>
             </div>
 
+            {method === "cash" && fullyPaid && changeVal > 0.009 && (
+              <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-xl border-2 border-warning/60 bg-warning/10 px-3 py-2 text-xs font-semibold">
+                <input
+                  type="checkbox"
+                  checked={changeGiven}
+                  onChange={(e) => setChangeGiven(e.target.checked)}
+                  className="size-4 accent-[var(--primary)]"
+                />
+                <span>
+                  {lang === "bn"
+                    ? `ফেরত ${money(changeVal, lang)} গ্রাহককে দেওয়া হয়েছে`
+                    : `Change ${money(changeVal, lang)} returned to customer`}
+                </span>
+              </label>
+            )}
+
             <Button
               variant="accent"
               className="mt-3 h-16 w-full rounded-2xl font-display text-lg font-black"
@@ -974,9 +1006,17 @@ function PosPage() {
             >
               {t("checkout")} · {money(total, lang)}
             </Button>
-            {cart.length > 0 && !method && (
+            {cart.length > 0 && !canPay && (
               <p className="mt-1 text-center text-xs font-semibold text-destructive">
-                {t("selectPaymentFirst")}
+                {!method
+                  ? t("selectPaymentFirst")
+                  : !fullyPaid
+                    ? lang === "bn"
+                      ? "সম্পূর্ণ পেমেন্ট অ্যামাউন্ট দিন"
+                      : "Enter the full payment amount"
+                    : lang === "bn"
+                      ? "ফেরত দেওয়ার পর টিক দিন"
+                      : "Confirm the change was returned"}
               </p>
             )}
 
