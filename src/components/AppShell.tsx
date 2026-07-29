@@ -177,9 +177,13 @@ export function AppShell({ children }: { children: ReactNode }) {
       icon: SettingsIcon,
       items: [
         { to: "/settings", feature: "settings", label: t("settings"), icon: SettingsIcon },
-        { to: "/api-hub", feature: "api-hub", label: t("apiHub"), icon: Plug },
       ],
-
+    },
+    {
+      id: "apihub",
+      label: t("apiHub"),
+      icon: Plug,
+      items: [{ to: "/api-hub", feature: "api-hub", label: t("apiHub"), icon: Plug }],
     },
   ];
 
@@ -227,6 +231,26 @@ export function AppShell({ children }: { children: ReactNode }) {
         {visibleGroups.map((g) => {
           const groupActive = g.items.some((i) => pathname.startsWith(i.to));
           const isOpen = collapsed ? false : (open[g.id] ?? groupActive);
+          if (g.items.length === 1 && !g.items[0].search) {
+            const only = g.items[0];
+            return (
+              <Link
+                key={g.id}
+                to={only.to}
+                title={g.label}
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+                  groupActive
+                    ? "bg-sidebar-accent text-sidebar-primary"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                  collapsed && "justify-center px-0",
+                )}
+              >
+                <g.icon className="size-4 shrink-0" />
+                {!collapsed && <span className="flex-1 truncate text-left">{g.label}</span>}
+              </Link>
+            );
+          }
           return (
             <div key={g.id}>
               <button
