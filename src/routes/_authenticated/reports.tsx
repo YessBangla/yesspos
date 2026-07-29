@@ -299,38 +299,45 @@ function ReportsPage() {
             </button>
           ))}
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[520px] text-sm">
-            <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-              <tr>
-                {currentTable().headers.map((h, i) => (
-                  <th key={h} className={cn("px-4 py-3", i > 0 && "text-right")}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {currentTable().rows.map((row, ri) => (
-                <tr key={ri} className="border-b border-border last:border-0">
-                  {row.map((c, ci) => (
-                    <td key={ci} className={cn("px-4 py-2.5", ci > 0 ? "text-right font-medium" : "font-medium")}>
-                      {typeof c === "number" ? num(c, lang) : c}
-                    </td>
+        {tab === "due" ? (
+          <div className="p-3">
+            <DueCollection sales={report.data?.dueSales ?? []} shopName={shop.data?.shop_name ?? "SheraPOS"} />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] text-sm">
+              <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+                <tr>
+                  {currentTable().headers.map((h, i) => (
+                    <th key={h} className={cn("px-4 py-3", i > 0 && "text-right")}>
+                      {h}
+                    </th>
                   ))}
                 </tr>
-              ))}
-              {currentTable().rows.length === 0 && (
-                <tr>
-                  <td className="px-4 py-6 text-muted-foreground" colSpan={6}>
-                    {report.isLoading ? t("loading") : t("noData")}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {currentTable().rows.map((row, ri) => (
+                  <tr key={ri} className="border-b border-border last:border-0">
+                    {row.map((c, ci) => (
+                      <td key={ci} className={cn("px-4 py-2.5", ci > 0 ? "text-right font-medium" : "font-medium")}>
+                        {typeof c === "number" ? num(c, lang) : c}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+                {currentTable().rows.length === 0 && (
+                  <tr>
+                    <td className="px-4 py-6 text-muted-foreground" colSpan={6}>
+                      {report.isLoading ? t("loading") : t("noData")}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
 
       {tab === "due" && (report.data?.dueSales.length ?? 0) > 0 && (
         <>
