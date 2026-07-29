@@ -314,6 +314,22 @@ function DashboardPage() {
     canAccess(me.data?.role, a.feature),
   );
 
+  const ESSENTIAL_LINKS = [
+    "/pos",
+    "/sales",
+    "/products",
+    "/contacts",
+    "/payments",
+    "/purchases",
+    "/expenses",
+    "/inventory",
+    "/delivery-orders",
+    "/reports",
+  ];
+  const essentialActions = quickActions.filter((a) => ESSENTIAL_LINKS.includes(a.to));
+  const visibleActions = showAllActions ? quickActions : essentialActions;
+
+
   const widgetLabel: Record<DashboardWidget, string> = {
     shortcuts: lang === "bn" ? "শর্টকাট" : "Shortcuts",
     kpi: lang === "bn" ? "কেপিআই কার্ড" : "KPI cards",
