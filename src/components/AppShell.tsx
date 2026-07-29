@@ -66,6 +66,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const { simple, toggle: toggleSimple } = useSimpleMode();
 
   const groups: NavGroup[] = [
     {
