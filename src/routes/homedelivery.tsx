@@ -520,6 +520,50 @@ function ShopPage() {
           </Button>
         </div>
 
+        {/* ---- Portal menu ---- */}
+        <nav className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 pb-2 text-sm">
+          <Link to="/" className="whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted">
+            {bn ? "হোম" : "Home"}
+          </Link>
+          <button
+            type="button"
+            className="whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted"
+            onClick={() => {
+              setCat("");
+              setQuery("");
+              setLimit(PAGE);
+            }}
+          >
+            {bn ? "সব পণ্য" : "All products"}
+          </button>
+          {(categories.data ?? []).slice(0, 6).map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className={cn(
+                "whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted",
+                cat === c.id && "bg-primary/10 font-semibold text-primary",
+              )}
+              onClick={() => {
+                setCat(c.id);
+                setLimit(PAGE);
+              }}
+            >
+              {bn ? c.name_bn : c.name_en}
+            </button>
+          ))}
+          <Link to="/track" className="ml-auto whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted">
+            {bn ? "অর্ডার ট্র্যাক" : "Track order"}
+          </Link>
+          <Link
+            to="/my-account"
+            search={{ tab: "orders" }}
+            className="whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted sm:hidden"
+          >
+            {bn ? "অ্যাকাউন্ট" : "Account"}
+          </Link>
+        </nav>
+
         {!online && (
           <div className="flex items-center justify-center gap-2 bg-warning/20 py-1 text-xs">
             <WifiOff className="size-3" />
@@ -751,6 +795,43 @@ function ShopPage() {
                 <p className="p-4 text-sm text-muted-foreground">{bn ? "কার্ট খালি" : "Cart is empty"}</p>
               )}
             </div>
+
+            {user && isCustomer ? (
+              (savedAddresses.data ?? []).length > 0 && (
+                <div className="space-y-2">
+                  <Label>{bn ? "সংরক্ষিত ঠিকানা" : "Saved addresses"}</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {(savedAddresses.data ?? []).map((a) => (
+                      <button
+                        key={a.id}
+                        type="button"
+                        className="rounded-xl border border-border px-3 py-2 text-left text-xs hover:border-primary"
+                        onClick={() =>
+                          setForm((f) => ({
+                            ...f,
+                            name: a.full_name,
+                            phone: a.phone,
+                            address: a.address,
+                            area: a.area,
+                            note: a.note ?? "",
+                          }))
+                        }
+                      >
+                        <span className="font-semibold">{a.label}</span>
+                        <span className="block text-muted-foreground">{a.area}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            ) : (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-dashed border-border p-3 text-sm">
+                <span className="text-muted-foreground">
+                  {bn ? "লগইন করলে ঠিকানা ও অর্ডার সংরক্ষিত থাকবে" : "Sign in to save addresses and track orders"}
+                </span>
+                <CustomerAccountMenu compact />
+              </div>
+            )}
 
             <div className="grid gap-3">
               <F label={bn ? "নাম" : "Name"} v={form.name} on={(v) => setForm({ ...form, name: v })} />
