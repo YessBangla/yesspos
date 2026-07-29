@@ -34,6 +34,17 @@ import { cn } from "@/lib/utils";
 import { useMyRole } from "@/lib/use-my-role";
 import { useActiveBranch } from "@/lib/active-branch";
 import { canAccess, type Feature } from "@/lib/permissions";
+import { DASHBOARD_WIDGETS, useDashboards, type DashboardWidget } from "@/lib/dashboards";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { LayoutGrid, Plus, Settings2, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -66,7 +77,10 @@ function DashboardPage() {
   const me = useMyRole();
   const { branch, canSwitch, branchId } = useActiveBranch();
   const scopeId = canSwitch ? null : branchId;
-  const [range, setRange] = useState<RangeKey>("month");
+  const dash = useDashboards(me.data?.userId ?? null);
+  const range = dash.active.range as RangeKey;
+  const setRange = (r: RangeKey) => dash.update({ range: r });
+  const show = (w: DashboardWidget) => dash.active.widgets.includes(w);
   const [tab, setTab] = useState<"sale" | "purchase" | "payment" | "quotation">("sale");
 
   const from = rangeStart(range);
@@ -248,16 +262,48 @@ function DashboardPage() {
 
   const quickActions = ([
     { to: "/pos", feature: "pos", label: t("pos"), icon: ShoppingCart },
+    { to: "/sales", feature: "sales", label: t("sales"), icon: Receipt },
     { to: "/products", feature: "products", label: t("products"), icon: Boxes },
+    { to: "/catalog", feature: "catalog", label: t("catalog"), icon: Boxes },
+    { to: "/stock-adjustments", feature: "stock-adjustments", label: t("stockAdjust"), icon: Boxes },
+    { to: "/stock-count", feature: "stock-count", label: t("stockCount"), icon: Boxes },
+    { to: "/labels", feature: "labels", label: t("labels"), icon: Receipt },
+    { to: "/branches", feature: "branches", label: t("branches"), icon: Receipt },
+    { to: "/stock-transfers", feature: "stock-transfers", label: t("stockTransfer"), icon: Truck },
     { to: "/purchases", feature: "purchases", label: t("purchases"), icon: Truck },
+    { to: "/purchase-orders", feature: "purchase-orders", label: t("purchaseOrders"), icon: Truck },
     { to: "/payments", feature: "payments", label: t("paymentsLedger"), icon: HandCoins },
     { to: "/expenses", feature: "expenses", label: t("expenses"), icon: Wallet },
-    { to: "/inventory", feature: "inventory", label: t("inventoryStatus"), icon: Boxes },
+    { to: "/mobile-payments", feature: "mobile-payments", label: lang === "bn" ? "মোবাইল পেমেন্ট" : "Mobile payments", icon: HandCoins },
+    { to: "/accounts", feature: "accounts", label: t("accounts"), icon: Wallet },
+    { to: "/chart-of-accounts", feature: "chart-of-accounts", label: t("chartOfAccounts"), icon: Wallet },
+    { to: "/journal", feature: "journal", label: t("journal"), icon: Receipt },
+    { to: "/day-book", feature: "day-book", label: t("dayBook"), icon: Receipt },
+    { to: "/financials", feature: "financials", label: t("financials"), icon: TrendingUp },
+    { to: "/party-statement", feature: "party-statement", label: t("partyStatement"), icon: Users },
     { to: "/contacts", feature: "contacts", label: t("contacts"), icon: Users },
-    { to: "/branches", feature: "branches", label: t("branches"), icon: Receipt },
+    { to: "/users", feature: "users", label: t("usersRoles"), icon: Users },
+    { to: "/reports", feature: "reports", label: t("reports"), icon: TrendingUp },
+    { to: "/inventory", feature: "inventory", label: t("inventoryStatus"), icon: Boxes },
+    { to: "/audit-logs", feature: "audit-logs", label: t("auditLog"), icon: Receipt },
+    { to: "/assistant", feature: "assistant", label: t("aiAssistant"), icon: Trophy },
+    { to: "/settings", feature: "settings", label: t("settings"), icon: Settings2 },
+    { to: "/api-hub", feature: "api-hub", label: t("apiHub"), icon: Settings2 },
   ] as { to: string; feature: Feature; label: string; icon: typeof ShoppingCart }[]).filter((a) =>
     canAccess(me.data?.role, a.feature),
   );
+
+  const widgetLabel: Record<DashboardWidget, string> = {
+    shortcuts: lang === "bn" ? "শর্টকাট" : "Shortcuts",
+    kpi: lang === "bn" ? "কেপিআই কার্ড" : "KPI cards",
+    highlights: lang === "bn" ? "হাইলাইট" : "Highlights",
+    ledgers: lang === "bn" ? "লেজার" : "Ledgers",
+    chart: lang === "bn" ? "চার্ট" : "Chart",
+    bestseller: lang === "bn" ? "বেস্ট সেলার" : "Best sellers",
+    transactions: lang === "bn" ? "সাম্প্রতিক লেনদেন" : "Recent transactions",
+    activity: lang === "bn" ? "কার্যকলাপ" : "Activity",
+    lowstock: lang === "bn" ? "কম স্টক" : "Low stock",
+  };
 
   const ranges: { key: RangeKey; label: string }[] = [
     { key: "today", label: t("rangeToday") },
@@ -293,6 +339,63 @@ function DashboardPage() {
         </div>
       </div>
 
+      <div className="surface-panel flex flex-wrap items-center gap-2 p-2">
+        <LayoutGrid className="ml-1 size-4 text-primary" />
+        {dash.presets.map((d) => (
+          <button
+            key={d.id}
+            onClick={() => dash.setActiveId(d.id)}
+            className={cn(
+              "rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
+              d.id === dash.activeId ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+            )}
+          >
+            {d.name}
+          </button>
+        ))}
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            const name = window.prompt(lang === "bn" ? "নতুন ড্যাশবোর্ডের নাম" : "New dashboard name");
+            if (name?.trim()) dash.add(name.trim().slice(0, 24));
+          }}
+        >
+          <Plus className="mr-1 size-4" />
+          {lang === "bn" ? "নতুন" : "New"}
+        </Button>
+        <div className="ml-auto flex items-center gap-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline">
+                <Settings2 className="mr-1 size-4" />
+                {lang === "bn" ? "কাস্টমাইজ" : "Customise"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>{lang === "bn" ? "উইজেট" : "Widgets"}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {DASHBOARD_WIDGETS.map((w) => (
+                <DropdownMenuCheckboxItem
+                  key={w}
+                  checked={show(w)}
+                  onSelect={(e) => e.preventDefault()}
+                  onCheckedChange={() => dash.toggleWidget(w)}
+                >
+                  {widgetLabel[w]}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {dash.presets.length > 1 && (
+            <Button size="icon" variant="ghost" onClick={() => dash.remove(dash.activeId)}>
+              <Trash2 className="size-4 text-destructive" />
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {show("shortcuts") && (
       <div className="surface-panel p-3">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {t("quickActionsTitle")}
@@ -310,7 +413,9 @@ function DashboardPage() {
           ))}
         </div>
       </div>
+      )}
 
+      {show("kpi") && (
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
         {cards.map((c) => (
           <div key={c.label} className="surface-panel p-3">
@@ -322,7 +427,9 @@ function DashboardPage() {
           </div>
         ))}
       </div>
+      )}
 
+      {show("highlights") && (
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div className="surface-panel p-4 text-center">
           <Trophy className="mx-auto size-7 text-primary" />
@@ -345,7 +452,9 @@ function DashboardPage() {
           <p className="font-display text-2xl font-bold">{num(lowStock.length, lang)}</p>
         </div>
       </div>
+      )}
 
+      {show("ledgers") && (
       <div className="grid gap-4 lg:grid-cols-3">
         <LedgerCard
           title={t("assets")}
@@ -370,8 +479,10 @@ function DashboardPage() {
           ]}
         />
       </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
+        {show("chart") && (
         <div className="surface-panel p-4 lg:col-span-2">
           <h2 className="mb-4 text-lg font-semibold">{t("last7days")}</h2>
           <div className="h-64">
@@ -393,7 +504,9 @@ function DashboardPage() {
             </ResponsiveContainer>
           </div>
         </div>
+        )}
 
+        {show("bestseller") && (
         <div className="surface-panel p-4">
           <h2 className="mb-3 text-lg font-semibold">{t("bestSeller")}</h2>
           {top.length === 0 && <p className="text-sm text-muted-foreground">{t("noData")}</p>}
@@ -408,9 +521,11 @@ function DashboardPage() {
             ))}
           </ul>
         </div>
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
+        {show("transactions") && (
         <div className="surface-panel overflow-hidden p-0">
           <div className="flex items-center justify-between gap-2 px-4 py-3">
             <h2 className="text-lg font-semibold">{t("recentTransactions")}</h2>
@@ -487,7 +602,9 @@ function DashboardPage() {
             </table>
           </div>
         </div>
+        )}
 
+        {show("activity") && (
         <div className="surface-panel p-4">
           <h2 className="mb-3 text-lg font-semibold">{t("recentActivity")}</h2>
           {(activity.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">{t("noData")}</p>}
@@ -505,7 +622,9 @@ function DashboardPage() {
             ))}
           </ul>
         </div>
+        )}
 
+        {show("lowstock") && (
         <div className="surface-panel p-4">
           <h2 className="mb-3 text-lg font-semibold">{t("lowStockItems")}</h2>
           {lowStock.length === 0 && <p className="text-sm text-muted-foreground">{t("noData")}</p>}
@@ -520,6 +639,7 @@ function DashboardPage() {
             ))}
           </ul>
         </div>
+        )}
       </div>
     </div>
   );

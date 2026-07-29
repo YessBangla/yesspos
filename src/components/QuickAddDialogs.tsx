@@ -31,6 +31,7 @@ type QuickProduct = {
   name_en: string;
   name_bn: string;
   sku: string;
+  seq: number | null;
   barcode: string | null;
   price: number;
   stock: number;

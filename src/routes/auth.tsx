@@ -47,7 +47,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/pos", replace: true });
+      if (data.session) navigate({ to: "/dashboard", replace: true });
     });
   }, [navigate]);
 
@@ -84,7 +84,7 @@ function AuthPage() {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
         await logAudit("login", { details: mode === "signup" ? "signup" : "password" });
-        navigate({ to: "/pos", replace: true });
+        navigate({ to: "/dashboard", replace: true });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
@@ -105,7 +105,7 @@ function AuthPage() {
     }
     if (result.redirected) return;
     await logAudit("login", { details: "google" });
-    navigate({ to: "/pos", replace: true });
+    navigate({ to: "/dashboard", replace: true });
   }
 
   return (

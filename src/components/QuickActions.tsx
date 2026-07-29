@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Bell, Calculator, HandCoins, LayoutGrid, Plus } from "lucide-react";
@@ -145,51 +145,112 @@ export function QuickActions() {
   );
 }
 
-function MiniCalculator() {
-  const [expr, setExpr] = useState("");
-  const [result, setResult] = useState("0");
+function evaluate(expr: string): number | null {
+  const clean = expr.replace(/×/g, "*").replace(/÷/g, "/").replace(/%/g, "/100");
+  if (!clean.trim()) return null;
+  if (!/^[\d+\-*/.\s()]+$/.test(clean)) return null;
+  try {
+    // eslint-disable-next-line no-new-func
+    const val = Function(`"use strict";return (${clean})`)() as number;
+    return Number.isFinite(val) ? Math.round(val * 10000) / 10000 : null;
+  } catch {
+    return null;
+  }
+}
 
-  const keys = ["7", "8", "9", "/", "4", "5", "6", "*", "1", "2", "3", "-", "0", ".", "=", "+"];
+function MiniCalculator() {
+  const { lang } = useI18n();
+  const [expr, setExpr] = useState("");
+  const [history, setHistory] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const live = evaluate(expr);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const keys = [
+    ["C", "(", ")", "%"],
+    ["7", "8", "9", "/"],
+    ["4", "5", "6", "*"],
+    ["1", "2", "3", "-"],
+    ["0", ".", "=", "+"],
+  ];
+
+  function equals() {
+    const val = evaluate(expr);
+    if (val === null) return;
+    setHistory((h) => [`${expr} = ${val}`, ...h].slice(0, 6));
+    setExpr(String(val));
+  }
 
   function press(k: string) {
-    if (k === "=") {
-      try {
-        if (!/^[\d+\-*/.\s()]+$/.test(expr)) throw new Error("bad");
-        // eslint-disable-next-line no-new-func
-        const val = Function(`"use strict";return (${expr})`)() as number;
-        setResult(Number.isFinite(val) ? String(Math.round(val * 100) / 100) : "0");
-      } catch {
-        setResult("0");
-      }
-      return;
-    }
+    if (k === "C") return setExpr("");
+    if (k === "=") return equals();
     setExpr((e) => e + k);
+    inputRef.current?.focus();
   }
 
   return (
     <div className="space-y-2">
-      <div className="rounded-lg bg-muted px-3 py-2 text-right">
-        <div className="truncate text-xs text-muted-foreground">{expr || "\u00a0"}</div>
-        <div className="text-lg font-bold">{result}</div>
+      <div className="rounded-lg bg-muted px-3 py-2">
+        <input
+          ref={inputRef}
+          value={expr}
+          inputMode="decimal"
+          autoComplete="off"
+          placeholder={lang === "bn" ? "যেমন 250*3+50" : "e.g. 250*3+50"}
+          onChange={(e) => setExpr(e.target.value)}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === "Enter") {
+              e.preventDefault();
+              equals();
+            }
+            if (e.key === "Escape") {
+              e.preventDefault();
+              setExpr("");
+            }
+          }}
+          className="w-full bg-transparent text-right text-sm outline-none placeholder:text-muted-foreground"
+        />
+        <div className="text-right font-display text-xl font-bold">{live ?? 0}</div>
       </div>
+
       <div className="grid grid-cols-4 gap-1">
-        {keys.map((k) => (
-          <Button key={k} size="sm" variant={k === "=" ? "default" : "outline"} onClick={() => press(k)}>
+        {keys.flat().map((k) => (
+          <Button
+            key={k}
+            size="sm"
+            variant={k === "=" ? "default" : /[0-9.]/.test(k) ? "secondary" : "outline"}
+            onClick={() => press(k)}
+          >
             {k}
           </Button>
         ))}
       </div>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="w-full"
-        onClick={() => {
-          setExpr("");
-          setResult("0");
-        }}
-      >
-        C
-      </Button>
+
+      {history.length > 0 && (
+        <div className="max-h-24 space-y-1 overflow-y-auto rounded-lg border border-border p-2 text-right text-xs text-muted-foreground">
+          {history.map((h, i) => (
+            <button
+              key={i}
+              className="block w-full truncate text-right hover:text-foreground"
+              onClick={() => setExpr(h.split(" = ")[1] ?? "")}
+            >
+              {h}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <p className="text-center text-[11px] text-muted-foreground">
+        {lang === "bn"
+          ? "কিবোর্ডে লিখুন · Enter = ফলাফল · Esc = মুছুন"
+          : "Type with keyboard · Enter = result · Esc = clear"}
+      </p>
     </div>
   );
 }
+

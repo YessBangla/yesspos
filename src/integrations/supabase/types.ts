@@ -741,6 +741,7 @@ export type Database = {
           name_bn: string
           name_en: string
           price: number
+          seq: number | null
           sku: string
           stock: number
           unit: string
@@ -759,6 +760,7 @@ export type Database = {
           name_bn: string
           name_en: string
           price?: number
+          seq?: number | null
           sku: string
           stock?: number
           unit?: string
@@ -777,6 +779,7 @@ export type Database = {
           name_bn?: string
           name_en?: string
           price?: number
+          seq?: number | null
           sku?: string
           stock?: number
           unit?: string
