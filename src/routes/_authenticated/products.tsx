@@ -260,7 +260,31 @@ function ProductsPage() {
               const low = p.branch_stock <= p.low_stock_at;
               return (
                 <tr key={p.id} className="border-b border-border last:border-0">
-                  <td className="px-4 py-3 font-medium">{lang === "bn" ? p.name_bn : p.name_en}</td>
+                  <td className="px-4 py-3 font-medium">
+                    <div className="flex items-center gap-3">
+                      {p.image_url ? (
+                        <img
+                          src={p.image_url}
+                          alt={lang === "bn" ? p.name_bn : p.name_en}
+                          loading="lazy"
+                          width={40}
+                          height={40}
+                          className="size-10 shrink-0 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-muted text-[10px] text-muted-foreground">
+                          —
+                        </span>
+                      )}
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate">{lang === "bn" ? p.name_bn : p.name_en}</span>
+                        {p.pack_size && (
+                          <span className="text-xs font-normal text-muted-foreground">{p.pack_size}</span>
+                        )}
+                      </span>
+                    </div>
+                  </td>
+
                   <td className="px-4 py-3 font-mono text-xs font-semibold text-primary">
                     {productSerial(branchCode, p.seq)}
                   </td>
