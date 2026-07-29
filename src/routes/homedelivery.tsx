@@ -138,6 +138,7 @@ const checkoutSchema = z.object({
 function ShopPage() {
   const { lang } = useI18n();
   const bn = lang === "bn";
+  const { text: sc } = useSiteContent();
   const cart = useShopCart();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
