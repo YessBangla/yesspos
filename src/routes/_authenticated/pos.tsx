@@ -665,6 +665,32 @@ function PosPage() {
           </Button>
         </div>
 
+        <AlertDialog open={closeAsk !== null} onOpenChange={(o) => !o && setCloseAsk(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {lang === "bn" ? "এই বিক্রয় বন্ধ করবেন?" : "Close this sale?"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {lang === "bn"
+                  ? "এই ট্যাবে পণ্য রয়েছে। বন্ধ করলে কার্টের সব পণ্য মুছে যাবে।"
+                  : "This tab still has items. Closing it will discard the cart."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (closeAsk) doCloseTab(closeAsk);
+                  setCloseAsk(null);
+                }}
+              >
+                {lang === "bn" ? "হ্যাঁ, বন্ধ করুন" : "Yes, close"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[1fr_420px]">
         {/* Catalog */}
         <section className="flex min-w-0 flex-col overflow-hidden">
