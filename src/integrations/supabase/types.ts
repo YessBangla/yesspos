@@ -513,13 +513,16 @@ export type Database = {
           note: string | null
           order_no: number
           payment_method: string
+          rider_id: string | null
           sale_id: string | null
+          scheduled_at: string | null
           slot: string | null
           status: string
           subtotal: number
           total: number
           updated_at: string
           user_id: string | null
+          zone_id: string | null
         }
         Insert: {
           address: string
@@ -536,13 +539,16 @@ export type Database = {
           note?: string | null
           order_no?: number
           payment_method?: string
+          rider_id?: string | null
           sale_id?: string | null
+          scheduled_at?: string | null
           slot?: string | null
           status?: string
           subtotal?: number
           total?: number
           updated_at?: string
           user_id?: string | null
+          zone_id?: string | null
         }
         Update: {
           address?: string
@@ -559,13 +565,16 @@ export type Database = {
           note?: string | null
           order_no?: number
           payment_method?: string
+          rider_id?: string | null
           sale_id?: string | null
+          scheduled_at?: string | null
           slot?: string | null
           status?: string
           subtotal?: number
           total?: number
           updated_at?: string
           user_id?: string | null
+          zone_id?: string | null
         }
         Relationships: [
           {
@@ -583,10 +592,127 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "delivery_orders_rider_id_fkey"
+            columns: ["rider_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_riders"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "delivery_orders_sale_id_fkey"
             columns: ["sale_id"]
             isOneToOne: false
             referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_orders_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_riders: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          nid: string | null
+          note: string | null
+          phone: string
+          updated_at: string
+          user_id: string | null
+          vehicle: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          nid?: string | null
+          note?: string | null
+          phone: string
+          updated_at?: string
+          user_id?: string | null
+          vehicle?: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          nid?: string | null
+          note?: string | null
+          phone?: string
+          updated_at?: string
+          user_id?: string | null
+          vehicle?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_riders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_zones: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          delivery_fee: number
+          eta_minutes: number
+          free_delivery_above: number | null
+          id: string
+          is_active: boolean
+          min_order: number
+          name_bn: string
+          name_en: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          delivery_fee?: number
+          eta_minutes?: number
+          free_delivery_above?: number | null
+          id?: string
+          is_active?: boolean
+          min_order?: number
+          name_bn: string
+          name_en: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          delivery_fee?: number
+          eta_minutes?: number
+          free_delivery_above?: number | null
+          id?: string
+          is_active?: boolean
+          min_order?: number
+          name_bn?: string
+          name_en?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_zones_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
             referencedColumns: ["id"]
           },
         ]
@@ -936,6 +1062,50 @@ export type Database = {
           },
         ]
       }
+      product_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          customer_name: string
+          id: string
+          is_approved: boolean
+          product_id: string
+          rating: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          customer_name: string
+          id?: string
+          is_approved?: boolean
+          product_id: string
+          rating?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          customer_name?: string
+          id?: string
+          is_approved?: boolean
+          product_id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_stock: {
         Row: {
           branch_id: string
@@ -1083,6 +1253,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      promotions: {
+        Row: {
+          bg_color: string | null
+          created_at: string
+          ends_on: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          kind: string
+          link_url: string | null
+          placement: string
+          sort_order: number
+          starts_on: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bg_color?: string | null
+          created_at?: string
+          ends_on?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          kind?: string
+          link_url?: string | null
+          placement?: string
+          sort_order?: number
+          starts_on?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bg_color?: string | null
+          created_at?: string
+          ends_on?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          kind?: string
+          link_url?: string | null
+          placement?: string
+          sort_order?: number
+          starts_on?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       purchase_items: {
         Row: {

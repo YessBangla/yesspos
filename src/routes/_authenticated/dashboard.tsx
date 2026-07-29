@@ -44,7 +44,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LayoutGrid, Plus, Settings2, Trash2 } from "lucide-react";
+import { Bike, LayoutGrid, MapPin, Megaphone, Plus, Settings2, Star, Store, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -289,6 +289,27 @@ function DashboardPage() {
     { to: "/assistant", feature: "assistant", label: t("aiAssistant"), icon: Trophy },
     { to: "/settings", feature: "settings", label: t("settings"), icon: Settings2 },
     { to: "/api-hub", feature: "api-hub", label: t("apiHub"), icon: Settings2 },
+    {
+      to: "/commerce",
+      feature: "commerce",
+      label: lang === "bn" ? "ই-কমার্স ড্যাশবোর্ড" : "Commerce dashboard",
+      icon: Store,
+    },
+    {
+      to: "/delivery-orders",
+      feature: "delivery-orders",
+      label: lang === "bn" ? "ডেলিভারি অর্ডার" : "Delivery orders",
+      icon: Truck,
+    },
+    { to: "/riders", feature: "riders", label: lang === "bn" ? "রাইডার" : "Riders", icon: Bike },
+    {
+      to: "/delivery-zones",
+      feature: "delivery-zones",
+      label: lang === "bn" ? "ডেলিভারি এলাকা" : "Delivery zones",
+      icon: MapPin,
+    },
+    { to: "/promotions", feature: "promotions", label: lang === "bn" ? "প্রোমোশন" : "Promotions", icon: Megaphone },
+    { to: "/reviews", feature: "reviews", label: lang === "bn" ? "রিভিউ" : "Reviews", icon: Star },
   ] as { to: string; feature: Feature; label: string; icon: typeof ShoppingCart }[]).filter((a) =>
     canAccess(me.data?.role, a.feature),
   );
