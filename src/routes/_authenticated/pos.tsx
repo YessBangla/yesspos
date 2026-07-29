@@ -57,6 +57,14 @@ import { cn } from "@/lib/utils";
 import { logAudit } from "@/lib/audit";
 import { getPrinterSize, printHtml, setPrinterSize, type PrinterSize } from "@/lib/print";
 import { QuickAddCustomer, QuickAddProduct } from "@/components/QuickAddDialogs";
+import {
+  REDEEM_MIN_POINTS,
+  applyLoyalty,
+  maxRedeemable,
+  pointsFor,
+  pointsToMoney,
+  registerMember,
+} from "@/lib/loyalty";
 import { isOfflineSupported, queueSale } from "@/lib/offline-queue";
 import { normalizePhone } from "@/lib/share-invoice";
 
@@ -87,6 +95,7 @@ type Product = {
   category_id: string | null;
   image_url: string | null;
   pack_size: string | null;
+  brand: string | null;
 };
 
 
@@ -106,6 +115,7 @@ type SaleSnapshot = {
   email: string;
   contactId: string;
   changeGiven: boolean;
+  redeemPoints: string;
 };
 
 type Coupon = {
@@ -171,6 +181,7 @@ function PosPage() {
   const [contactId, setContactId] = useState("");
   const [scan, setScan] = useState("");
   const [changeGiven, setChangeGiven] = useState(false);
+  const [redeemPoints, setRedeemPoints] = useState("");
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [tabs, setTabs] = useState<{ id: string; name: string }[]>([{ id: "t1", name: "1" }]);
   const [activeTab, setActiveTab] = useState("t1");
@@ -215,7 +226,7 @@ function PosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id,name_en,name_bn,sku,seq,barcode,price,stock,unit,category_id,image_url,pack_size")
+        .select("id,name_en,name_bn,sku,seq,barcode,price,stock,unit,category_id,image_url,pack_size,brand")
         .eq("is_active", true)
         .order("name_en");
       if (error) throw error;
@@ -366,9 +377,10 @@ function PosPage() {
       phone,
       email,
       contactId,
+      redeemPoints,
       changeGiven,
     }),
-    [cart, discount, discountMode, couponCode, coupon, taxPct, paid, method, customer, phone, email, contactId, changeGiven],
+    [cart, discount, discountMode, couponCode, coupon, taxPct, paid, method, customer, phone, email, contactId, changeGiven, redeemPoints],
   );
 
   const applySale = useCallback((s: SaleSnapshot) => {
@@ -384,6 +396,7 @@ function PosPage() {
     setPhone(s.phone);
     setEmail(s.email);
     setContactId(s.contactId);
+    setRedeemPoints(s.redeemPoints ?? "");
     setChangeGiven(s.changeGiven);
   }, []);
 
