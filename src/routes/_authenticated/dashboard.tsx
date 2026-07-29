@@ -36,6 +36,8 @@ import { useActiveBranch } from "@/lib/active-branch";
 import { canAccess, type Feature } from "@/lib/permissions";
 import { DASHBOARD_WIDGETS, useDashboards, type DashboardWidget } from "@/lib/dashboards";
 import { Button } from "@/components/ui/button";
+import { ChannelStatusPanel } from "@/components/ChannelStatusPanel";
+
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
