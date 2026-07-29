@@ -1,8 +1,8 @@
-import {
-  Smartphone, Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRightLeft,
+  Smartphone,
   BarChart3,
   Barcode,
   BookOpenCheck,
