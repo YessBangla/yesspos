@@ -105,7 +105,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       id: "purchase",
       label: t("grpPurchase"),
       icon: Truck,
-      items: [{ to: "/purchases", feature: "purchases", label: t("purchases"), icon: Truck }],
+      items: [
+        { to: "/purchases", feature: "purchases", label: t("purchases"), icon: Truck },
+        { to: "/purchase-orders", feature: "purchase-orders", label: t("purchaseOrders"), icon: ClipboardCheck },
+      ],
     },
     {
       id: "finance",
