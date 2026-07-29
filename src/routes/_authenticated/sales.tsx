@@ -19,6 +19,8 @@ import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { logAudit } from "@/lib/audit";
 import { getPrinterSize, printHtml, PRINTER_SIZES, type PrinterSize } from "@/lib/print";
+import { ShareInvoiceButtons } from "@/components/ShareInvoiceButtons";
+
 
 export const Route = createFileRoute("/_authenticated/sales")({
   head: () => ({
@@ -575,6 +577,28 @@ function SalesPage() {
                   </Button>
                 ))}
               </div>
+              <ShareInvoiceButtons
+                phone={viewing.customer_phone}
+                invoice={{
+                  invoice: Number(viewing.invoice_no),
+                  at: viewing.created_at,
+                  lines: (items.data ?? []).map((i) => ({
+                    name: i.name_snapshot,
+                    qty: i.quantity,
+                    price: Number(i.unit_price),
+                  })),
+                  subtotal: Number(viewing.subtotal),
+                  discount: Number(viewing.discount),
+                  tax: Number(viewing.tax),
+                  total: Number(viewing.total),
+                  paid: Number(viewing.paid),
+                  shopName: settings.data?.shop_name ?? "SheraPOS",
+                  shopPhone: settings.data?.phone ?? "",
+                  customer: viewing.customer_name ?? "",
+                  footer: settings.data?.receipt_footer ?? "",
+                }}
+              />
+
             </div>
           )}
         </DialogContent>
