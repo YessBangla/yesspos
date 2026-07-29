@@ -1,2 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /shop
+Disallow: /dashboard
+Disallow: /pos
+
+Sitemap: https://yesspos.lovable.app/sitemap.xml
