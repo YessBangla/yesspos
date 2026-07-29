@@ -28,6 +28,8 @@ import { deliveryFeeFor, useShopCart, type ShopLine } from "@/lib/shop-cart";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { checkPackCart } from "@/lib/pack-size";
+import { useCustomerSession, normalizePhone } from "@/lib/customer-auth";
+import { CustomerAccountMenu } from "@/components/CustomerAccountMenu";
 import { checkOrderConsistency, formatIssues } from "@/lib/order-check";
 import {
   QUEUE_MAX_ATTEMPTS,
@@ -149,6 +151,36 @@ function ShopPage() {
   const [queued, setQueued] = useState<QueuedOrder[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [placing, setPlacing] = useState(false);
+  const { user, isCustomer, name: accName, phone: accPhone } = useCustomerSession();
+  const [prefilled, setPrefilled] = useState(false);
+
+  const savedAddresses = useQuery({
+    queryKey: ["shop-addresses", user?.id],
+    enabled: !!user && isCustomer,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("customer_addresses")
+        .select("id,label,full_name,phone,address,area,note,is_default")
+        .order("is_default", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Signed-in shoppers get their default address pre-filled at checkout.
+  useEffect(() => {
+    if (prefilled || !user || !isCustomer) return;
+    const a = savedAddresses.data?.[0];
+    setForm((f) => ({
+      ...f,
+      name: a?.full_name || accName || f.name,
+      phone: a?.phone || normalizePhone(accPhone) || f.phone,
+      address: a?.address || f.address,
+      area: a?.area || f.area,
+      note: a?.note || f.note,
+    }));
+    if (savedAddresses.data) setPrefilled(true);
+  }, [user, isCustomer, accName, accPhone, savedAddresses.data, prefilled]);
 
   // Keep search / category / checkout shareable and reload-safe in the URL.
   useEffect(() => {
@@ -296,6 +328,7 @@ function ShopPage() {
     }
 
     const orderRow = {
+      user_id: user && isCustomer ? user.id : null,
       customer_name: parsed.data.name,
       customer_phone: parsed.data.phone,
       address: parsed.data.address,
@@ -418,6 +451,9 @@ function ShopPage() {
             <Link to="/track" className="hover:underline">
               {bn ? "অর্ডার ট্র্যাক" : "Track order"}
             </Link>
+            <Link to="/my-account" search={{ tab: "orders" }} className="hover:underline">
+              {bn ? "আমার অ্যাকাউন্ট" : "My account"}
+            </Link>
             <Link to="/auth" className="hidden hover:underline sm:inline">
               {bn ? "স্টাফ লগইন" : "Staff login"}
             </Link>
@@ -471,6 +507,10 @@ function ShopPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="hidden shrink-0 sm:block">
+            <CustomerAccountMenu />
           </div>
 
           <Button className="h-11 shrink-0 rounded-full" onClick={() => setCheckout(true)}>
