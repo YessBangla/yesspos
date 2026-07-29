@@ -46,6 +46,7 @@ import { cn } from "@/lib/utils";
 import { useMyRole } from "@/lib/use-my-role";
 import { canAccess, type Feature } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
+import { SIMPLE_ROUTES, useSimpleMode } from "@/lib/simple-mode";
 
 type NavItem = {
   to: string;
