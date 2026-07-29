@@ -27,6 +27,8 @@ export const FEATURES = [
   "party-statement",
   "branches",
   "stock-transfers",
+  "stock-count",
+  "purchase-orders",
 ] as const;
 
 
