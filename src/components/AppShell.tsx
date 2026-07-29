@@ -62,7 +62,7 @@ type NavItem = {
 type NavGroup = { id: string; label: string; icon: ComponentType<{ className?: string }>; items: NavItem[] };
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
