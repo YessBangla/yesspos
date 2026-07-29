@@ -17,6 +17,7 @@ import {
   Quote,
   ReceiptText,
   ShieldCheck,
+  ShoppingBag,
   ShoppingCart,
   Truck,
   Users,
