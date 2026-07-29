@@ -436,11 +436,24 @@ function DashboardPage() {
 
       {show("shortcuts") && (
       <div className="surface-panel p-3">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("quickActionsTitle")}
-        </p>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("quickActionsTitle")}
+          </p>
+          {quickActions.length > essentialActions.length && (
+            <Button size="sm" variant="ghost" onClick={() => setShowAllActions((v) => !v)}>
+              {showAllActions
+                ? lang === "bn"
+                  ? "কম দেখান"
+                  : "Show less"
+                : lang === "bn"
+                  ? "সব দেখান"
+                  : "Show all"}
+            </Button>
+          )}
+        </div>
         <div className="flex flex-wrap gap-2">
-          {quickActions.map((a) => (
+          {visibleActions.map((a) => (
             <Link
               key={a.to}
               to={a.to}
@@ -453,6 +466,9 @@ function DashboardPage() {
         </div>
       </div>
       )}
+
+      <ChannelStatusPanel branchId={branch?.id} />
+
 
       {show("kpi") && (
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
