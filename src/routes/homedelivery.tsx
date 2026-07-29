@@ -40,7 +40,21 @@ import {
   type QueuedOrder,
 } from "@/lib/delivery-queue";
 
+const SITE = "https://yesspos.lovable.app";
+
+/** Deep-linkable portal state: ?q=rice&cat=<id>&checkout=1 */
+const searchSchema = z.object({
+  q: z.string().trim().max(60).optional(),
+  cat: z.string().trim().max(64).optional(),
+  checkout: z.boolean().optional(),
+});
+
 export const Route = createFileRoute("/homedelivery")({
+  validateSearch: (input: Record<string, unknown>) => {
+    const raw = { ...input, checkout: input.checkout === true || input.checkout === "1" || input.checkout === "true" };
+    const parsed = searchSchema.safeParse(raw);
+    return parsed.success ? parsed.data : {};
+  },
   head: () => ({
     meta: [
       { title: "Online grocery & home delivery — Yess Shop" },
@@ -51,11 +65,14 @@ export const Route = createFileRoute("/homedelivery")({
       { property: "og:title", content: "Online grocery & home delivery — Yess Shop" },
       { property: "og:description", content: "Fresh groceries delivered to your door, free above ৳1000." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: `${SITE}/homedelivery` },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: `${SITE}/homedelivery` }],
   }),
   component: ShopPage,
 });
+
 
 type P = {
   id: string;
