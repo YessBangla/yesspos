@@ -328,75 +328,102 @@ function PosPage() {
   const checkout = useMutation({
     mutationFn: async (status: "final" | "draft" | "quotation" = "final") => {
       if (cart.length === 0) throw new Error(t("emptyCart"));
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData.user?.id;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const uid = sessionData.session?.user.id;
       if (!uid) throw new Error("Unauthorized");
 
-      const { data: sale, error } = await supabase
-        .from("sales")
-        .insert({
-          cashier_id: uid,
-          branch_id: myBranch.branchId,
-          contact_id: contactId || null,
-          status,
-          customer_name: customer.trim().slice(0, 80) || null,
-          customer_phone: phone.trim().slice(0, 20) || null,
-          subtotal,
-          discount: discountVal,
-          coupon_code: coupon?.code ?? null,
-          tax: taxVal,
-          total,
-          paid: status === "final" ? paidVal : 0,
-          payment_method: method,
-        })
-        .select("id,invoice_no,created_at")
-        .single();
-      if (error) throw error;
-
-      // Items are stored for every status. The database only moves stock when
-      // the sale is final (or when a hold/quotation is later converted).
-      const items = cart.map((l) => ({
-        sale_id: sale.id,
+      const salePayload = {
+        cashier_id: uid,
+        branch_id: myBranch.branchId,
+        contact_id: contactId || null,
+        status,
+        customer_name: customer.trim().slice(0, 80) || null,
+        customer_phone: phone.trim().slice(0, 20) || null,
+        subtotal,
+        discount: discountVal,
+        coupon_code: coupon?.code ?? null,
+        tax: taxVal,
+        total,
+        paid: status === "final" ? paidVal : 0,
+        payment_method: method,
+      };
+      const itemRows = cart.map((l) => ({
         product_id: l.product.id,
         name_snapshot: lang === "bn" ? l.product.name_bn : l.product.name_en,
         unit_price: Number(l.product.price),
         quantity: l.qty,
         line_total: Number(l.product.price) * l.qty,
       }));
+
+      const s = settings.data;
+      const baseReceipt = {
+        lines: cart,
+        subtotal,
+        discount: discountVal,
+        couponCode: coupon?.code ?? "",
+        tax: taxVal,
+        total,
+        paid: paidVal,
+        method,
+        customer,
+        phone,
+        email,
+        shopName: s?.shop_name ?? t("appName"),
+        shopAddress: s?.address ?? "",
+        shopPhone: s?.phone ?? "",
+        footer: s?.receipt_footer ?? t("thanks"),
+      };
+
+      // No network: keep selling. The sale is stored locally and replayed later.
+      if (typeof navigator !== "undefined" && !navigator.onLine && isOfflineSupported()) {
+        await queueSale(salePayload, itemRows);
+        return {
+          status,
+          offline: true,
+          receipt: {
+            ...baseReceipt,
+            invoice: 0,
+            at: new Date().toISOString(),
+          } satisfies Receipt,
+        };
+      }
+
+      const { data: sale, error } = await supabase
+        .from("sales")
+        .insert(salePayload)
+        .select("id,invoice_no,created_at")
+        .single();
+      if (error) throw error;
+
+      // Items are stored for every status. The database only moves stock when
+      // the sale is final (or when a hold/quotation is later converted).
+      const items = itemRows.map((i) => ({ ...i, sale_id: sale.id }));
       const { error: itemsError } = await supabase.from("sale_items").insert(items);
       if (itemsError) throw itemsError;
 
-
-      const s = settings.data;
       return {
         status,
+        offline: false,
         receipt: {
+          ...baseReceipt,
           invoice: Number(sale.invoice_no),
-          lines: cart,
-          subtotal,
-          discount: discountVal,
-          couponCode: coupon?.code ?? "",
-          tax: taxVal,
-          total,
-          paid: paidVal,
-          method,
-          customer,
-          phone,
-          email,
           at: sale.created_at as string,
-          shopName: s?.shop_name ?? t("appName"),
-          shopAddress: s?.address ?? "",
-          shopPhone: s?.phone ?? "",
-          footer: s?.receipt_footer ?? t("thanks"),
         } satisfies Receipt,
       };
     },
-    onSuccess: ({ status, receipt: r }) => {
+    onSuccess: ({ status, offline, receipt: r }) => {
       void logAudit("sale", { entity: "sale", details: `${status} · ${r?.invoice ?? ""}` });
       if (status === "final") {
         setReceipt(r);
-        toast.success(t("saleDone"));
+        toast.success(
+          offline
+            ? lang === "bn"
+              ? "অফলাইনে সংরক্ষিত — নেট এলে অটো সিঙ্ক হবে"
+              : "Saved offline — will sync automatically"
+            : t("saleDone"),
+        );
       } else toast.success(status === "draft" ? t("holdSale") : t("saveQuotation"));
+
       resetSale();
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["branch-stock"] });
