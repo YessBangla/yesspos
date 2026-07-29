@@ -5,16 +5,16 @@ import { useI18n } from "@/lib/i18n";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms of Service — SheraPOS" },
+      { title: "Terms of Service — SokolerBazar" },
       {
         name: "description",
         content:
-          "The agreement governing use of the SheraPOS platform: subscriptions, billing, acceptable use, data ownership, warranties and liability.",
+          "The agreement governing use of the SokolerBazar platform: subscriptions, billing, acceptable use, data ownership, warranties and liability.",
       },
-      { property: "og:title", content: "Terms of Service — SheraPOS" },
+      { property: "og:title", content: "Terms of Service — SokolerBazar" },
       {
         property: "og:description",
-        content: "Subscription terms, acceptable use, data ownership and liability for SheraPOS customers.",
+        content: "Subscription terms, acceptable use, data ownership and liability for SokolerBazar customers.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -32,13 +32,13 @@ function TermsPage() {
         {
           heading: "চুক্তি গ্রহণ",
           body: [
-            "SheraPOS প্ল্যাটফর্মে অ্যাকাউন্ট খোলা বা ব্যবহারের মাধ্যমে আপনি (“গ্রাহক”) এই শর্তাবলিতে সম্মত হচ্ছেন। প্রতিষ্ঠানের পক্ষে সম্মত হলে আপনি নিশ্চিত করছেন যে আপনার সেই কর্তৃত্ব রয়েছে।",
+            "SokolerBazar প্ল্যাটফর্মে অ্যাকাউন্ট খোলা বা ব্যবহারের মাধ্যমে আপনি (“গ্রাহক”) এই শর্তাবলিতে সম্মত হচ্ছেন। প্রতিষ্ঠানের পক্ষে সম্মত হলে আপনি নিশ্চিত করছেন যে আপনার সেই কর্তৃত্ব রয়েছে।",
           ],
         },
         {
           heading: "সেবার বিবরণ",
           body: [
-            "SheraPOS একটি সাবস্ক্রিপশনভিত্তিক ক্লাউড সফটওয়্যার যা বিলিং, ইনভেন্টরি, মাল্টি-ব্রাঞ্চ ব্যবস্থাপনা, হিসাব ও রিপোর্টিং সুবিধা দেয়। আমরা সময়ে সময়ে ফিচার যোগ, পরিবর্তন বা অপসারণ করতে পারি।",
+            "SokolerBazar একটি সাবস্ক্রিপশনভিত্তিক ক্লাউড সফটওয়্যার যা বিলিং, ইনভেন্টরি, মাল্টি-ব্রাঞ্চ ব্যবস্থাপনা, হিসাব ও রিপোর্টিং সুবিধা দেয়। আমরা সময়ে সময়ে ফিচার যোগ, পরিবর্তন বা অপসারণ করতে পারি।",
           ],
         },
         {
@@ -98,13 +98,13 @@ function TermsPage() {
         {
           heading: "Acceptance of terms",
           body: [
-            "By creating an account or otherwise using the SheraPOS platform, you (“Customer”) enter into a binding agreement with us on these terms. If you accept on behalf of an organisation, you represent that you are authorised to bind that organisation.",
+            "By creating an account or otherwise using the SokolerBazar platform, you (“Customer”) enter into a binding agreement with us on these terms. If you accept on behalf of an organisation, you represent that you are authorised to bind that organisation.",
           ],
         },
         {
           heading: "Description of the service",
           body: [
-            "SheraPOS is a subscription-based cloud application providing billing, inventory, multi-branch operations, accounting and reporting functionality. We may add, modify or discontinue features, and will avoid materially degrading core functionality during a paid term.",
+            "SokolerBazar is a subscription-based cloud application providing billing, inventory, multi-branch operations, accounting and reporting functionality. We may add, modify or discontinue features, and will avoid materially degrading core functionality during a paid term.",
           ],
         },
         {
@@ -172,8 +172,8 @@ function TermsPage() {
       }
       intro={
         bn
-          ? "এই শর্তাবলি SheraPOS প্ল্যাটফর্ম ব্যবহারের নিয়ম, সাবস্ক্রিপশন, ডেটা মালিকানা ও দায়সীমা নির্ধারণ করে।"
-          : "These terms govern access to and use of the SheraPOS platform, including subscription commitments, acceptable use, data ownership and the allocation of risk between us."
+          ? "এই শর্তাবলি SokolerBazar প্ল্যাটফর্ম ব্যবহারের নিয়ম, সাবস্ক্রিপশন, ডেটা মালিকানা ও দায়সীমা নির্ধারণ করে।"
+          : "These terms govern access to and use of the SokolerBazar platform, including subscription commitments, acceptable use, data ownership and the allocation of risk between us."
       }
       sections={sections}
       footnote={

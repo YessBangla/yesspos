@@ -28,12 +28,12 @@ import {
 export const Route = createFileRoute("/_authenticated/mobile-payments")({
   head: () => ({
     meta: [
-      { title: "Mobile payments & reconciliation — SheraPOS" },
+      { title: "Mobile payments & reconciliation — SokolerBazar" },
       {
         name: "description",
         content: "Collect bKash, Nagad, Rocket, Upay and SSLCommerz payments by QR or push request and reconcile them against invoices.",
       },
-      { property: "og:title", content: "Mobile payments & reconciliation — SheraPOS" },
+      { property: "og:title", content: "Mobile payments & reconciliation — SokolerBazar" },
       { property: "og:description", content: "QR and push mobile money collection with automatic reconciliation." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -114,7 +114,7 @@ function MobilePaymentsPage() {
   const gatewayEnabled = gatewaySettings.data?.find((r) => r.provider === gateway)?.enabled ?? false;
   const amountNum = Number(amount) || 0;
   const g = gatewayById(gateway)!;
-  const shopName = shop.data?.shop_name ?? "SheraPOS";
+  const shopName = shop.data?.shop_name ?? "SokolerBazar";
 
   const payload = useMemo(
     () =>

@@ -14,9 +14,9 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/_authenticated/delivery-orders")({
   head: () => ({
     meta: [
-      { title: "Home delivery orders — Yess POS" },
+      { title: "Home delivery orders — SokolerBazar" },
       { name: "description", content: "Manage online grocery orders, delivery status and convert them into sales." },
-      { property: "og:title", content: "Home delivery orders — Yess POS" },
+      { property: "og:title", content: "Home delivery orders — SokolerBazar" },
       { property: "og:description", content: "Track and fulfil online home delivery orders." },
     ],
   }),

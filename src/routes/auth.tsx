@@ -15,10 +15,10 @@ import { LangToggle } from "@/components/LangToggle";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — SheraPOS" },
-      { name: "description", content: "Sign in to your SheraPOS shop account to start billing." },
-      { property: "og:title", content: "Sign in — SheraPOS" },
-      { property: "og:description", content: "Sign in to your SheraPOS shop account." },
+      { title: "Sign in — SokolerBazar" },
+      { name: "description", content: "Sign in to your SokolerBazar shop account to start billing." },
+      { property: "og:title", content: "Sign in — SokolerBazar" },
+      { property: "og:description", content: "Sign in to your SokolerBazar shop account." },
     ],
   }),
   component: AuthPage,

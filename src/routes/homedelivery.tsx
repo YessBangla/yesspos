@@ -66,12 +66,12 @@ export const Route = createFileRoute("/homedelivery")({
 
   head: () => ({
     meta: [
-      { title: "Online grocery & home delivery — Yess Shop" },
+      { title: "Online grocery & home delivery — SokolerBazar" },
       {
         name: "description",
         content: "Order fresh groceries online and get home delivery, or pay in store. Rice, oil, dairy, snacks and daily essentials.",
       },
-      { property: "og:title", content: "Online grocery & home delivery — Yess Shop" },
+      { property: "og:title", content: "Online grocery & home delivery — SokolerBazar" },
       { property: "og:description", content: "Fresh groceries delivered to your door, free above ৳1000." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: `${SITE}/homedelivery` },
@@ -495,7 +495,7 @@ function ShopPage() {
             <span className="gradient-brand grid size-9 place-items-center rounded-xl text-primary-foreground">
               <ShoppingBasket className="size-5" />
             </span>
-            <span className="hidden font-display text-lg font-bold text-primary sm:block">Yess Shop</span>
+            <span className="hidden font-display text-lg font-bold text-primary sm:block">SokolerBazar</span>
           </Link>
 
           <div className="relative min-w-[160px] flex-1">
@@ -770,7 +770,7 @@ function ShopPage() {
       <footer className="mt-12 border-t border-border bg-card">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 text-sm sm:grid-cols-3">
           <div>
-            <p className="font-display text-base font-bold text-primary">Yess Shop</p>
+            <p className="font-display text-base font-bold text-primary">SokolerBazar</p>
             <p className="mt-1 text-muted-foreground">
               {bn
                 ? "সুপারশপের সব পণ্য অনলাইনে — অর্ডার করুন, ঘরে বসে বুঝে নিন।"

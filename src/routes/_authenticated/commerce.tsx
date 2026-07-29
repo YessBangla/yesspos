@@ -20,12 +20,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/commerce")({
   head: () => ({
     meta: [
-      { title: "E-commerce control tower — Yess POS" },
+      { title: "E-commerce control tower — SokolerBazar" },
       {
         name: "description",
         content: "Live home-delivery KPIs: orders, fulfilment funnel, rider load, delivery zones and promotions.",
       },
-      { property: "og:title", content: "E-commerce control tower — Yess POS" },
+      { property: "og:title", content: "E-commerce control tower — SokolerBazar" },
       { property: "og:description", content: "Monitor online grocery orders, riders, zones and campaigns." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

@@ -12,9 +12,9 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/_authenticated/reviews")({
   head: () => ({
     meta: [
-      { title: "Product reviews & ratings — Yess POS" },
+      { title: "Product reviews & ratings — SokolerBazar" },
       { name: "description", content: "Moderate customer product reviews and ratings for the online storefront." },
-      { property: "og:title", content: "Product reviews & ratings — Yess POS" },
+      { property: "og:title", content: "Product reviews & ratings — SokolerBazar" },
       { property: "og:description", content: "Approve, reject and monitor shopper feedback on products." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

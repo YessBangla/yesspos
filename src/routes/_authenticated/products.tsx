@@ -25,9 +25,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/products")({
   head: () => ({
     meta: [
-      { title: "Products & stock — SheraPOS" },
+      { title: "Products & stock — SokolerBazar" },
       { name: "description", content: "Manage your product catalogue, prices and stock levels." },
-      { property: "og:title", content: "Products & stock — SheraPOS" },
+      { property: "og:title", content: "Products & stock — SokolerBazar" },
       { property: "og:description", content: "Manage catalogue, prices and stock levels." },
     ],
   }),
