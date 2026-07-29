@@ -40,7 +40,7 @@ import {
   type QueuedOrder,
 } from "@/lib/delivery-queue";
 
-export const Route = createFileRoute("/shop")({
+export const Route = createFileRoute("/homedelivery")({
   head: () => ({
     meta: [
       { title: "Online grocery & home delivery — Yess Shop" },
