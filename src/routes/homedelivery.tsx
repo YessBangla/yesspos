@@ -549,9 +549,14 @@ function ShopPage() {
 
         {/* ---- Portal menu ---- */}
         <nav className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 pb-2 text-sm">
-          <Link to="/" className="whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted">
-            {bn ? "হোম" : "Home"}
+          <Link
+            to="/"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-3 py-1.5 font-medium hover:bg-muted"
+          >
+            <Home className="size-4 text-primary" />
+            {bn ? "মূল হোম পেজ" : "Main home page"}
           </Link>
+
           <button
             type="button"
             className="whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted"
