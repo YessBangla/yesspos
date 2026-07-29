@@ -58,7 +58,7 @@ export function SiteContentEditor() {
       return changed.length;
     },
     onSuccess: (count) => {
-      void logAudit("site_content_update", { entity: "site_content", details: `${count} texts` });
+      void logAudit("settings_update", { entity: "site_content", details: `${count} texts` });
       queryClient.invalidateQueries({ queryKey: SITE_CONTENT_KEY });
       toast.success(bn ? `${count} টি লেখা সংরক্ষণ হয়েছে` : `${count} texts saved`);
     },
