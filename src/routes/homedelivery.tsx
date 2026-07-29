@@ -128,10 +128,13 @@ function ShopPage() {
   const { lang } = useI18n();
   const bn = lang === "bn";
   const cart = useShopCart();
-  const [query, setQuery] = useState("");
-  const [cat, setCat] = useState<string>("");
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [query, setQuery] = useState(search.q ?? "");
+  const [cat, setCat] = useState<string>(search.cat ?? "");
   const [limit, setLimit] = useState(PAGE);
-  const [checkout, setCheckout] = useState(false);
+  const [checkout, setCheckout] = useState(!!search.checkout);
+
   const [online, setOnline] = useState(true);
   const [form, setForm] = useState({ name: "", phone: "", address: "", area: "", note: "", payment: "cod" });
   const [placed, setPlaced] = useState<number | null>(null);
