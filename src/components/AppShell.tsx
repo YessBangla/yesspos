@@ -89,6 +89,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         { to: "/sales", feature: "sales", label: t("sales"), icon: ReceiptText },
         { to: "/sales", feature: "sales", label: t("quotations"), icon: FileText, search: { filter: "quotation" } },
         { to: "/sales", feature: "sales", label: t("saleReturns"), icon: RotateCcw, search: { filter: "returns" } },
+        {
+          to: "/delivery-orders",
+          feature: "delivery-orders",
+          label: lang === "bn" ? "হোম ডেলিভারি" : "Home delivery",
+          icon: Truck,
+        },
       ],
     },
     {
