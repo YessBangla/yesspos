@@ -122,7 +122,7 @@ function DeliveryOrdersPage() {
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase.from("delivery_orders").update({ status }).eq("id", id);
       if (error) throw error;
-      await logAudit("delivery_order_status", "delivery_orders", id, status);
+      await logAudit("delivery_order", { entity: "delivery_orders", entityId: id, details: status });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["delivery-orders"] });

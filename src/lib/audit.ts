@@ -24,7 +24,8 @@ export type AuditAction =
   | "branch_create"
   | "branch_update"
   | "stock_transfer"
-  | "contact_create";
+  | "contact_create"
+  | "delivery_order";
 
 /** Fire-and-forget audit trail entry. Never blocks or breaks the calling flow. */
 export async function logAudit(
