@@ -382,7 +382,9 @@ function ProductsPage() {
                 label={lang === "bn" ? "ছবির লিংক" : "Image URL"}
                 value={form.image_url}
                 onChange={(v) => setForm({ ...form, image_url: v })}
+                maxLength={500}
               />
+
             </div>
             {form.image_url && (
               <img
