@@ -379,6 +379,100 @@ function TrackPage() {
                 </ol>
               </div>
             )}
+
+            {proofs.length > 0 && (
+              <div className="mt-3 rounded-lg border border-border p-3">
+                <p className="mb-2 flex items-center gap-1 font-semibold">
+                  <Camera className="size-4 text-primary" />{" "}
+                  {bn ? "ডেলিভারির প্রমাণ" : "Proof of delivery"}
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {proofs.map((p) => (
+                    <div key={p.file_path} className="space-y-1">
+                      <ProofThumb path={p.file_path} alt={p.kind} />
+                      <p className="text-[10px] text-muted-foreground">
+                        {p.kind === "signature"
+                          ? bn
+                            ? "স্বাক্ষর"
+                            : "Signature"
+                          : bn
+                            ? "ছবি"
+                            : "Photo"}{" "}
+                        · {p.created_at.slice(0, 16).replace("T", " ")}
+                      </p>
+                      {p.receiver_name && <p className="text-[10px]">{p.receiver_name}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-3 rounded-lg border border-border p-3">
+              <p className="mb-2 font-semibold">
+                {bn ? "আপনার ফিডব্যাক" : "Your feedback"}
+              </p>
+              {sentKind ? (
+                <p className="flex items-center gap-1 text-sm text-primary">
+                  <ThumbsUp className="size-4" />
+                  {sentKind === "confirm"
+                    ? bn
+                      ? "ধন্যবাদ, ডেলিভারি কনফার্ম করা হয়েছে।"
+                      : "Thanks, your delivery is confirmed."
+                    : bn
+                      ? "আপনার সমস্যা রিপোর্ট করা হয়েছে, আমরা দ্রুত যোগাযোগ করব।"
+                      : "Your issue was reported, we will contact you soon."}
+                </p>
+              ) : (
+                <>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant={feedbackKind === "confirm" ? "default" : "outline"}
+                      onClick={() => setFeedbackKind("confirm")}
+                    >
+                      <ThumbsUp className="mr-1 size-4" />
+                      {bn ? "ডেলিভারি কনফার্ম" : "Confirm delivery"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={feedbackKind === "issue" ? "destructive" : "outline"}
+                      onClick={() => setFeedbackKind("issue")}
+                    >
+                      <AlertTriangle className="mr-1 size-4" />
+                      {bn ? "সমস্যা রিপোর্ট" : "Report an issue"}
+                    </Button>
+                  </div>
+                  {feedbackKind && (
+                    <div className="mt-2 space-y-2">
+                      <Textarea
+                        value={feedbackMsg}
+                        maxLength={1000}
+                        rows={3}
+                        onChange={(e) => setFeedbackMsg(e.target.value)}
+                        placeholder={
+                          feedbackKind === "issue"
+                            ? bn
+                              ? "কী সমস্যা হয়েছে লিখুন…"
+                              : "Describe the problem…"
+                            : bn
+                              ? "মন্তব্য (ঐচ্ছিক)"
+                              : "Comment (optional)"
+                        }
+                      />
+                      <Button
+                        size="sm"
+                        disabled={sending}
+                        onClick={() => void sendFeedback(feedbackKind)}
+                      >
+                        <Send className="mr-1 size-4" />
+                        {bn ? "পাঠান" : "Send"}
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
           </div>
         )}
       </div>
