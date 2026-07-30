@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Bike, PackageSearch, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,16 +45,30 @@ function TrackPage() {
   const [result, setResult] = useState<Tracked | null | "none">(null);
   const [loading, setLoading] = useState(false);
 
-  async function search() {
+  const search = useCallback(async (no = orderNo, ph = phone) => {
     setLoading(true);
     const { data } = await supabase.rpc("track_delivery_order", {
-      _order_no: Number(orderNo),
-      _phone: phone.trim(),
+      _order_no: Number(no),
+      _phone: ph.trim(),
     });
     const row = (data as unknown as Tracked[] | null)?.[0] ?? null;
     setResult(row ?? "none");
     setLoading(false);
-  }
+  }, [orderNo, phone]);
+
+  // Auto-track when opened from a QR code / shared link: /track?order=123&phone=01…
+  const autoRan = useRef(false);
+  useEffect(() => {
+    if (autoRan.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const no = params.get("order") ?? "";
+    const ph = params.get("phone") ?? "";
+    if (!no || !ph) return;
+    autoRan.current = true;
+    setOrderNo(no);
+    setPhone(ph);
+    void search(no, ph);
+  }, [search]);
 
   return (
     <main className="mx-auto max-w-lg px-4 py-16">
@@ -71,7 +85,7 @@ function TrackPage() {
           <Label>{bn ? "ফোন" : "Phone"}</Label>
           <Input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} />
         </div>
-        <Button className="w-full" onClick={search} disabled={loading || !orderNo || !phone}>
+        <Button className="w-full" onClick={() => search()} disabled={loading || !orderNo || !phone}>
           <PackageSearch className="mr-1 size-4" /> {bn ? "খুঁজুন" : "Track"}
         </Button>
 
