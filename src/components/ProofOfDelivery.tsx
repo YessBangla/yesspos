@@ -370,13 +370,84 @@ export function ProofOfDelivery({ orderId, orderNo }: { orderId: string; orderNo
 
           <div className="flex flex-wrap gap-3">
             {(proofs.data ?? []).map((p) => (
-              <div key={p.id} className="space-y-1">
+              <div key={p.id} className="w-32 space-y-1">
                 <ProofImage path={p.file_path} alt={p.kind} />
                 <p className="text-[10px] text-muted-foreground">
                   {p.kind === "signature" ? (bn ? "স্বাক্ষর" : "Signature") : bn ? "ছবি" : "Photo"}{" "}
-                  · {p.created_at.slice(0, 16).replace("T", " ")}
+                  · {(p.captured_at ?? p.created_at).slice(0, 16).replace("T", " ")}
                 </p>
+                <span
+                  className={
+                    p.status === "approved"
+                      ? "inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary"
+                      : p.status === "rejected"
+                        ? "inline-block rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive"
+                        : "inline-block rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                  }
+                >
+                  {p.status === "approved"
+                    ? bn
+                      ? "অ্যাপ্রুভড"
+                      : "Approved"
+                    : p.status === "rejected"
+                      ? bn
+                        ? "রিজেক্টেড"
+                        : "Rejected"
+                      : bn
+                        ? "অপেক্ষমাণ"
+                        : "Pending"}
+                </span>
+                {p.lat != null && p.lng != null ? (
+                  <a
+                    href={`https://www.openstreetmap.org/?mlat=${p.lat}&mlon=${p.lng}#map=17/${p.lat}/${p.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-[10px] text-primary underline"
+                  >
+                    <MapPin className="mr-0.5 inline size-3" />
+                    {p.lat.toFixed(4)}, {p.lng.toFixed(4)}
+                    {p.accuracy_m ? ` ±${Math.round(p.accuracy_m)}m` : ""}
+                  </a>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground">
+                    {bn ? "লোকেশন নেই" : "No GPS"}
+                  </p>
+                )}
                 {p.receiver_name && <p className="text-[10px]">{p.receiver_name}</p>}
+                {p.reject_reason && (
+                  <p className="text-[10px] text-destructive">{p.reject_reason}</p>
+                )}
+                {canVerify && (
+                  <div className="flex flex-wrap gap-1">
+                    <button
+                      type="button"
+                      disabled={verify.isPending || p.status === "approved"}
+                      className="inline-flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-[10px] text-primary disabled:opacity-40"
+                      onClick={() => verify.mutate({ p, status: "approved" })}
+                    >
+                      <ShieldCheck className="size-3" /> {bn ? "অ্যাপ্রুভ" : "Approve"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={verify.isPending}
+                      className="inline-flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-[10px] text-destructive disabled:opacity-40"
+                      onClick={() => {
+                        const reason = window.prompt(
+                          bn ? "রিজেক্টের কারণ লিখুন (বাধ্যতামূলক)" : "Reason for rejection (required)",
+                          p.reject_reason ?? "",
+                        );
+                        if (reason === null) return;
+                        if (reason.trim().length < 3) {
+                          toast.error(bn ? "কারণ লিখতে হবে" : "A reason is required");
+                          return;
+                        }
+                        verify.mutate({ p, status: "rejected", reason: reason.trim() });
+                      }}
+                    >
+                      <ShieldX className="size-3" /> {bn ? "রিজেক্ট" : "Reject"}
+                    </button>
+                  </div>
+                )}
                 <button
                   type="button"
                   className="inline-flex items-center gap-1 text-[10px] text-destructive"
@@ -392,6 +463,7 @@ export function ProofOfDelivery({ orderId, orderNo }: { orderId: string; orderNo
               </p>
             )}
           </div>
+
         </div>
       )}
     </div>
