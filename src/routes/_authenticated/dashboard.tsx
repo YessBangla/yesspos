@@ -457,37 +457,99 @@ function DashboardPage() {
       </div>
 
       {show("shortcuts") && (
-      <div className="surface-panel p-3">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("quickActionsTitle")}
-          </p>
-          {quickActions.length > essentialActions.length && (
+      <section className="rounded-3xl border border-border/60 bg-gradient-to-br from-secondary/60 via-card to-card p-4 shadow-panel">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-display text-xl font-bold">
+              {lang === "bn" ? "আমার ওয়ার্কস্পেস" : "My workspace"}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {num(quickActions.length, lang)} {lang === "bn" ? "টি মডিউল উপলব্ধ" : "modules available"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={moduleQuery}
+                onChange={(e) => setModuleQuery(e.target.value)}
+                placeholder={lang === "bn" ? "খুঁজুন..." : "Search"}
+                aria-label={lang === "bn" ? "মডিউল খুঁজুন" : "Search modules"}
+                className="h-10 w-44 rounded-full border border-border bg-card/80 pl-9 pr-3 text-sm outline-none backdrop-blur transition-colors placeholder:text-muted-foreground focus:border-primary/60 sm:w-60"
+              />
+            </div>
+            <Button asChild size="icon" className="size-10 rounded-full shadow-lift">
+              <Link to="/pos" aria-label={lang === "bn" ? "নতুন বিক্রয়" : "New sale"}>
+                <Plus className="size-5" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          {moduleCards.map((a) => {
+            const meta = moduleMeta(a.to, lang === "bn");
+            return (
+              <div
+                key={a.to}
+                className="group rounded-2xl border border-border/60 bg-card/70 p-4 shadow-panel backdrop-blur transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lift"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-display text-base font-semibold">{a.label}</p>
+                    <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{meta.hint}</p>
+                  </div>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                      meta.tone,
+                    )}
+                  >
+                    {meta.group}
+                  </span>
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  <Link
+                    to={a.to}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5 text-sm font-semibold text-secondary-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <a.icon className="size-4" />
+                    {lang === "bn" ? "খুলুন" : "Open"}
+                  </Link>
+                  <a
+                    href={a.to}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-lg px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    {lang === "bn" ? "নতুন ট্যাব" : "New tab"}
+                  </a>
+                </div>
+              </div>
+            );
+          })}
+          {moduleCards.length === 0 && (
+            <p className="text-sm text-muted-foreground">{t("noData")}</p>
+          )}
+        </div>
+
+        {!moduleQuery && quickActions.length > essentialActions.length && (
+          <div className="mt-3 flex justify-center">
             <Button size="sm" variant="ghost" onClick={() => setShowAllActions((v) => !v)}>
               {showAllActions
                 ? lang === "bn"
                   ? "কম দেখান"
                   : "Show less"
                 : lang === "bn"
-                  ? "সব দেখান"
-                  : "Show all"}
+                  ? "সব মডিউল দেখান"
+                  : "Show all modules"}
             </Button>
           )}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {visibleActions.map((a) => (
-            <Link
-              key={a.to}
-              to={a.to}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:border-primary/50 hover:bg-accent"
-            >
-              <a.icon className="size-4 text-primary" />
-              {a.label}
-            </Link>
-          ))}
-        </div>
-      </div>
+          </div>
+        )}
+      </section>
       )}
+
 
       <ChannelStatusPanel branchId={branch?.id} />
 
