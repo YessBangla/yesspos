@@ -1255,6 +1255,9 @@ export type Database = {
         Row: {
           alt_text: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_usage: Json | null
           folder: string
           height: number | null
           id: string
@@ -1266,11 +1269,15 @@ export type Database = {
           updated_at: string
           uploaded_by: string | null
           url: string
+          variants: Json
           width: number | null
         }
         Insert: {
           alt_text?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_usage?: Json | null
           folder?: string
           height?: number | null
           id?: string
@@ -1282,11 +1289,15 @@ export type Database = {
           updated_at?: string
           uploaded_by?: string | null
           url: string
+          variants?: Json
           width?: number | null
         }
         Update: {
           alt_text?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_usage?: Json | null
           folder?: string
           height?: number | null
           id?: string
@@ -1298,6 +1309,7 @@ export type Database = {
           updated_at?: string
           uploaded_by?: string | null
           url?: string
+          variants?: Json
           width?: number | null
         }
         Relationships: []
@@ -2469,6 +2481,7 @@ export type Database = {
         }
         Returns: number
       }
+      can_manage_media: { Args: { _user_id: string }; Returns: boolean }
       can_see_branch: { Args: { _branch_id: string }; Returns: boolean }
       check_order_consistency: {
         Args: { _lines: Json }
@@ -2489,6 +2502,7 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       my_branch_id: { Args: never; Returns: string }
+      purge_expired_media: { Args: never; Returns: number }
       register_member: {
         Args: { _name?: string; _phone: string }
         Returns: {
