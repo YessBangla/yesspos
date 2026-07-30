@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bike, Phone, Plus, Trash2 } from "lucide-react";
+import { Bike, MapPin, Phone, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,9 @@ type Rider = {
   is_active: boolean;
   branch_id: string | null;
   note: string | null;
+  current_lat: number | null;
+  current_lng: number | null;
+  location_updated_at: string | null;
 };
 
 const VEHICLES = ["bike", "cycle", "van", "foot"];
@@ -110,6 +113,29 @@ function RidersPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
+  const setLocation = useMutation({
+    mutationFn: async (id: string) => {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+        if (!navigator.geolocation) return reject(new Error("Geolocation unavailable"));
+        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15_000 });
+      });
+      const { error } = await supabase
+        .from("delivery_riders")
+        .update({
+          current_lat: pos.coords.latitude,
+          current_lng: pos.coords.longitude,
+          location_updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidate();
+      toast.success(bn ? "লোকেশন আপডেট হয়েছে" : "Location updated");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("delivery_riders").delete().eq("id", id);
@@ -180,6 +206,13 @@ function RidersPage() {
                   {r.vehicle}
                   {r.nid ? ` · NID ${r.nid}` : ""}
                 </p>
+                <p className="text-xs text-muted-foreground">
+                  {r.location_updated_at
+                    ? `${bn ? "লোকেশন" : "Location"}: ${r.location_updated_at.slice(0, 16).replace("T", " ")}`
+                    : bn
+                      ? "লোকেশন নেই"
+                      : "No location"}
+                </p>
               </div>
               <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold">
                 {bn ? "চলমান" : "Open"}: {num(load.get(r.id) ?? 0, lang)}
@@ -196,6 +229,15 @@ function RidersPage() {
               >
                 {r.is_active ? (bn ? "ডিউটিতে" : "On duty") : bn ? "বন্ধ" : "Off duty"}
               </button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setLocation.mutate(r.id)}
+                disabled={setLocation.isPending}
+              >
+                <MapPin className="mr-1 size-3.5" />
+                {bn ? "লোকেশন আপডেট" : "Update location"}
+              </Button>
               <Button size="icon" variant="ghost" className="ml-auto" onClick={() => remove.mutate(r.id)}>
                 <Trash2 className="size-4 text-destructive" />
               </Button>
