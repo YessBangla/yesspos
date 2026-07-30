@@ -40,15 +40,17 @@ function FinancialsPage() {
     queryFn: async () => {
       const start = `${from}T00:00:00`;
       const end = `${to}T23:59:59`;
-      const [sales, saleItems, saleReturns, purchases, expenses, contacts, products, accounts, lines] = await Promise.all([
+      const [sales, saleItems, saleReturns, purchaseReturns, purchases, expenses, contacts, products, accounts, txns, lines] = await Promise.all([
         supabase.from("sales").select("total,paid,created_at").gte("created_at", start).lte("created_at", end),
         supabase.from("sale_items").select("quantity,product_id,line_total,sale_id"),
         supabase.from("sale_returns").select("total,created_at").gte("created_at", start).lte("created_at", end),
+        supabase.from("purchase_returns").select("total,created_at").gte("created_at", start).lte("created_at", end),
         supabase.from("purchases").select("total,paid,purchased_on").gte("purchased_on", from).lte("purchased_on", to),
         supabase.from("expenses").select("amount,spent_on").gte("spent_on", from).lte("spent_on", to),
         supabase.from("contacts").select("type,opening_balance"),
         supabase.from("products").select("stock,cost"),
         supabase.from("accounts").select("name,opening_balance,type"),
+        supabase.from("account_transactions").select("type,amount,account_id,to_account_id"),
         supabase
           .from("journal_lines")
           .select("debit,credit,ledger_accounts(code,name_en,name_bn,class)"),
@@ -57,15 +59,18 @@ function FinancialsPage() {
         sales: sales.data ?? [],
         saleItems: saleItems.data ?? [],
         saleReturns: saleReturns.data ?? [],
+        purchaseReturns: purchaseReturns.data ?? [],
         purchases: purchases.data ?? [],
         expenses: expenses.data ?? [],
         contacts: contacts.data ?? [],
         products: products.data ?? [],
         accounts: accounts.data ?? [],
+        txns: txns.data ?? [],
         lines: lines.data ?? [],
       };
     },
   });
+
 
   const f = useMemo(() => {
     const d = q.data;
