@@ -80,6 +80,11 @@ type Proof = {
   receiver_name: string | null;
   note: string | null;
   created_at: string;
+  captured_at: string | null;
+  lat: number | null;
+  lng: number | null;
+  accuracy_m: number | null;
+  status: string | null;
 };
 
 /** Signed preview of a private proof image. */
