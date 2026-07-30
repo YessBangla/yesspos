@@ -864,22 +864,28 @@ function ShopPage() {
             ))}
           </div>
 
-          <div className="mt-4 flex items-baseline justify-between">
-            <h2 className="font-display text-lg font-bold">
-              {cat
-                ? ((bn
-                    ? categories.data?.find((c) => c.id === cat)?.name_bn
-                    : categories.data?.find((c) => c.id === cat)?.name_en) ?? "")
-                : bn
-                  ? "সব পণ্য"
-                  : "All products"}
-            </h2>
-            <span className="text-xs text-muted-foreground">
+          <div className="mt-8 flex flex-wrap items-end justify-between gap-2 border-b border-border pb-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                {bn ? "আজকের বাজার" : "Today's aisle"}
+              </p>
+              <h2 className="font-display text-2xl font-extrabold">
+                {cat
+                  ? ((bn
+                      ? categories.data?.find((c) => c.id === cat)?.name_bn
+                      : categories.data?.find((c) => c.id === cat)?.name_en) ?? "")
+                  : bn
+                    ? "সব পণ্য"
+                    : "All products"}
+              </h2>
+            </div>
+            <span className="text-sm text-muted-foreground">
               {num(visible.length, lang)} {bn ? "পণ্য" : "items"}
             </span>
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
+
             {shown.map((p) => (
               <ProductCard
                 key={p.id}
