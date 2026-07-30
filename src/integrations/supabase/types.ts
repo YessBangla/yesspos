@@ -528,8 +528,12 @@ export type Database = {
       }
       delivery_feedback: {
         Row: {
+          assigned_to: string | null
           created_at: string
           customer_phone: string | null
+          due_at: string | null
+          escalated: boolean
+          escalated_at: string | null
           id: string
           kind: string
           message: string | null
@@ -537,12 +541,18 @@ export type Database = {
           order_no: number | null
           rating: number | null
           resolved: boolean
+          resolved_at: string | null
           resolved_note: string | null
+          severity: string
           updated_at: string
         }
         Insert: {
+          assigned_to?: string | null
           created_at?: string
           customer_phone?: string | null
+          due_at?: string | null
+          escalated?: boolean
+          escalated_at?: string | null
           id?: string
           kind?: string
           message?: string | null
@@ -550,12 +560,18 @@ export type Database = {
           order_no?: number | null
           rating?: number | null
           resolved?: boolean
+          resolved_at?: string | null
           resolved_note?: string | null
+          severity?: string
           updated_at?: string
         }
         Update: {
+          assigned_to?: string | null
           created_at?: string
           customer_phone?: string | null
+          due_at?: string | null
+          escalated?: boolean
+          escalated_at?: string | null
           id?: string
           kind?: string
           message?: string | null
@@ -563,7 +579,9 @@ export type Database = {
           order_no?: number | null
           rating?: number | null
           resolved?: boolean
+          resolved_at?: string | null
           resolved_note?: string | null
+          severity?: string
           updated_at?: string
         }
         Relationships: [
@@ -787,6 +805,8 @@ export type Database = {
       }
       delivery_proofs: {
         Row: {
+          accuracy_m: number | null
+          captured_at: string
           created_at: string
           created_by: string | null
           file_path: string
@@ -797,9 +817,15 @@ export type Database = {
           note: string | null
           order_id: string
           receiver_name: string | null
+          reject_reason: string | null
+          status: string
           updated_at: string
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
+          accuracy_m?: number | null
+          captured_at?: string
           created_at?: string
           created_by?: string | null
           file_path: string
@@ -810,9 +836,15 @@ export type Database = {
           note?: string | null
           order_id: string
           receiver_name?: string | null
+          reject_reason?: string | null
+          status?: string
           updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
+          accuracy_m?: number | null
+          captured_at?: string
           created_at?: string
           created_by?: string | null
           file_path?: string
@@ -823,7 +855,11 @@ export type Database = {
           note?: string | null
           order_id?: string
           receiver_name?: string | null
+          reject_reason?: string | null
+          status?: string
           updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: [
           {
@@ -2392,6 +2428,7 @@ export type Database = {
           product_id: string
         }[]
       }
+      escalate_overdue_feedback: { Args: never; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2457,11 +2494,16 @@ export type Database = {
       track_delivery_proofs: {
         Args: { _order_no: number; _phone: string }
         Returns: {
+          accuracy_m: number
+          captured_at: string
           created_at: string
           file_path: string
           kind: string
+          lat: number
+          lng: number
           note: string
           receiver_name: string
+          status: string
         }[]
       }
     }
