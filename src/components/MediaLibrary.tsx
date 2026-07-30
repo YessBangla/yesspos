@@ -642,6 +642,8 @@ function MediaCard({
   selectable,
   checked,
   onToggle,
+  canEdit = true,
+  canDelete = true,
 }: {
   asset: MediaAsset;
   bn: boolean;
@@ -652,6 +654,8 @@ function MediaCard({
   selectable?: boolean;
   checked?: boolean;
   onToggle?: () => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [showUsage, setShowUsage] = useState(false);
@@ -669,18 +673,21 @@ function MediaCard({
         .join("\n");
       const more = usage.length > 5 ? (bn ? `\n… আরও ${usage.length - 5}টি` : `\n… ${usage.length - 5} more`) : "";
       const msg = bn
-        ? `সতর্কতা! এই ছবিটি এখন ${usage.length} জায়গায় ব্যবহার হচ্ছে:\n${list}${more}\n\nমুছে ফেললে ওইসব জায়গায় ছবি ভাঙা দেখাবে। তবুও মুছবেন?`
-        : `Warning! This image is used in ${usage.length} place(s):\n${list}${more}\n\nDeleting it will break those images. Delete anyway?`;
+        ? `সতর্কতা! এই ছবিটি এখন ${usage.length} জায়গায় ব্যবহার হচ্ছে:\n${list}${more}\n\nমুছে ফেললে ওইসব জায়গায় ছবি ভাঙা দেখাবে। ছবিটি ${TRASH_RETENTION_DAYS} দিন রিসাইকেল বিনে থাকবে। মুছবেন?`
+        : `Warning! This image is used in ${usage.length} place(s):\n${list}${more}\n\nIt will move to the recycle bin and stay restorable for ${TRASH_RETENTION_DAYS} days. Continue?`;
       if (!confirm(msg)) return;
-      const second = bn
-        ? "নিশ্চিত করতে আবার চাপুন — এটি ফেরানো যাবে না।"
-        : "Press OK once more to confirm — this cannot be undone.";
-      if (!confirm(second)) return;
-    } else if (!confirm(bn ? "ছবিটি মুছে ফেলবেন?" : "Delete this image?")) {
+    } else if (
+      !confirm(
+        bn
+          ? `ছবিটি রিসাইকেল বিনে পাঠাবেন? ${TRASH_RETENTION_DAYS} দিনের মধ্যে ফেরানো যাবে।`
+          : `Move to recycle bin? You can restore it within ${TRASH_RETENTION_DAYS} days.`,
+      )
+    ) {
       return;
     }
     onDelete();
   }
+
 
   return (
     <div
