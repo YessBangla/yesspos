@@ -77,18 +77,25 @@ function FinancialsPage() {
     const sum = <T,>(arr: T[], pick: (x: T) => number) => arr.reduce((s, x) => s + pick(x), 0);
     if (!d)
       return {
-        revenue: 0, returns: 0, purchaseCost: 0, expense: 0, netProfit: 0,
+        revenue: 0, returns: 0, purchaseReturns: 0, purchaseCost: 0, expense: 0, netProfit: 0,
         stockValue: 0, receivable: 0, payable: 0, cash: 0, trial: [] as { name: string; debit: number; credit: number }[],
       };
     const revenue = sum(d.sales, (s) => Number(s.total));
     const returns = sum(d.saleReturns, (s) => Number(s.total));
+    const purchaseReturns = sum(d.purchaseReturns, (p) => Number(p.total));
     const purchaseCost = sum(d.purchases, (p) => Number(p.total));
     const expense = sum(d.expenses, (e) => Number(e.amount));
     const stockValue = sum(d.products, (p) => Number(p.stock) * Number(p.cost));
     const receivable = sum(d.sales, (s) => Number(s.total) - Number(s.paid));
     const payable = sum(d.purchases, (p) => Number(p.total) - Number(p.paid));
-    const cash = sum(d.accounts, (a) => Number(a.opening_balance));
-    const netProfit = revenue - returns - purchaseCost - expense;
+    // Cash on hand = opening balances plus the net effect of every account movement
+    // (transfers net to zero across the two sides, so only deposits/withdrawals shift the total).
+    const txnNet = sum(d.txns, (x) =>
+      x.type === "deposit" ? Number(x.amount) : x.type === "withdraw" ? -Number(x.amount) : 0,
+    );
+    const cash = sum(d.accounts, (a) => Number(a.opening_balance)) + txnNet;
+    const netProfit = revenue - returns - (purchaseCost - purchaseReturns) - expense;
+
 
     const map = new Map<string, { name: string; debit: number; credit: number }>();
     for (const l of d.lines) {
