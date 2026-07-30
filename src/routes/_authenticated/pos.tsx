@@ -914,7 +914,7 @@ function PosPage() {
                   onClick={() => add(p)}
                   className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-[var(--shadow-lift)] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
                 >
-                  <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl bg-muted transition-colors group-hover:bg-primary/5">
+                  <span className="relative grid h-32 w-full shrink-0 place-items-center overflow-hidden rounded-xl bg-muted transition-colors group-hover:bg-primary/5 sm:h-36">
                     {p.image_url ? (
                       <img
                         src={p.image_url}
