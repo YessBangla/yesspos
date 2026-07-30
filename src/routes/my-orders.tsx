@@ -95,7 +95,7 @@ function MyOrdersPage() {
 
       const { data: products, error: pErr } = await supabase
         .from("products")
-        .select("id,name,name_bn,sell_price,pack_size,image_url,is_active")
+        .select("id,name_en,name_bn,price,pack_size,image_url,is_active")
         .in("id", ids);
       if (pErr) throw pErr;
 
@@ -110,9 +110,9 @@ function MyOrdersPage() {
         cart.add(
           {
             id: p.id,
-            name_en: p.name,
-            name_bn: p.name_bn ?? p.name,
-            price: Number(p.sell_price ?? 0),
+            name_en: p.name_en,
+            name_bn: p.name_bn ?? p.name_en,
+            price: Number(p.price ?? 0),
             pack_size: p.pack_size ?? null,
             image_url: p.image_url ?? null,
           },
