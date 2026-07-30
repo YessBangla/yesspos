@@ -340,6 +340,8 @@ function DeliveryOrdersPage() {
       qc.invalidateQueries({ queryKey: ["order-notifications"] });
       qc.invalidateQueries({ queryKey: ["notification-log"] });
       setSelected([]);
+      void autoSend();
+
       toast.success(
         bn ? `${v.ids.length} টি অর্ডার আপডেট হয়েছে` : `${v.ids.length} order(s) updated`,
       );
