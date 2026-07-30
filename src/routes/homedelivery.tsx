@@ -1422,30 +1422,43 @@ function CartRow({
   onSet: (q: number) => void;
 }) {
   return (
-    <div className="flex items-center gap-3 p-3">
-      <span className="min-w-0 flex-1 truncate text-sm">{bn ? l.name_bn : l.name_en}</span>
-      <div className="flex items-center gap-1">
+    <div className="flex items-center gap-3 px-4 py-3">
+      {l.image_url ? (
+        <img
+          src={l.image_url}
+          alt=""
+          loading="lazy"
+          className="size-11 shrink-0 rounded-xl bg-muted object-cover"
+        />
+      ) : (
+        <span className="size-11 shrink-0 rounded-xl bg-muted" />
+      )}
+      <div className="min-w-0 flex-1">
+        <span className="line-clamp-1 text-sm font-medium">{bn ? l.name_bn : l.name_en}</span>
+        <span className="text-xs text-muted-foreground">{money(l.price * l.qty, lang)}</span>
+      </div>
+      <div className="flex shrink-0 items-center gap-0.5 rounded-full border border-border">
         <Button
           size="icon"
           variant="ghost"
-          className="size-9 sm:size-7"
+          className="size-8 rounded-full"
           onClick={() => onSet(l.qty - 1)}
         >
           <Minus className="size-3" />
         </Button>
-        <span className="w-6 text-center text-sm">{num(l.qty, lang)}</span>
+        <span className="w-5 text-center text-sm font-semibold">{num(l.qty, lang)}</span>
         <Button
           size="icon"
           variant="ghost"
-          className="size-9 sm:size-7"
+          className="size-8 rounded-full"
           onClick={() => onSet(l.qty + 1)}
         >
           <Plus className="size-3" />
         </Button>
       </div>
-      <span className="w-20 text-right text-sm font-semibold">{money(l.price * l.qty, lang)}</span>
     </div>
   );
+
 }
 
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
