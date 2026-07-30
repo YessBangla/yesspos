@@ -190,7 +190,9 @@ function FinancialsPage() {
                 [t("sales"), f.revenue],
                 [t("saleReturns"), -f.returns],
                 [t("purchases"), -f.purchaseCost],
+                [lang === "bn" ? "ক্রয় ফেরত" : "Purchase returns", f.purchaseReturns],
                 [t("expenses"), -f.expense],
+
               ].map(([label, val]) => (
                 <div key={label as string} className="flex items-center justify-between px-4 py-3 text-sm">
                   <span>{label as string}</span>
