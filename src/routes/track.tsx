@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { PackageSearch } from "lucide-react";
+import { Bike, PackageSearch, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +21,21 @@ export const Route = createFileRoute("/track")({
   component: TrackPage,
 });
 
-type Tracked = { order_no: number; status: string; total: number; created_at: string };
+type Tracked = {
+  order_no: number;
+  status: string;
+  total: number;
+  created_at: string;
+  updated_at: string | null;
+  slot: string | null;
+  area: string | null;
+  payment_method: string | null;
+  rider_name: string | null;
+  rider_phone: string | null;
+  rider_vehicle: string | null;
+  eta_minutes: number | null;
+};
+
 
 function TrackPage() {
   const { lang } = useI18n();
@@ -78,7 +92,54 @@ function TrackPage() {
               <span className="text-muted-foreground">{bn ? "মোট" : "Total"}</span>
               <span className="font-semibold">{money(Number(result.total), lang)}</span>
             </div>
+            {result.slot && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{bn ? "স্লট" : "Slot"}</span>
+                <span className="font-semibold">{result.slot}</span>
+              </div>
+            )}
+            {result.eta_minutes != null && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{bn ? "আনুমানিক সময়" : "Estimated time"}</span>
+                <span className="font-semibold">
+                  {result.eta_minutes} {bn ? "মিনিট" : "min"}
+                </span>
+              </div>
+            )}
+            {result.updated_at && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{bn ? "সর্বশেষ আপডেট" : "Last update"}</span>
+                <span>{result.updated_at.slice(0, 16).replace("T", " ")}</span>
+              </div>
+            )}
+
+            <div className="mt-3 rounded-lg bg-muted/60 p-3">
+              <p className="mb-1 flex items-center gap-1 font-semibold">
+                <Bike className="size-4 text-primary" /> {bn ? "ডেলিভারি ম্যান" : "Delivery man"}
+              </p>
+              {result.rider_name ? (
+                <>
+                  <p>{result.rider_name}</p>
+                  {result.rider_vehicle && (
+                    <p className="text-xs text-muted-foreground">{result.rider_vehicle}</p>
+                  )}
+                  {result.rider_phone && (
+                    <a
+                      href={`tel:${result.rider_phone}`}
+                      className="mt-1 inline-flex items-center gap-1 font-semibold text-primary underline"
+                    >
+                      <Phone className="size-3" /> {result.rider_phone}
+                    </a>
+                  )}
+                </>
+              ) : (
+                <p className="text-muted-foreground">
+                  {bn ? "এখনো রাইডার নির্ধারণ হয়নি।" : "No rider assigned yet."}
+                </p>
+              )}
+            </div>
           </div>
+
         )}
       </div>
       <Link to="/homedelivery" className="mt-6 inline-block text-sm text-primary underline">

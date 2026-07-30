@@ -40,15 +40,17 @@ function FinancialsPage() {
     queryFn: async () => {
       const start = `${from}T00:00:00`;
       const end = `${to}T23:59:59`;
-      const [sales, saleItems, saleReturns, purchases, expenses, contacts, products, accounts, lines] = await Promise.all([
+      const [sales, saleItems, saleReturns, purchaseReturns, purchases, expenses, contacts, products, accounts, txns, lines] = await Promise.all([
         supabase.from("sales").select("total,paid,created_at").gte("created_at", start).lte("created_at", end),
         supabase.from("sale_items").select("quantity,product_id,line_total,sale_id"),
         supabase.from("sale_returns").select("total,created_at").gte("created_at", start).lte("created_at", end),
+        supabase.from("purchase_returns").select("total,created_at").gte("created_at", start).lte("created_at", end),
         supabase.from("purchases").select("total,paid,purchased_on").gte("purchased_on", from).lte("purchased_on", to),
         supabase.from("expenses").select("amount,spent_on").gte("spent_on", from).lte("spent_on", to),
         supabase.from("contacts").select("type,opening_balance"),
         supabase.from("products").select("stock,cost"),
         supabase.from("accounts").select("name,opening_balance,type"),
+        supabase.from("account_transactions").select("type,amount,account_id,to_account_id"),
         supabase
           .from("journal_lines")
           .select("debit,credit,ledger_accounts(code,name_en,name_bn,class)"),
@@ -57,33 +59,43 @@ function FinancialsPage() {
         sales: sales.data ?? [],
         saleItems: saleItems.data ?? [],
         saleReturns: saleReturns.data ?? [],
+        purchaseReturns: purchaseReturns.data ?? [],
         purchases: purchases.data ?? [],
         expenses: expenses.data ?? [],
         contacts: contacts.data ?? [],
         products: products.data ?? [],
         accounts: accounts.data ?? [],
+        txns: txns.data ?? [],
         lines: lines.data ?? [],
       };
     },
   });
+
 
   const f = useMemo(() => {
     const d = q.data;
     const sum = <T,>(arr: T[], pick: (x: T) => number) => arr.reduce((s, x) => s + pick(x), 0);
     if (!d)
       return {
-        revenue: 0, returns: 0, purchaseCost: 0, expense: 0, netProfit: 0,
+        revenue: 0, returns: 0, purchaseReturns: 0, purchaseCost: 0, expense: 0, netProfit: 0,
         stockValue: 0, receivable: 0, payable: 0, cash: 0, trial: [] as { name: string; debit: number; credit: number }[],
       };
     const revenue = sum(d.sales, (s) => Number(s.total));
     const returns = sum(d.saleReturns, (s) => Number(s.total));
+    const purchaseReturns = sum(d.purchaseReturns, (p) => Number(p.total));
     const purchaseCost = sum(d.purchases, (p) => Number(p.total));
     const expense = sum(d.expenses, (e) => Number(e.amount));
     const stockValue = sum(d.products, (p) => Number(p.stock) * Number(p.cost));
     const receivable = sum(d.sales, (s) => Number(s.total) - Number(s.paid));
     const payable = sum(d.purchases, (p) => Number(p.total) - Number(p.paid));
-    const cash = sum(d.accounts, (a) => Number(a.opening_balance));
-    const netProfit = revenue - returns - purchaseCost - expense;
+    // Cash on hand = opening balances plus the net effect of every account movement
+    // (transfers net to zero across the two sides, so only deposits/withdrawals shift the total).
+    const txnNet = sum(d.txns, (x) =>
+      x.type === "deposit" ? Number(x.amount) : x.type === "withdraw" ? -Number(x.amount) : 0,
+    );
+    const cash = sum(d.accounts, (a) => Number(a.opening_balance)) + txnNet;
+    const netProfit = revenue - returns - (purchaseCost - purchaseReturns) - expense;
+
 
     const map = new Map<string, { name: string; debit: number; credit: number }>();
     for (const l of d.lines) {
@@ -95,7 +107,7 @@ function FinancialsPage() {
       cur.credit += Number(l.credit);
       map.set(key, cur);
     }
-    return { revenue, returns, purchaseCost, expense, netProfit, stockValue, receivable, payable, cash, trial: [...map.values()] };
+    return { revenue, returns, purchaseReturns, purchaseCost, expense, netProfit, stockValue, receivable, payable, cash, trial: [...map.values()] };
   }, [q.data, lang]);
 
   const totalAssets = f.stockValue + f.receivable + f.cash;
@@ -178,7 +190,9 @@ function FinancialsPage() {
                 [t("sales"), f.revenue],
                 [t("saleReturns"), -f.returns],
                 [t("purchases"), -f.purchaseCost],
+                [lang === "bn" ? "ক্রয় ফেরত" : "Purchase returns", f.purchaseReturns],
                 [t("expenses"), -f.expense],
+
               ].map(([label, val]) => (
                 <div key={label as string} className="flex items-center justify-between px-4 py-3 text-sm">
                   <span>{label as string}</span>

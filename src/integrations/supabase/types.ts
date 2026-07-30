@@ -2197,10 +2197,18 @@ export type Database = {
       track_delivery_order: {
         Args: { _order_no: number; _phone: string }
         Returns: {
+          area: string
           created_at: string
+          eta_minutes: number
           order_no: number
+          payment_method: string
+          rider_name: string
+          rider_phone: string
+          rider_vehicle: string
+          slot: string
           status: string
           total: number
+          updated_at: string
         }[]
       }
     }
