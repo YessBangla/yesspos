@@ -544,9 +544,9 @@ function DashboardPage() {
                   ? "সব মডিউল দেখান"
                   : "Show all modules"}
             </Button>
-          )}
           </div>
         )}
+
       </section>
       )}
 
