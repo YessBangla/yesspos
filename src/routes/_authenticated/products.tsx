@@ -535,7 +535,18 @@ function ProductsPage() {
                 <MediaPicker
                   variant="default"
                   onSelect={(url) => setForm((f) => ({ ...f, image_url: url }))}
-                  label={lang === "bn" ? "গ্যালারি থেকে ছবি বাছুন" : "Choose from gallery"}
+                  onSelectMany={(assets) => {
+                    if (!assets.length) return;
+                    setForm((f) => ({ ...f, image_url: assets[0].url }));
+                    if (assets.length > 1) {
+                      toast.info(
+                        lang === "bn"
+                          ? "প্রথম ছবিটি কভার হিসেবে বসানো হয়েছে; বাকিগুলো তালিকা থেকে অন্য পণ্যে বসাতে পারবেন।"
+                          : "First image set as cover; use the product list to apply the rest.",
+                      );
+                    }
+                  }}
+                  label={lang === "bn" ? "গ্যালারি থেকে কভার ছবি বাছুন" : "Choose cover from gallery"}
                 />
                 {form.image_url && (
                   <Button
