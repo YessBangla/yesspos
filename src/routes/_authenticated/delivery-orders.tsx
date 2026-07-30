@@ -474,6 +474,10 @@ function DeliveryOrdersPage() {
         )}
       </div>
 
+      <RiderSchedule orders={orders.data ?? []} riders={riders.data ?? []} statusText={statusText} />
+
+
+
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         {orders.isLoading && <p className="text-muted-foreground">…</p>}
         {visible.map((o) => {
