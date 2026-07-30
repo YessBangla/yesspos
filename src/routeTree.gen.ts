@@ -38,6 +38,7 @@ import { Route as AuthenticatedProductAuditRouteImport } from './routes/_authent
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
 import { Route as AuthenticatedPartyStatementRouteImport } from './routes/_authenticated/party-statement'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedMobilePaymentsRouteImport } from './routes/_authenticated/mobile-payments'
 import { Route as AuthenticatedMediaRouteImport } from './routes/_authenticated/media'
 import { Route as AuthenticatedLabelsRouteImport } from './routes/_authenticated/labels'
@@ -49,6 +50,7 @@ import { Route as AuthenticatedDeliveryZonesRouteImport } from './routes/_authen
 import { Route as AuthenticatedDeliveryOrdersRouteImport } from './routes/_authenticated/delivery-orders'
 import { Route as AuthenticatedDayBookRouteImport } from './routes/_authenticated/day-book'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCouponsRouteImport } from './routes/_authenticated/coupons'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
 import { Route as AuthenticatedCommerceRouteImport } from './routes/_authenticated/commerce'
 import { Route as AuthenticatedChartOfAccountsRouteImport } from './routes/_authenticated/chart-of-accounts'
@@ -209,6 +211,12 @@ const AuthenticatedPartyStatementRoute =
     path: '/party-statement',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMobilePaymentsRoute =
   AuthenticatedMobilePaymentsRouteImport.update({
     id: '/mobile-payments',
@@ -265,6 +273,11 @@ const AuthenticatedDayBookRoute = AuthenticatedDayBookRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCouponsRoute = AuthenticatedCouponsRouteImport.update({
+  id: '/coupons',
+  path: '/coupons',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedContactsRoute = AuthenticatedContactsRouteImport.update({
@@ -334,6 +347,7 @@ export interface FileRoutesByFullPath {
   '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/commerce': typeof AuthenticatedCommerceRoute
   '/contacts': typeof AuthenticatedContactsRoute
+  '/coupons': typeof AuthenticatedCouponsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/day-book': typeof AuthenticatedDayBookRoute
   '/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
@@ -345,6 +359,7 @@ export interface FileRoutesByFullPath {
   '/labels': typeof AuthenticatedLabelsRoute
   '/media': typeof AuthenticatedMediaRoute
   '/mobile-payments': typeof AuthenticatedMobilePaymentsRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/party-statement': typeof AuthenticatedPartyStatementRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/pos': typeof AuthenticatedPosRoute
@@ -384,6 +399,7 @@ export interface FileRoutesByTo {
   '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/commerce': typeof AuthenticatedCommerceRoute
   '/contacts': typeof AuthenticatedContactsRoute
+  '/coupons': typeof AuthenticatedCouponsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/day-book': typeof AuthenticatedDayBookRoute
   '/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
@@ -395,6 +411,7 @@ export interface FileRoutesByTo {
   '/labels': typeof AuthenticatedLabelsRoute
   '/media': typeof AuthenticatedMediaRoute
   '/mobile-payments': typeof AuthenticatedMobilePaymentsRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/party-statement': typeof AuthenticatedPartyStatementRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/pos': typeof AuthenticatedPosRoute
@@ -436,6 +453,7 @@ export interface FileRoutesById {
   '/_authenticated/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/_authenticated/commerce': typeof AuthenticatedCommerceRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
+  '/_authenticated/coupons': typeof AuthenticatedCouponsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/day-book': typeof AuthenticatedDayBookRoute
   '/_authenticated/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
@@ -447,6 +465,7 @@ export interface FileRoutesById {
   '/_authenticated/labels': typeof AuthenticatedLabelsRoute
   '/_authenticated/media': typeof AuthenticatedMediaRoute
   '/_authenticated/mobile-payments': typeof AuthenticatedMobilePaymentsRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/party-statement': typeof AuthenticatedPartyStatementRoute
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
@@ -488,6 +507,7 @@ export interface FileRouteTypes {
     | '/chart-of-accounts'
     | '/commerce'
     | '/contacts'
+    | '/coupons'
     | '/dashboard'
     | '/day-book'
     | '/delivery-orders'
@@ -499,6 +519,7 @@ export interface FileRouteTypes {
     | '/labels'
     | '/media'
     | '/mobile-payments'
+    | '/notifications'
     | '/party-statement'
     | '/payments'
     | '/pos'
@@ -538,6 +559,7 @@ export interface FileRouteTypes {
     | '/chart-of-accounts'
     | '/commerce'
     | '/contacts'
+    | '/coupons'
     | '/dashboard'
     | '/day-book'
     | '/delivery-orders'
@@ -549,6 +571,7 @@ export interface FileRouteTypes {
     | '/labels'
     | '/media'
     | '/mobile-payments'
+    | '/notifications'
     | '/party-statement'
     | '/payments'
     | '/pos'
@@ -589,6 +612,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chart-of-accounts'
     | '/_authenticated/commerce'
     | '/_authenticated/contacts'
+    | '/_authenticated/coupons'
     | '/_authenticated/dashboard'
     | '/_authenticated/day-book'
     | '/_authenticated/delivery-orders'
@@ -600,6 +624,7 @@ export interface FileRouteTypes {
     | '/_authenticated/labels'
     | '/_authenticated/media'
     | '/_authenticated/mobile-payments'
+    | '/_authenticated/notifications'
     | '/_authenticated/party-statement'
     | '/_authenticated/payments'
     | '/_authenticated/pos'
@@ -839,6 +864,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPartyStatementRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/mobile-payments': {
       id: '/_authenticated/mobile-payments'
       path: '/mobile-payments'
@@ -914,6 +946,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/coupons': {
+      id: '/_authenticated/coupons'
+      path: '/coupons'
+      fullPath: '/coupons'
+      preLoaderRoute: typeof AuthenticatedCouponsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/contacts': {
@@ -992,6 +1031,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChartOfAccountsRoute: typeof AuthenticatedChartOfAccountsRoute
   AuthenticatedCommerceRoute: typeof AuthenticatedCommerceRoute
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
+  AuthenticatedCouponsRoute: typeof AuthenticatedCouponsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDayBookRoute: typeof AuthenticatedDayBookRoute
   AuthenticatedDeliveryOrdersRoute: typeof AuthenticatedDeliveryOrdersRoute
@@ -1003,6 +1043,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLabelsRoute: typeof AuthenticatedLabelsRoute
   AuthenticatedMediaRoute: typeof AuthenticatedMediaRoute
   AuthenticatedMobilePaymentsRoute: typeof AuthenticatedMobilePaymentsRoute
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPartyStatementRoute: typeof AuthenticatedPartyStatementRoute
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
@@ -1033,6 +1074,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChartOfAccountsRoute: AuthenticatedChartOfAccountsRoute,
   AuthenticatedCommerceRoute: AuthenticatedCommerceRoute,
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
+  AuthenticatedCouponsRoute: AuthenticatedCouponsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDayBookRoute: AuthenticatedDayBookRoute,
   AuthenticatedDeliveryOrdersRoute: AuthenticatedDeliveryOrdersRoute,
@@ -1044,6 +1086,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLabelsRoute: AuthenticatedLabelsRoute,
   AuthenticatedMediaRoute: AuthenticatedMediaRoute,
   AuthenticatedMobilePaymentsRoute: AuthenticatedMobilePaymentsRoute,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPartyStatementRoute: AuthenticatedPartyStatementRoute,
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,

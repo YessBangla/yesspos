@@ -39,7 +39,15 @@ export type AuditAction =
   | "delivery_proof_upload"
   | "delivery_proof_verify"
   | "delivery_feedback_escalate"
-  | "delivery_feedback_resolve";
+  | "delivery_feedback_resolve"
+  | "coupon_create"
+  | "coupon_update"
+  | "coupon_delete"
+  | "order_cancel"
+  | "order_reschedule"
+  | "slot_capacity_update"
+  | "notification_resend";
+
 
 
 /** Fire-and-forget audit trail entry. Never blocks or breaks the calling flow. */

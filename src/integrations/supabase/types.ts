@@ -377,8 +377,12 @@ export type Database = {
           is_active: boolean
           max_discount: number | null
           min_amount: number
+          note: string | null
+          starts_on: string | null
           type: string
           updated_at: string
+          usage_limit: number | null
+          used_count: number
           value: number
         }
         Insert: {
@@ -389,8 +393,12 @@ export type Database = {
           is_active?: boolean
           max_discount?: number | null
           min_amount?: number
+          note?: string | null
+          starts_on?: string | null
           type?: string
           updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
           value?: number
         }
         Update: {
@@ -401,8 +409,12 @@ export type Database = {
           is_active?: boolean
           max_discount?: number | null
           min_amount?: number
+          note?: string | null
+          starts_on?: string | null
           type?: string
           updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
           value?: number
         }
         Relationships: []
@@ -692,6 +704,8 @@ export type Database = {
           area: string | null
           assigned_to: string | null
           branch_id: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
           contact_id: string | null
           coupon_code: string | null
           created_at: string
@@ -703,10 +717,14 @@ export type Database = {
           note: string | null
           order_no: number
           payment_method: string
+          reschedule_count: number
+          rescheduled_at: string | null
           rider_id: string | null
           sale_id: string | null
           scheduled_at: string | null
           slot: string | null
+          slot_date: string | null
+          slot_id: string | null
           status: string
           subtotal: number
           total: number
@@ -719,6 +737,8 @@ export type Database = {
           area?: string | null
           assigned_to?: string | null
           branch_id?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           contact_id?: string | null
           coupon_code?: string | null
           created_at?: string
@@ -730,10 +750,14 @@ export type Database = {
           note?: string | null
           order_no?: number
           payment_method?: string
+          reschedule_count?: number
+          rescheduled_at?: string | null
           rider_id?: string | null
           sale_id?: string | null
           scheduled_at?: string | null
           slot?: string | null
+          slot_date?: string | null
+          slot_id?: string | null
           status?: string
           subtotal?: number
           total?: number
@@ -746,6 +770,8 @@ export type Database = {
           area?: string | null
           assigned_to?: string | null
           branch_id?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           contact_id?: string | null
           coupon_code?: string | null
           created_at?: string
@@ -757,10 +783,14 @@ export type Database = {
           note?: string | null
           order_no?: number
           payment_method?: string
+          reschedule_count?: number
+          rescheduled_at?: string | null
           rider_id?: string | null
           sale_id?: string | null
           scheduled_at?: string | null
           slot?: string | null
+          slot_date?: string | null
+          slot_id?: string | null
           status?: string
           subtotal?: number
           total?: number
@@ -932,6 +962,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      delivery_slot_capacity: {
+        Row: {
+          capacity: number
+          created_at: string
+          id: string
+          is_active: boolean
+          slot_id: string
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          slot_id: string
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          slot_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       delivery_zones: {
         Row: {
@@ -2495,6 +2552,20 @@ export type Database = {
           product_id: string
         }[]
       }
+      customer_cancel_order: {
+        Args: { _order_id: string; _phone: string; _reason?: string }
+        Returns: string
+      }
+      customer_reschedule_order: {
+        Args: {
+          _order_id: string
+          _phone: string
+          _slot_date: string
+          _slot_id: string
+          _slot_label: string
+        }
+        Returns: string
+      }
       escalate_overdue_feedback: { Args: never; Returns: number }
       has_role: {
         Args: {
@@ -2528,6 +2599,16 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      slot_availability: {
+        Args: { _day: string }
+        Returns: {
+          available: number
+          booked: number
+          capacity: number
+          is_active: boolean
+          slot_id: string
+        }[]
       }
       submit_delivery_feedback: {
         Args: {

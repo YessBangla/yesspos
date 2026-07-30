@@ -1,6 +1,8 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  Ticket,
+  MessageSquareText,
   ArrowRightLeft,
   Bike,
   MapPin,
@@ -165,6 +167,18 @@ export function AppShell({ children }: { children: ReactNode }) {
           feature: "promotions",
           label: lang === "bn" ? "প্রোমোশন" : "Promotions",
           icon: Megaphone,
+        },
+        {
+          to: "/coupons",
+          feature: "coupons",
+          label: lang === "bn" ? "কুপন" : "Coupons",
+          icon: Ticket,
+        },
+        {
+          to: "/notifications",
+          feature: "notifications",
+          label: lang === "bn" ? "SMS লগ" : "SMS log",
+          icon: MessageSquareText,
         },
         { to: "/reviews", feature: "reviews", label: lang === "bn" ? "রিভিউ" : "Reviews", icon: Star },
       ],
