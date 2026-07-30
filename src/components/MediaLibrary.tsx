@@ -827,24 +827,29 @@ function MediaCard({
             >
               {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 px-2 text-xs"
-              onClick={() => setEditing(true)}
-              title={bn ? "তথ্য সম্পাদনা" : "Edit info"}
-            >
-              ✎
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className={cn("h-7 px-2", used ? "text-warning-foreground" : "text-destructive")}
-              title={used ? (bn ? "ব্যবহৃত ছবি — সতর্কতা" : "In use — warning") : bn ? "মুছুন" : "Delete"}
-              onClick={confirmDelete}
-            >
-              {used ? <AlertTriangle className="size-3.5" /> : <Trash2 className="size-3.5" />}
-            </Button>
+            {canEdit && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-xs"
+                onClick={() => setEditing(true)}
+                title={bn ? "তথ্য সম্পাদনা" : "Edit info"}
+              >
+                ✎
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                size="sm"
+                variant="outline"
+                className={cn("h-7 px-2", used ? "text-warning-foreground" : "text-destructive")}
+                title={used ? (bn ? "ব্যবহৃত ছবি — সতর্কতা" : "In use — warning") : bn ? "মুছুন" : "Delete"}
+                onClick={confirmDelete}
+              >
+                {used ? <AlertTriangle className="size-3.5" /> : <Trash2 className="size-3.5" />}
+              </Button>
+            )}
+
           </div>
         )}
       </div>
