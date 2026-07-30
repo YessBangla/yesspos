@@ -180,33 +180,68 @@ export function MediaLibrary({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assets.isLoading, assets.data]);
 
+  const invalidateAll = () => {
+    qc.invalidateQueries({ queryKey: ["media-assets"] });
+    qc.invalidateQueries({ queryKey: ["media-usage"] });
+    qc.invalidateQueries({ queryKey: ["media-trash"] });
+    qc.invalidateQueries({ queryKey: ["media-log"] });
+  };
+
   const remove = useMutation({
-    mutationFn: (a: MediaAsset) => deleteMedia(a),
+    mutationFn: (a: MediaAsset) => deleteMedia(a, usageFor(a).map((u) => ({ kind: u.kind, label: u.label }))),
     onSuccess: () => {
-      toast.success(bn ? "ছবি মুছে ফেলা হয়েছে" : "Image deleted");
-      qc.invalidateQueries({ queryKey: ["media-assets"] });
-      qc.invalidateQueries({ queryKey: ["media-usage"] });
+      toast.success(
+        bn
+          ? `ছবিটি রিসাইকেল বিনে গেছে — ${TRASH_RETENTION_DAYS} দিনের মধ্যে ফেরানো যাবে`
+          : `Moved to trash — restorable for ${TRASH_RETENTION_DAYS} days`,
+      );
+      invalidateAll();
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+  const restore = useMutation({
+    mutationFn: (a: MediaAsset) => restoreMedia(a),
+    onSuccess: () => {
+      toast.success(bn ? "ছবি ফিরিয়ে আনা হয়েছে" : "Image restored");
+      invalidateAll();
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+  const purge = useMutation({
+    mutationFn: (a: MediaAsset) => purgeMedia(a),
+    onSuccess: () => {
+      toast.success(bn ? "স্থায়ীভাবে মুছে ফেলা হয়েছে" : "Permanently deleted");
+      invalidateAll();
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
   const saveMeta = useMutation({
-    mutationFn: async (a: { id: string; alt_text: string; tags: string[] }) => {
+    mutationFn: async (a: { id: string; name: string; alt_text: string; tags: string[] }) => {
       const { error } = await supabase
         .from("media_assets")
         .update({ alt_text: a.alt_text || null, tags: a.tags })
         .eq("id", a.id);
       if (error) throw error;
+      await logMediaAction(
+        "tag_edit",
+        a.id,
+        `${a.name} · alt="${a.alt_text}" · tags=${a.tags.join(", ") || "—"}`,
+      );
     },
     onSuccess: () => {
       toast.success(bn ? "সংরক্ষিত" : "Saved");
       qc.invalidateQueries({ queryKey: ["media-assets"] });
+      qc.invalidateQueries({ queryKey: ["media-log"] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
   const selectable = Boolean(onPickMany);
   const selectedAssets = (assets.data ?? []).filter((a) => selected.includes(a.id));
+
 
   return (
     <div className="space-y-4">
