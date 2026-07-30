@@ -46,7 +46,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bike, Home, LayoutGrid, MapPin, Megaphone, Plus, Settings2, ShoppingBasket, Star, Store, Trash2 } from "lucide-react";
+import { Bike, Home, LayoutGrid, MapPin, Megaphone, Plus, Search, Settings2, ShoppingBasket, Star, Store, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
