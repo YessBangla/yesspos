@@ -92,13 +92,14 @@ function DeliveryOrdersPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("delivery_riders")
-        .select("id,name,is_active")
+        .select("id,name,phone,vehicle,is_active")
         .eq("is_active", true)
         .order("name");
       if (error) throw error;
-      return data as { id: string; name: string; is_active: boolean }[];
+      return data as { id: string; name: string; phone: string; vehicle: string; is_active: boolean }[];
     },
   });
+
 
   const items = useQuery({
     queryKey: ["delivery-order-items"],
