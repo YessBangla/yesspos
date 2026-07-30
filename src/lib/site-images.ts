@@ -125,7 +125,10 @@ export const SITE_PRODUCT_IMAGES: { url: string; name: string }[] = [
   { url: "/products/yogurt.jpg", name: "Yogurt" },
 ];
 
+import heroShade from "@/assets/hero-shade.jpg";
+import cardShade from "@/assets/card-shade.jpg";
+
 export const SITE_OTHER_IMAGES: { url: string; name: string; folder: string }[] = [
-  { url: "/hero-shade.jpg", name: "Hero Shade", folder: "banners" },
-  { url: "/card-shade.jpg", name: "Card Shade", folder: "banners" },
+  { url: heroShade, name: "Hero Shade", folder: "banners" },
+  { url: cardShade, name: "Card Shade", folder: "banners" },
 ];
