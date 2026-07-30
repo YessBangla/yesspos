@@ -308,6 +308,19 @@ function DeliveryOrdersPage() {
                   ))}
                 </select>
               </div>
+              {(() => {
+                const rider = (riders.data ?? []).find((r) => r.id === o.rider_id);
+                if (!rider) return null;
+                return (
+                  <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <a href={`tel:${rider.phone}`} className="inline-flex items-center gap-1 font-semibold text-primary">
+                      <Phone className="size-3" /> {rider.phone}
+                    </a>
+                    <span>· {rider.vehicle}</span>
+                  </p>
+                );
+              })()}
+
 
               <div className="flex flex-wrap gap-2">
                 {next && o.status !== "cancelled" && (
