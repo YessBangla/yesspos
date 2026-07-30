@@ -166,73 +166,155 @@
 }
 
 /*
- * Dashboard skin — soft sky-blue glass palette.
- * Scoped to /dashboard so POS and other modules keep the teal system.
+ * Dashboard skin — hue-driven glass palette, scoped to /dashboard so POS and
+ * other modules keep the teal system. The active palette is chosen with
+ * [data-dash-theme] and the light/dark variant with [data-dash-mode].
  */
 .dashboard-skin {
-  --background: oklch(0.965 0.024 235);
-  --foreground: oklch(0.3 0.05 250);
+  --dash-h: 235;
+  --dash-ph: 258;
+  --dash-ah: 215;
+}
+
+.dashboard-skin[data-dash-theme="lavender"] {
+  --dash-h: 285;
+  --dash-ph: 274;
+  --dash-ah: 330;
+}
+
+.dashboard-skin[data-dash-theme="mint"] {
+  --dash-h: 172;
+  --dash-ph: 168;
+  --dash-ah: 145;
+}
+
+.dashboard-skin[data-dash-theme="sunset"] {
+  --dash-h: 48;
+  --dash-ph: 36;
+  --dash-ah: 20;
+}
+
+.dashboard-skin[data-dash-theme="slate"] {
+  --dash-h: 250;
+  --dash-ph: 252;
+  --dash-ah: 240;
+}
+
+.dashboard-skin[data-dash-theme="slate"] {
+  --dash-sat: 0.012;
+}
+
+.dashboard-skin {
+  --dash-sat: 0.026;
+
+  --background: oklch(0.965 var(--dash-sat) var(--dash-h));
+  --foreground: oklch(0.3 0.05 var(--dash-ph));
   --card: oklch(1 0 0 / 0.74);
-  --card-foreground: oklch(0.3 0.05 250);
-  --popover: oklch(0.995 0.006 235);
-  --popover-foreground: oklch(0.3 0.05 250);
-  --primary: oklch(0.55 0.17 258);
-  --primary-foreground: oklch(0.99 0.005 240);
-  --secondary: oklch(0.94 0.035 235);
-  --secondary-foreground: oklch(0.38 0.09 255);
-  --muted: oklch(0.948 0.026 235);
-  --muted-foreground: oklch(0.55 0.04 245);
-  --accent: oklch(0.82 0.1 215);
-  --accent-foreground: oklch(0.3 0.07 240);
+  --card-foreground: oklch(0.3 0.05 var(--dash-ph));
+  --popover: oklch(0.995 0.006 var(--dash-h));
+  --popover-foreground: oklch(0.3 0.05 var(--dash-ph));
+  --primary: oklch(0.55 0.17 var(--dash-ph));
+  --primary-foreground: oklch(0.99 0.005 var(--dash-ph));
+  --secondary: oklch(0.94 0.035 var(--dash-h));
+  --secondary-foreground: oklch(0.38 0.09 var(--dash-ph));
+  --muted: oklch(0.948 var(--dash-sat) var(--dash-h));
+  --muted-foreground: oklch(0.55 0.04 var(--dash-ph));
+  --accent: oklch(0.82 0.1 var(--dash-ah));
+  --accent-foreground: oklch(0.3 0.07 var(--dash-ph));
   --success: oklch(0.66 0.16 155);
   --warning: oklch(0.8 0.14 78);
   --destructive: oklch(0.62 0.21 18);
-  --border: oklch(0.9 0.03 235);
-  --input: oklch(0.9 0.03 235);
-  --ring: oklch(0.55 0.17 258);
-  --chart-1: oklch(0.55 0.17 258);
-  --chart-2: oklch(0.7 0.13 215);
+  --border: oklch(0.9 0.03 var(--dash-h));
+  --input: oklch(0.9 0.03 var(--dash-h));
+  --ring: oklch(0.55 0.17 var(--dash-ph));
+  --chart-1: oklch(0.55 0.17 var(--dash-ph));
+  --chart-2: oklch(0.7 0.13 var(--dash-ah));
   --chart-3: oklch(0.66 0.16 155);
   --chart-4: oklch(0.62 0.14 280);
   --chart-5: oklch(0.72 0.15 55);
-  --shadow-panel: 0 1px 2px oklch(0.4 0.1 250 / 0.06), 0 12px 34px -18px oklch(0.4 0.12 250 / 0.35);
-  --shadow-lift: 0 2px 8px oklch(0.4 0.1 250 / 0.1), 0 22px 48px -24px oklch(0.4 0.12 250 / 0.45);
+  --shadow-panel: 0 1px 2px oklch(0.4 0.1 var(--dash-ph) / 0.06), 0 12px 34px -18px oklch(0.4 0.12 var(--dash-ph) / 0.35);
+  --shadow-lift: 0 2px 8px oklch(0.4 0.1 var(--dash-ph) / 0.1), 0 22px 48px -24px oklch(0.4 0.12 var(--dash-ph) / 0.45);
 
   border-radius: var(--radius-3xl);
   background-image:
-    radial-gradient(120% 90% at 88% -8%, oklch(0.82 0.1 232 / 0.55) 0%, transparent 60%),
-    radial-gradient(90% 80% at 2% 100%, oklch(0.86 0.08 220 / 0.5) 0%, transparent 62%),
-    linear-gradient(180deg, oklch(0.955 0.032 233) 0%, oklch(0.975 0.018 240) 100%);
+    radial-gradient(120% 90% at 88% -8%, oklch(0.82 0.1 var(--dash-h) / 0.55) 0%, transparent 60%),
+    radial-gradient(90% 80% at 2% 100%, oklch(0.86 0.08 var(--dash-ah) / 0.5) 0%, transparent 62%),
+    linear-gradient(180deg, oklch(0.955 0.032 var(--dash-h)) 0%, oklch(0.975 0.018 var(--dash-ph)) 100%);
   color: var(--foreground);
 }
 
-.dashboard-skin .surface-panel,
-.dashboard-skin [class*="bg-card"] {
-  backdrop-filter: blur(14px);
+/* ---- Glass surfaces: cards, table headers and chart panels ---- */
+.dashboard-skin[data-dash-glass="on"] .surface-panel,
+.dashboard-skin[data-dash-glass="on"] [class*="bg-card"],
+.dashboard-skin[data-dash-glass="on"] [data-slot="card"] {
+  backdrop-filter: blur(16px) saturate(150%);
+  background-color: color-mix(in oklab, var(--color-card) 78%, transparent);
+  border-color: color-mix(in oklab, var(--primary) 14%, var(--color-border));
 }
 
-.dark .dashboard-skin {
-  --background: oklch(0.21 0.035 250);
-  --foreground: oklch(0.95 0.015 235);
-  --card: oklch(0.27 0.04 250 / 0.75);
-  --card-foreground: oklch(0.95 0.015 235);
-  --popover: oklch(0.27 0.04 250);
-  --popover-foreground: oklch(0.95 0.015 235);
-  --primary: oklch(0.72 0.13 250);
-  --primary-foreground: oklch(0.19 0.04 250);
-  --secondary: oklch(0.32 0.045 250);
-  --secondary-foreground: oklch(0.95 0.015 235);
-  --muted: oklch(0.32 0.045 250);
-  --muted-foreground: oklch(0.74 0.03 240);
+.dashboard-skin[data-dash-glass="on"] thead,
+.dashboard-skin[data-dash-glass="on"] thead th,
+.dashboard-skin[data-dash-glass="on"] [data-slot="table-header"] {
+  backdrop-filter: blur(12px);
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--primary) 12%, transparent) 0%,
+    color-mix(in oklab, var(--primary) 4%, transparent) 100%
+  );
+  color: color-mix(in oklab, var(--primary) 72%, var(--foreground));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.72rem;
+}
+
+.dashboard-skin[data-dash-glass="on"] .recharts-wrapper,
+.dashboard-skin[data-dash-glass="on"] .recharts-surface {
+  border-radius: var(--radius-xl);
+}
+
+.dashboard-skin[data-dash-glass="on"] .recharts-default-tooltip,
+.dashboard-skin[data-dash-glass="on"] .recharts-tooltip-wrapper > div {
+  backdrop-filter: blur(14px);
+  background-color: color-mix(in oklab, var(--color-card) 82%, transparent) !important;
+  border: 1px solid color-mix(in oklab, var(--primary) 20%, var(--color-border)) !important;
+  border-radius: var(--radius-lg);
+}
+
+.dashboard-skin[data-dash-glass="on"] .recharts-cartesian-grid line {
+  stroke: color-mix(in oklab, var(--primary) 16%, transparent);
+}
+
+/* ---- Dark variant ---- */
+.dashboard-skin[data-dash-mode="dark"] {
+  --background: oklch(0.21 0.035 var(--dash-ph));
+  --foreground: oklch(0.95 0.015 var(--dash-h));
+  --card: oklch(0.27 0.04 var(--dash-ph) / 0.75);
+  --card-foreground: oklch(0.95 0.015 var(--dash-h));
+  --popover: oklch(0.27 0.04 var(--dash-ph));
+  --popover-foreground: oklch(0.95 0.015 var(--dash-h));
+  --primary: oklch(0.74 0.13 var(--dash-ph));
+  --primary-foreground: oklch(0.19 0.04 var(--dash-ph));
+  --secondary: oklch(0.32 0.045 var(--dash-ph));
+  --secondary-foreground: oklch(0.95 0.015 var(--dash-h));
+  --muted: oklch(0.32 0.045 var(--dash-ph));
+  --muted-foreground: oklch(0.74 0.03 var(--dash-h));
+  --accent: oklch(0.5 0.11 var(--dash-ah));
+  --accent-foreground: oklch(0.96 0.01 var(--dash-h));
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.72 0.13 250);
+  --ring: oklch(0.74 0.13 var(--dash-ph));
+  --chart-1: oklch(0.74 0.13 var(--dash-ph));
+  --chart-2: oklch(0.72 0.13 var(--dash-ah));
+  --shadow-panel: 0 1px 2px oklch(0 0 0 / 0.3), 0 12px 34px -18px oklch(0 0 0 / 0.6);
+  --shadow-lift: 0 2px 8px oklch(0 0 0 / 0.35), 0 22px 48px -24px oklch(0 0 0 / 0.7);
 
+  color: var(--foreground);
   background-image:
-    radial-gradient(120% 90% at 88% -8%, oklch(0.5 0.13 245 / 0.4) 0%, transparent 58%),
-    radial-gradient(90% 80% at 4% 104%, oklch(0.45 0.1 220 / 0.35) 0%, transparent 60%),
-    linear-gradient(180deg, oklch(0.22 0.035 245) 0%, oklch(0.2 0.03 255) 100%);
+    radial-gradient(120% 90% at 88% -8%, oklch(0.5 0.13 var(--dash-ph) / 0.4) 0%, transparent 58%),
+    radial-gradient(90% 80% at 4% 104%, oklch(0.45 0.1 var(--dash-ah) / 0.35) 0%, transparent 60%),
+    linear-gradient(180deg, oklch(0.22 0.035 var(--dash-h)) 0%, oklch(0.2 0.03 var(--dash-ph)) 100%);
 }
+
 
 
 /*

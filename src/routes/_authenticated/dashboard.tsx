@@ -35,6 +35,8 @@ import { useMyRole } from "@/lib/use-my-role";
 import { useActiveBranch } from "@/lib/active-branch";
 import { canAccess, type Feature } from "@/lib/permissions";
 import { DASHBOARD_WIDGETS, useDashboards, type DashboardWidget } from "@/lib/dashboards";
+import { dashboardThemeAttrs, useDashboardTheme } from "@/lib/dashboard-theme";
+import { DashboardThemePanel } from "@/components/DashboardThemePanel";
 import { Button } from "@/components/ui/button";
 import { ChannelStatusPanel } from "@/components/ChannelStatusPanel";
 
@@ -80,6 +82,7 @@ function DashboardPage() {
   const { branch, canSwitch, branchId } = useActiveBranch();
   const scopeId = canSwitch ? null : branchId;
   const dash = useDashboards(me.data?.userId ?? null);
+  const dashTheme = useDashboardTheme();
   const range = dash.active.range as RangeKey;
   const setRange = (r: RangeKey) => dash.update({ range: r });
   const show = (w: DashboardWidget) => dash.active.widgets.includes(w);
@@ -365,7 +368,10 @@ function DashboardPage() {
   ];
 
   return (
-    <div className="dashboard-skin space-y-4 p-4">
+    <div
+      className="dashboard-skin space-y-4 p-4"
+      {...dashboardThemeAttrs(dashTheme.theme, dashTheme.mode, dashTheme.glass)}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-bold">
           {t("welcome")}{" "}
@@ -431,6 +437,13 @@ function DashboardPage() {
           {lang === "bn" ? "নতুন" : "New"}
         </Button>
         <div className="ml-auto flex items-center gap-1">
+          <DashboardThemePanel
+            theme={dashTheme.theme}
+            mode={dashTheme.mode}
+            glass={dashTheme.glass}
+            onChange={dashTheme.save}
+            onReset={dashTheme.reset}
+          />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="outline">

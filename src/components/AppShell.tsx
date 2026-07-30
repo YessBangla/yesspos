@@ -320,14 +320,22 @@ export function AppShell({ children }: { children: ReactNode }) {
                 to={only.to}
                 title={g.label}
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+                  "group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all",
                   groupActive
-                    ? "bg-sidebar-accent text-sidebar-primary"
+                    ? "bg-sidebar-accent text-sidebar-primary shadow-[inset_0_1px_0_oklch(1_0_0/0.08)] ring-1 ring-sidebar-primary/25"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
                   collapsed && "justify-center px-0",
                 )}
               >
-                <g.icon className="size-4 shrink-0" />
+                {groupActive && !collapsed && (
+                  <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-sidebar-primary" />
+                )}
+                <g.icon
+                  className={cn(
+                    "size-4 shrink-0 transition-colors",
+                    groupActive ? "text-sidebar-primary" : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground",
+                  )}
+                />
                 {!collapsed && <span className="flex-1 truncate text-left">{g.label}</span>}
               </Link>
             );
@@ -340,15 +348,23 @@ export function AppShell({ children }: { children: ReactNode }) {
                   collapsed ? setCollapsed(false) : setOpen((s) => ({ ...s, [g.id]: !(s[g.id] ?? groupActive) }))
                 }
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+                  "group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all",
                   groupActive
-                    ? "text-sidebar-primary"
+                    ? "bg-sidebar-accent/70 text-sidebar-primary ring-1 ring-sidebar-primary/20"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
                   collapsed && "justify-center px-0",
                 )}
                 title={g.label}
               >
-                <g.icon className="size-4 shrink-0" />
+                {groupActive && !collapsed && (
+                  <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-sidebar-primary" />
+                )}
+                <g.icon
+                  className={cn(
+                    "size-4 shrink-0 transition-colors",
+                    groupActive ? "text-sidebar-primary" : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground",
+                  )}
+                />
                 {!collapsed && (
                   <>
                     <span className="flex-1 text-left">{g.label}</span>
@@ -358,7 +374,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </button>
 
               {isOpen && (
-                <div className="mt-0.5 space-y-0.5 pl-3">
+                <div className="mt-1 ml-5 space-y-0.5 border-l border-sidebar-border/70 pl-2.5">
                   {g.items.map((item) => {
                     const active =
                       pathname.startsWith(item.to) &&
@@ -371,13 +387,21 @@ export function AppShell({ children }: { children: ReactNode }) {
                         to={item.to}
                         search={item.search as never}
                         className={cn(
-                          "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          "group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all",
                           active
-                            ? "bg-sidebar-accent text-sidebar-primary"
-                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60",
+                            ? "bg-sidebar-accent text-sidebar-primary ring-1 ring-sidebar-primary/25"
+                            : "text-sidebar-foreground/75 hover:translate-x-0.5 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
                         )}
                       >
-                        <item.icon className="size-4 shrink-0" />
+                        <span
+                          className={cn(
+                            "absolute -left-[13px] h-1.5 w-1.5 rounded-full transition-colors",
+                            active ? "bg-sidebar-primary" : "bg-transparent group-hover:bg-sidebar-foreground/40",
+                          )}
+                        />
+                        <item.icon
+                          className={cn("size-4 shrink-0", active ? "text-sidebar-primary" : "text-sidebar-foreground/60")}
+                        />
                         <span className="truncate">{item.label}</span>
                       </Link>
                     );
@@ -445,7 +469,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-border bg-card px-3 py-2.5">
+        <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-border/70 bg-card/80 px-3 py-2.5 backdrop-blur-xl supports-[backdrop-filter]:bg-card/70">
           <Button variant="outline" size="icon" className="md:hidden" onClick={() => setMobileOpen(true)}>
             <Menu className="size-4" />
           </Button>
