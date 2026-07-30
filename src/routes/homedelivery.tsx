@@ -509,7 +509,7 @@ function ShopPage() {
     });
 
   return (
-    <main className="min-h-screen bg-muted/30 pb-28 lg:pb-10">
+    <main className="storefront min-h-screen bg-background pb-28 lg:pb-10">
       {/* ---- Top utility bar ---- */}
       <div className="bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-1.5 text-xs">
