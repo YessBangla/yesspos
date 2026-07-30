@@ -35,7 +35,10 @@ export type AuditAction =
   | "promotion_create"
   | "promotion_update"
   | "promotion_delete"
-  | "review_moderate";
+  | "review_moderate"
+  | "delivery_proof_upload"
+  | "delivery_feedback_resolve";
+
 
 /** Fire-and-forget audit trail entry. Never blocks or breaks the calling flow. */
 export async function logAudit(
