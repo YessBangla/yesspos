@@ -272,7 +272,9 @@ function PosPage() {
     const q = query.trim().toLowerCase();
     const stockMap = branchStock.data;
     return (products.data ?? [])
-      .map((p) => (stockMap ? { ...p, stock: stockMap.get(p.id) ?? 0 } : p))
+      // Branch stock rows are optional: fall back to the product's own stock
+      // so every product stays sellable/visible in each branch.
+      .map((p) => (stockMap && stockMap.has(p.id) ? { ...p, stock: stockMap.get(p.id) ?? 0 } : p))
       .filter(
         (p) =>
           (cat === "all" || p.category_id === cat) &&
