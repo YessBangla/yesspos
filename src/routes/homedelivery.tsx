@@ -703,7 +703,7 @@ function ShopPage() {
             <Link to="/track" className="hover:underline">
               {bn ? "অর্ডার ট্র্যাক" : "Track order"}
             </Link>
-            <Link to="/my-account" search={{ tab: "orders" }} className="hover:underline">
+            <Link to="/my-orders" className="hover:underline">
               {bn ? "আমার অ্যাকাউন্ট" : "My account"}
             </Link>
             <Link to="/auth" className="hidden hover:underline sm:inline">
