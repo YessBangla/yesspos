@@ -1,12 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Camera, Eraser, ImageIcon, Loader2, PenLine, Trash2, Upload } from "lucide-react";
+import {
+  Camera,
+  Eraser,
+  ImageIcon,
+  Loader2,
+  MapPin,
+  PenLine,
+  ShieldCheck,
+  ShieldX,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { logAudit } from "@/lib/audit";
+import { useMyRole } from "@/lib/use-my-role";
 
 type Proof = {
   id: string;
@@ -179,6 +191,9 @@ export function ProofOfDelivery({ orderId, orderNo }: { orderId: string; orderNo
   const [note, setNote] = useState("");
   const [mode, setMode] = useState<"photo" | "signature">("photo");
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const { data: me } = useMyRole();
+  const canVerify =
+    me?.role === "admin" || me?.role === "super_admin" || me?.role === "manager";
 
   const proofs = useQuery({
     queryKey: ["delivery-proofs", orderId],
