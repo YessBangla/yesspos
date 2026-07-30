@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { deliveryFeeFor, useShopCart, type ShopLine } from "@/lib/shop-cart";
+import { applyCoupon } from "@/lib/coupon";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { checkPackCart } from "@/lib/pack-size";
@@ -224,6 +225,11 @@ function ShopPage() {
   const [queued, setQueued] = useState<QueuedOrder[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [placing, setPlacing] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponMsg, setCouponMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [couponBusy, setCouponBusy] = useState(false);
+
   const { user, isCustomer, name: accName, phone: accPhone } = useCustomerSession();
   const [prefilled, setPrefilled] = useState(false);
 
@@ -409,7 +415,43 @@ function ShopPage() {
   const shown = visible.slice(0, limit);
 
   const fee = deliveryFeeFor(cart.subtotal);
-  const total = cart.subtotal + fee;
+  const discount = Math.min(coupon?.discount ?? 0, cart.subtotal);
+  const total = Math.max(cart.subtotal - discount + fee, 0);
+
+  async function checkCoupon(code: string) {
+    setCouponBusy(true);
+    const res = await applyCoupon(code, cart.subtotal, bn);
+    setCouponBusy(false);
+    setCouponMsg({ ok: res.ok, text: res.message });
+    setCoupon(res.ok ? { code: res.code, discount: res.discount } : null);
+    return res.ok;
+  }
+
+  function clearCoupon() {
+    setCoupon(null);
+    setCouponInput("");
+    setCouponMsg(null);
+  }
+
+  // Re-check the applied coupon whenever the cart value changes.
+  useEffect(() => {
+    if (!coupon) return;
+    let cancelled = false;
+    void applyCoupon(coupon.code, cart.subtotal, bn).then((res) => {
+      if (cancelled) return;
+      if (!res.ok) {
+        setCoupon(null);
+        setCouponMsg({ ok: false, text: res.message });
+      } else if (res.discount !== coupon.discount) {
+        setCoupon({ code: res.code, discount: res.discount });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart.subtotal, bn]);
+
 
   const slotLabel = useMemo(() => {
     if (!slotTime) return "";
@@ -493,7 +535,10 @@ function ShopPage() {
       slot: slotLabel,
       payment_method: form.payment,
       subtotal: cart.subtotal,
+      discount,
+      coupon_code: coupon?.code ?? null,
       delivery_fee: fee,
+
       total,
     };
     const items = cart.lines.map((l) => ({
@@ -575,7 +620,9 @@ function ShopPage() {
       }
 
       setPlacedInfo({ phone: parsed.data.phone, slot: slotLabel, total });
+      clearCoupon();
       cart.clear();
+
       setCheckout(false);
       setStep(0);
       setErrors([]);
@@ -656,7 +703,7 @@ function ShopPage() {
             <Link to="/track" className="hover:underline">
               {bn ? "অর্ডার ট্র্যাক" : "Track order"}
             </Link>
-            <Link to="/my-account" search={{ tab: "orders" }} className="hover:underline">
+            <Link to="/my-orders" className="hover:underline">
               {bn ? "আমার অ্যাকাউন্ট" : "My account"}
             </Link>
             <Link to="/auth" className="hidden hover:underline sm:inline">
@@ -1187,6 +1234,12 @@ function ShopPage() {
             </div>
             <div className="space-y-1.5 border-t border-border bg-muted/40 p-5 text-sm">
               <Row label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
+              {discount > 0 && (
+                <Row
+                  label={`${bn ? "ছাড়" : "Discount"}${coupon ? ` (${coupon.code})` : ""}`}
+                  value={`− ${money(discount, lang)}`}
+                />
+              )}
               <Row label={bn ? "ডেলিভারি" : "Delivery"} value={money(fee, lang)} />
               <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
               {cart.subtotal > 0 && cart.subtotal < 1000 && (
@@ -1294,6 +1347,12 @@ function ShopPage() {
             </div>
             <div className="space-y-1 border-t border-border p-4 text-sm">
               <Row label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
+              {discount > 0 && (
+                <Row
+                  label={`${bn ? "ছাড়" : "Discount"}${coupon ? ` (${coupon.code})` : ""}`}
+                  value={`− ${money(discount, lang)}`}
+                />
+              )}
               <Row label={bn ? "ডেলিভারি" : "Delivery"} value={money(fee, lang)} />
               <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
               <Button
@@ -1603,6 +1662,64 @@ function ShopPage() {
                 </div>
 
                 <div className="surface-panel space-y-2 p-4">
+                  <Label htmlFor="coupon-code" className="text-sm font-semibold">
+                    {bn ? "কুপন / প্রোমো কোড" : "Coupon / promo code"}
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="coupon-code"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void checkCoupon(couponInput);
+                        }
+                      }}
+                      placeholder={bn ? "যেমন SAVE10" : "e.g. SAVE10"}
+                      maxLength={24}
+                      disabled={!!coupon}
+                      aria-describedby="coupon-msg"
+                      className="uppercase"
+                    />
+                    {coupon ? (
+                      <Button type="button" variant="outline" onClick={clearCoupon}>
+                        {bn ? "সরান" : "Remove"}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={() => void checkCoupon(couponInput)}
+                        disabled={couponBusy || couponInput.trim().length === 0}
+                      >
+                        {bn ? "প্রয়োগ" : "Apply"}
+                      </Button>
+                    )}
+                  </div>
+                  <p
+                    id="coupon-msg"
+                    role="status"
+                    aria-live="polite"
+                    className={cn(
+                      "text-xs",
+                      couponMsg
+                        ? couponMsg.ok
+                          ? "font-medium text-primary"
+                          : "text-destructive"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {couponMsg
+                      ? couponMsg.ok && discount > 0
+                        ? `${couponMsg.text} — ${money(discount, lang)}`
+                        : couponMsg.text
+                      : bn
+                        ? "কোড থাকলে এখানে লিখুন, ছাড় সঙ্গে সঙ্গে যোগ হবে।"
+                        : "Have a code? Enter it here and the discount applies instantly."}
+                  </p>
+                </div>
+
+                <div className="surface-panel space-y-2 p-4">
                   <p className="text-sm font-semibold">
                     {bn ? "অর্ডারের পরের ধাপগুলো" : "What happens next"}
                   </p>
@@ -1613,6 +1730,12 @@ function ShopPage() {
 
             <div className="surface-panel space-y-1 p-4 text-sm">
               <Row label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
+              {discount > 0 && (
+                <Row
+                  label={`${bn ? "ছাড়" : "Discount"}${coupon ? ` (${coupon.code})` : ""}`}
+                  value={`− ${money(discount, lang)}`}
+                />
+              )}
               <Row label={bn ? "ডেলিভারি" : "Delivery"} value={money(fee, lang)} />
               <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
             </div>

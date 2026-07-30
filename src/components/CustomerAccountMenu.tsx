@@ -189,7 +189,7 @@ export function CustomerAccountMenu({ compact = false }: { compact?: boolean }) 
         <DropdownMenuLabel className="truncate">{name || (bn ? "আমার অ্যাকাউন্ট" : "My account")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to="/my-account" search={{ tab: "orders" }}>
+          <Link to="/my-orders">
             <Package className="mr-2 size-4" />
             {bn ? "আমার অর্ডার" : "My orders"}
           </Link>

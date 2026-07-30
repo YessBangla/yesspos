@@ -693,6 +693,7 @@ export type Database = {
           assigned_to: string | null
           branch_id: string | null
           contact_id: string | null
+          coupon_code: string | null
           created_at: string
           customer_name: string
           customer_phone: string
@@ -719,6 +720,7 @@ export type Database = {
           assigned_to?: string | null
           branch_id?: string | null
           contact_id?: string | null
+          coupon_code?: string | null
           created_at?: string
           customer_name: string
           customer_phone: string
@@ -745,6 +747,7 @@ export type Database = {
           assigned_to?: string | null
           branch_id?: string | null
           contact_id?: string | null
+          coupon_code?: string | null
           created_at?: string
           customer_name?: string
           customer_phone?: string
@@ -2569,6 +2572,16 @@ export type Database = {
           note: string
           receiver_name: string
           status: string
+        }[]
+      }
+      validate_coupon: {
+        Args: { _code: string; _subtotal: number }
+        Returns: {
+          code: string
+          discount: number
+          kind: string
+          reason: string
+          value: number
         }[]
       }
     }

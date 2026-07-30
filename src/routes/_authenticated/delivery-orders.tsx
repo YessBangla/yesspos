@@ -27,6 +27,8 @@ import { FeedbackSla } from "@/components/FeedbackSla";
 import { NotificationLog } from "@/components/NotificationLog";
 import { ProofOfDelivery } from "@/components/ProofOfDelivery";
 import { OrderFeedback } from "@/components/OrderFeedback";
+import { dispatchNotifications } from "@/lib/notify-dispatch.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/_authenticated/delivery-orders")({
   head: () => ({
@@ -270,6 +272,33 @@ function DeliveryOrdersPage() {
     };
   }, [visible, byOrder]);
 
+  // Auto-deliver queued customer notifications through the configured SMS gateway.
+  const dispatch = useServerFn(dispatchNotifications);
+  const autoSend = async () => {
+    try {
+      const res = await dispatch({ data: undefined });
+      if (res.sent > 0) {
+        toast.success(
+          bn ? `${res.sent} টি এসএমএস পাঠানো হয়েছে` : `${res.sent} SMS notification(s) sent`,
+        );
+      }
+      qc.invalidateQueries({ queryKey: ["order-notifications"] });
+      qc.invalidateQueries({ queryKey: ["notification-log"] });
+    } catch (e) {
+      console.error("[notifications] auto-send failed", e);
+    }
+  };
+
+  // Background sweep so notifications go out even without a manual action.
+  useQuery({
+    queryKey: ["notification-autosend"],
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      await autoSend();
+      return Date.now();
+    },
+  });
+
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase.from("delivery_orders").update({ status }).eq("id", id);
@@ -284,12 +313,14 @@ function DeliveryOrdersPage() {
       qc.invalidateQueries({ queryKey: ["delivery-orders"] });
       qc.invalidateQueries({ queryKey: ["delivery-order-events"] });
       qc.invalidateQueries({ queryKey: ["order-notifications"] });
+      void autoSend();
       toast.success(
         bn
-          ? "আপডেট হয়েছে · গ্রাহক নোটিফিকেশন তৈরি হয়েছে"
-          : "Updated · customer notification created",
+          ? "আপডেট হয়েছে · গ্রাহককে জানানো হচ্ছে"
+          : "Updated · customer is being notified",
       );
     },
+
 
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
@@ -309,6 +340,8 @@ function DeliveryOrdersPage() {
       qc.invalidateQueries({ queryKey: ["order-notifications"] });
       qc.invalidateQueries({ queryKey: ["notification-log"] });
       setSelected([]);
+      void autoSend();
+
       toast.success(
         bn ? `${v.ids.length} টি অর্ডার আপডেট হয়েছে` : `${v.ids.length} order(s) updated`,
       );
