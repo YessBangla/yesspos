@@ -117,12 +117,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           label: lang === "bn" ? "ছবি অডিট" : "Image audit",
           icon: ImageOff,
         },
-        {
-          to: "/media",
-          feature: "media",
-          label: lang === "bn" ? "ইমেজ গ্যালারি" : "Image gallery",
-          icon: Images,
-        },
+        { to: "/catalog", feature: "catalog", label: t("catalog"), icon: Tags },
+
         { to: "/catalog", feature: "catalog", label: t("catalog"), icon: Tags },
         { to: "/stock-adjustments", feature: "stock-adjustments", label: t("stockAdjust"), icon: SlidersHorizontal },
         { to: "/stock-count", feature: "stock-count", label: t("stockCount"), icon: ClipboardList },
