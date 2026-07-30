@@ -1,4 +1,12 @@
 import { LangToggle } from "@/components/LangToggle";
+import {
+  TIME_SLOTS,
+  dayKey,
+  nextDays,
+  slotNotPassed,
+  slotStates,
+  useSlotAvailability,
+} from "@/lib/slots";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -151,31 +159,8 @@ type P = {
 
 const PAGE = 24;
 
-/** Chaldal-style delivery windows. */
-const TIME_SLOTS = [
-  { id: "08:00-11:00", bn: "সকাল ৮টা - ১১টা", en: "8:00 AM - 11:00 AM" },
-  { id: "11:00-14:00", bn: "সকাল ১১টা - দুপুর ২টা", en: "11:00 AM - 2:00 PM" },
-  { id: "14:00-17:00", bn: "দুপুর ২টা - বিকাল ৫টা", en: "2:00 PM - 5:00 PM" },
-  { id: "17:00-20:00", bn: "বিকাল ৫টা - রাত ৮টা", en: "5:00 PM - 8:00 PM" },
-] as const;
-
-function nextDays(count: number) {
-  return Array.from({ length: count }, (_, i) => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
-}
-
-/** A slot is only bookable if it ends at least 1 hour from now. */
-function slotAvailable(date: Date, slotId: string) {
-  const [, end] = slotId.split("-");
-  const [h, m] = end.split(":").map(Number);
-  const endsAt = new Date(date);
-  endsAt.setHours(h, m, 0, 0);
-  return endsAt.getTime() - Date.now() > 60 * 60 * 1000;
-}
+/** Delivery windows, cut-off rules and live capacity live in one shared module. */
+const slotAvailable = (d: Date | string, id: string) => slotNotPassed(d, id);
 
 const checkoutSchema = z.object({
   name: z.string().trim().min(2, "name").max(60),
