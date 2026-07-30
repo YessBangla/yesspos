@@ -338,6 +338,11 @@ function DashboardPage() {
   ];
   const essentialActions = quickActions.filter((a) => ESSENTIAL_LINKS.includes(a.to));
   const visibleActions = showAllActions ? quickActions : essentialActions;
+  const q = moduleQuery.trim().toLowerCase();
+  const moduleCards = q
+    ? quickActions.filter((a) => a.label.toLowerCase().includes(q) || a.to.toLowerCase().includes(q))
+    : visibleActions;
+
 
 
   const widgetLabel: Record<DashboardWidget, string> = {
