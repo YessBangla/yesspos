@@ -229,8 +229,10 @@ function DeliveryOrdersPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["delivery-orders"] });
       qc.invalidateQueries({ queryKey: ["delivery-order-events"] });
-      toast.success(bn ? "আপডেট হয়েছে" : "Updated");
+      qc.invalidateQueries({ queryKey: ["order-notifications"] });
+      toast.success(bn ? "আপডেট হয়েছে · গ্রাহক নোটিফিকেশন তৈরি হয়েছে" : "Updated · customer notification created");
     },
+
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
