@@ -612,11 +612,15 @@ function ShopPage() {
             <CustomerAccountMenu />
           </div>
 
-          <Button className="h-11 shrink-0 rounded-full" onClick={() => setCheckout(true)}>
-            <ShoppingBag className="mr-1 size-4" />
+          <Button
+            className="h-12 shrink-0 rounded-full px-5 font-semibold"
+            onClick={() => setCheckout(true)}
+          >
+            <ShoppingBag className="mr-1.5 size-4" />
             <span className="hidden sm:inline">{num(cart.count, lang)} · </span>
             {money(cart.subtotal, lang)}
           </Button>
+
         </div>
 
         {/* ---- Portal menu ---- */}
