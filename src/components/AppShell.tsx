@@ -140,7 +140,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     },
     {
       id: "ecom",
-      label: lang === "bn" ? "ই-কমার্স" : "E-commerce",
+      label: lang === "bn" ? "হোম ডেলিভারি" : "Home Delivery",
       icon: Store,
       items: [
         {
