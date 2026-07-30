@@ -38,6 +38,7 @@ import { Route as AuthenticatedProductAuditRouteImport } from './routes/_authent
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
 import { Route as AuthenticatedPartyStatementRouteImport } from './routes/_authenticated/party-statement'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedMobilePaymentsRouteImport } from './routes/_authenticated/mobile-payments'
 import { Route as AuthenticatedMediaRouteImport } from './routes/_authenticated/media'
 import { Route as AuthenticatedLabelsRouteImport } from './routes/_authenticated/labels'
@@ -210,6 +211,12 @@ const AuthenticatedPartyStatementRoute =
     path: '/party-statement',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMobilePaymentsRoute =
   AuthenticatedMobilePaymentsRouteImport.update({
     id: '/mobile-payments',
@@ -352,6 +359,7 @@ export interface FileRoutesByFullPath {
   '/labels': typeof AuthenticatedLabelsRoute
   '/media': typeof AuthenticatedMediaRoute
   '/mobile-payments': typeof AuthenticatedMobilePaymentsRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/party-statement': typeof AuthenticatedPartyStatementRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/pos': typeof AuthenticatedPosRoute
@@ -403,6 +411,7 @@ export interface FileRoutesByTo {
   '/labels': typeof AuthenticatedLabelsRoute
   '/media': typeof AuthenticatedMediaRoute
   '/mobile-payments': typeof AuthenticatedMobilePaymentsRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/party-statement': typeof AuthenticatedPartyStatementRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/pos': typeof AuthenticatedPosRoute
@@ -456,6 +465,7 @@ export interface FileRoutesById {
   '/_authenticated/labels': typeof AuthenticatedLabelsRoute
   '/_authenticated/media': typeof AuthenticatedMediaRoute
   '/_authenticated/mobile-payments': typeof AuthenticatedMobilePaymentsRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/party-statement': typeof AuthenticatedPartyStatementRoute
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
@@ -509,6 +519,7 @@ export interface FileRouteTypes {
     | '/labels'
     | '/media'
     | '/mobile-payments'
+    | '/notifications'
     | '/party-statement'
     | '/payments'
     | '/pos'
@@ -560,6 +571,7 @@ export interface FileRouteTypes {
     | '/labels'
     | '/media'
     | '/mobile-payments'
+    | '/notifications'
     | '/party-statement'
     | '/payments'
     | '/pos'
@@ -612,6 +624,7 @@ export interface FileRouteTypes {
     | '/_authenticated/labels'
     | '/_authenticated/media'
     | '/_authenticated/mobile-payments'
+    | '/_authenticated/notifications'
     | '/_authenticated/party-statement'
     | '/_authenticated/payments'
     | '/_authenticated/pos'
@@ -851,6 +864,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPartyStatementRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/mobile-payments': {
       id: '/_authenticated/mobile-payments'
       path: '/mobile-payments'
@@ -1023,6 +1043,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLabelsRoute: typeof AuthenticatedLabelsRoute
   AuthenticatedMediaRoute: typeof AuthenticatedMediaRoute
   AuthenticatedMobilePaymentsRoute: typeof AuthenticatedMobilePaymentsRoute
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPartyStatementRoute: typeof AuthenticatedPartyStatementRoute
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
@@ -1065,6 +1086,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLabelsRoute: AuthenticatedLabelsRoute,
   AuthenticatedMediaRoute: AuthenticatedMediaRoute,
   AuthenticatedMobilePaymentsRoute: AuthenticatedMobilePaymentsRoute,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPartyStatementRoute: AuthenticatedPartyStatementRoute,
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
