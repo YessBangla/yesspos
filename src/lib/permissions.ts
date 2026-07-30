@@ -94,3 +94,18 @@ export function canAccess(role: AppRole | null | undefined, feature: Feature) {
 export function isAdminRole(role: AppRole | null | undefined) {
   return role === "admin" || role === "super_admin";
 }
+
+/** Who may upload images, edit tags/alt text or assign product images. */
+export function canEditMedia(role: AppRole | null | undefined) {
+  return role === "super_admin" || role === "admin" || role === "manager";
+}
+
+/** Who may move images to trash, restore them or delete them permanently. */
+export function canDeleteMedia(role: AppRole | null | undefined) {
+  return role === "super_admin" || role === "admin" || role === "manager";
+}
+
+/** Who may see the media audit log (admins only, matching audit_logs access). */
+export function canViewMediaLog(role: AppRole | null | undefined) {
+  return isAdminRole(role);
+}
