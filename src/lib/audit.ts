@@ -37,6 +37,8 @@ export type AuditAction =
   | "promotion_delete"
   | "review_moderate"
   | "delivery_proof_upload"
+  | "delivery_proof_verify"
+  | "delivery_feedback_escalate"
   | "delivery_feedback_resolve";
 
 
