@@ -1,5 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, BellRing, Check, Copy, MessageCircle, RotateCcw, Smartphone } from "lucide-react";
+import {
+  AlertTriangle,
+  BellRing,
+  Check,
+  Copy,
+  MessageCircle,
+  RotateCcw,
+  Smartphone,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,7 +88,9 @@ export function OrderNotifications({ orderId, phone }: { orderId: string; phone?
       {list.isLoading && <p className="text-xs text-muted-foreground">…</p>}
       {!list.isLoading && rows.length === 0 && (
         <p className="text-xs text-muted-foreground">
-          {bn ? "স্ট্যাটাস বদলালে বার্তা এখানে তৈরি হবে।" : "Messages appear here on every status change."}
+          {bn
+            ? "স্ট্যাটাস বদলালে বার্তা এখানে তৈরি হবে।"
+            : "Messages appear here on every status change."}
         </p>
       )}
       <ul className="space-y-1.5">
@@ -135,13 +145,20 @@ export function OrderNotifications({ orderId, phone }: { orderId: string; phone?
                 className="h-7 px-2"
                 onClick={async () => {
                   const ok = await copyMessage(n.body);
-                  toast[ok ? "success" : "error"](ok ? (bn ? "কপি হয়েছে" : "Copied") : bn ? "কপি হয়নি" : "Copy failed");
+                  toast[ok ? "success" : "error"](
+                    ok ? (bn ? "কপি হয়েছে" : "Copied") : bn ? "কপি হয়নি" : "Copy failed",
+                  );
                 }}
               >
                 <Copy className="mr-1 size-3" /> {bn ? "কপি" : "Copy"}
               </Button>
               {!n.is_sent && (
-                <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => markSent.mutate(n)}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2"
+                  onClick={() => markSent.mutate(n)}
+                >
                   <Check className="mr-1 size-3" /> {bn ? "পাঠানো হয়েছে" : "Mark sent"}
                 </Button>
               )}

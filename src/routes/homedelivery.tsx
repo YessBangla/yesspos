@@ -14,7 +14,6 @@ import {
   ShoppingBag,
   Home,
   ShoppingBasket,
-
   Truck,
   WifiOff,
 } from "lucide-react";
@@ -56,7 +55,11 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/homedelivery")({
   validateSearch: (input: Record<string, unknown>) => {
-    const truthy = input.checkout === true || input.checkout === 1 || input.checkout === "1" || input.checkout === "true";
+    const truthy =
+      input.checkout === true ||
+      input.checkout === 1 ||
+      input.checkout === "1" ||
+      input.checkout === "true";
     const parsed = searchSchema.safeParse({
       q: typeof input.q === "string" && input.q.trim() ? input.q : undefined,
       cat: typeof input.cat === "string" && input.cat.trim() ? input.cat : undefined,
@@ -70,10 +73,14 @@ export const Route = createFileRoute("/homedelivery")({
       { title: "Online grocery & home delivery — Sokoler Bazar" },
       {
         name: "description",
-        content: "Order fresh groceries online and get home delivery, or pay in store. Rice, oil, dairy, snacks and daily essentials.",
+        content:
+          "Order fresh groceries online and get home delivery, or pay in store. Rice, oil, dairy, snacks and daily essentials.",
       },
       { property: "og:title", content: "Online grocery & home delivery — Sokoler Bazar" },
-      { property: "og:description", content: "Fresh groceries delivered to your door, free above ৳1000." },
+      {
+        property: "og:description",
+        content: "Fresh groceries delivered to your door, free above ৳1000.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:url", content: `${SITE}/homedelivery` },
       { name: "twitter:card", content: "summary_large_image" },
@@ -82,7 +89,6 @@ export const Route = createFileRoute("/homedelivery")({
   }),
   component: ShopPage,
 });
-
 
 type P = {
   id: string;
@@ -148,7 +154,14 @@ function ShopPage() {
   const [cartOpen, setCartOpen] = useState(false);
 
   const [online, setOnline] = useState(true);
-  const [form, setForm] = useState({ name: "", phone: "", address: "", area: "", note: "", payment: "cod" });
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    area: "",
+    note: "",
+    payment: "cod",
+  });
   const [placed, setPlaced] = useState<number | null>(null);
   const [slotDay, setSlotDay] = useState(() => nextDays(1)[0].toISOString().slice(0, 10));
   const [slotTime, setSlotTime] = useState<string>("");
@@ -203,8 +216,6 @@ function ShopPage() {
     setCheckout(!!search.checkout);
   }, [search.q, search.cat, search.checkout]);
 
-
-
   const refreshQueue = useCallback(async () => setQueued(await listQueuedOrders()), []);
 
   const runSync = useCallback(
@@ -220,7 +231,9 @@ function ShopPage() {
               : `${res.synced} queued order(s) sent (#${res.placed.join(", #")})`,
           );
         if (res.failed > 0)
-          toast.error(bn ? "কিছু অর্ডার পাঠানো যায়নি — আবার চেষ্টা হবে" : "Some orders failed — will retry");
+          toast.error(
+            bn ? "কিছু অর্ডার পাঠানো যায়নি — আবার চেষ্টা হবে" : "Some orders failed — will retry",
+          );
       } finally {
         setSyncing(false);
         await refreshQueue();
@@ -258,7 +271,10 @@ function ShopPage() {
     queryKey: ["shop-categories"],
     staleTime: 5 * 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase.from("categories").select("id,name_en,name_bn").order("name_en");
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id,name_en,name_bn")
+        .order("name_en");
       if (error) throw error;
       return data;
     },
@@ -306,19 +322,41 @@ function ShopPage() {
     const parsed = checkoutSchema.safeParse(form);
     if (!parsed.success) {
       const codes = new Set(parsed.error.issues.map((i) => String(i.message)));
-      if (codes.has("name")) found.push(bn ? "পুরো নাম লিখুন (কমপক্ষে ২ অক্ষর)" : "Enter your full name (min 2 characters)");
-      if (codes.has("phone")) found.push(bn ? "সঠিক বাংলাদেশি মোবাইল নম্বর দিন (01XXXXXXXXX)" : "Enter a valid Bangladeshi mobile number (01XXXXXXXXX)");
-      if (codes.has("address")) found.push(bn ? "সম্পূর্ণ ঠিকানা দিন — বাসা/রোড/এলাকা (কমপক্ষে ১০ অক্ষর)" : "Enter a full address — house/road/area (min 10 characters)");
+      if (codes.has("name"))
+        found.push(
+          bn ? "পুরো নাম লিখুন (কমপক্ষে ২ অক্ষর)" : "Enter your full name (min 2 characters)",
+        );
+      if (codes.has("phone"))
+        found.push(
+          bn
+            ? "সঠিক বাংলাদেশি মোবাইল নম্বর দিন (01XXXXXXXXX)"
+            : "Enter a valid Bangladeshi mobile number (01XXXXXXXXX)",
+        );
+      if (codes.has("address"))
+        found.push(
+          bn
+            ? "সম্পূর্ণ ঠিকানা দিন — বাসা/রোড/এলাকা (কমপক্ষে ১০ অক্ষর)"
+            : "Enter a full address — house/road/area (min 10 characters)",
+        );
       if (codes.has("area")) found.push(bn ? "এলাকা লিখুন" : "Enter your area");
-      if (parsed.error.issues.some((i) => i.path[0] === "note")) found.push(bn ? "নোট সর্বোচ্চ ২০০ অক্ষর" : "Note can be at most 200 characters");
+      if (parsed.error.issues.some((i) => i.path[0] === "note"))
+        found.push(bn ? "নোট সর্বোচ্চ ২০০ অক্ষর" : "Note can be at most 200 characters");
     }
     if (!slotTime) found.push(bn ? "ডেলিভারির সময় বেছে নিন" : "Choose a delivery slot");
     else if (!slotAvailable(new Date(slotDay), slotTime))
-      found.push(bn ? "এই স্লটটি আর নেওয়া যাবে না, অন্যটি বেছে নিন" : "That slot has passed — pick another one");
+      found.push(
+        bn
+          ? "এই স্লটটি আর নেওয়া যাবে না, অন্যটি বেছে নিন"
+          : "That slot has passed — pick another one",
+      );
     if (cart.lines.length === 0) found.push(bn ? "কার্ট খালি" : "Cart is empty");
 
     checkPackCart(
-      cart.lines.map((l) => ({ name: bn ? l.name_bn : l.name_en, pack_size: l.pack_size, qty: l.qty })),
+      cart.lines.map((l) => ({
+        name: bn ? l.name_bn : l.name_en,
+        pack_size: l.pack_size,
+        qty: l.qty,
+      })),
     ).forEach((i) => found.push(bn ? i.bn : i.en));
 
     return { ok: found.length === 0, found, parsed };
@@ -358,7 +396,11 @@ function ShopPage() {
       await queueOrder(orderRow, items);
       cart.clear();
       setCheckout(false);
-      toast.success(bn ? "অফলাইন — অনলাইনে এলে অর্ডার স্বয়ংক্রিয়ভাবে যাবে" : "Offline — your order will be sent automatically when you reconnect");
+      toast.success(
+        bn
+          ? "অফলাইন — অনলাইনে এলে অর্ডার স্বয়ংক্রিয়ভাবে যাবে"
+          : "Offline — your order will be sent automatically when you reconnect",
+      );
       return;
     }
 
@@ -377,7 +419,11 @@ function ShopPage() {
       if (issues.length > 0) {
         const msgs = formatIssues(issues, bn).split("\n");
         setErrors(msgs);
-        toast.error(bn ? "অর্ডার দেওয়া যাবে না — পণ্যের তথ্য মেলেনি" : "Cannot place order — product data mismatch");
+        toast.error(
+          bn
+            ? "অর্ডার দেওয়া যাবে না — পণ্যের তথ্য মেলেনি"
+            : "Cannot place order — product data mismatch",
+        );
         void products.refetch();
         return;
       }
@@ -402,7 +448,8 @@ function ShopPage() {
         if (!dup) {
           await supabase.from("customer_addresses").insert({
             user_id: user.id,
-            label: (savedAddresses.data ?? []).length === 0 ? "Home" : parsed.data.area.slice(0, 20),
+            label:
+              (savedAddresses.data ?? []).length === 0 ? "Home" : parsed.data.area.slice(0, 20),
             full_name: parsed.data.name,
             phone: parsed.data.phone,
             address: parsed.data.address,
@@ -467,7 +514,9 @@ function ShopPage() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-1.5 text-xs">
           <span className="flex items-center gap-1.5">
             <Truck className="size-3.5" />
-            {bn ? "ঢাকায় ১ ঘণ্টায় ডেলিভারি · ৳১০০০+ অর্ডারে ফ্রি" : "1-hour delivery in Dhaka · Free above ৳1000"}
+            {bn
+              ? "ঢাকায় ১ ঘণ্টায় ডেলিভারি · ৳১০০০+ অর্ডারে ফ্রি"
+              : "1-hour delivery in Dhaka · Free above ৳1000"}
           </span>
           <span className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-1 font-semibold hover:underline">
@@ -498,7 +547,9 @@ function ShopPage() {
             <span className="gradient-brand grid size-9 place-items-center rounded-xl text-primary-foreground">
               <ShoppingBasket className="size-5" />
             </span>
-            <span className="hidden font-display text-lg font-bold text-primary sm:block">{sc("brand.name", "Sokoler Bazar")}</span>
+            <span className="hidden font-display text-lg font-bold text-primary sm:block">
+              {sc("brand.name", "Sokoler Bazar")}
+            </span>
           </Link>
 
           <div className="relative min-w-[160px] flex-1">
@@ -527,12 +578,21 @@ function ShopPage() {
                     }}
                   >
                     {sug.image_url ? (
-                      <img src={sug.image_url} alt="" loading="lazy" className="size-8 rounded object-cover" />
+                      <img
+                        src={sug.image_url}
+                        alt=""
+                        loading="lazy"
+                        className="size-8 rounded object-cover"
+                      />
                     ) : (
                       <span className="size-8 rounded bg-muted" />
                     )}
-                    <span className="min-w-0 flex-1 truncate text-sm">{bn ? sug.name_bn : sug.name_en}</span>
-                    <span className="text-xs font-semibold text-primary">{money(Number(sug.price), lang)}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm">
+                      {bn ? sug.name_bn : sug.name_en}
+                    </span>
+                    <span className="text-xs font-semibold text-primary">
+                      {money(Number(sug.price), lang)}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -587,7 +647,10 @@ function ShopPage() {
               {bn ? c.name_bn : c.name_en}
             </button>
           ))}
-          <Link to="/track" className="ml-auto whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted">
+          <Link
+            to="/track"
+            className="ml-auto whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted"
+          >
             {bn ? "অর্ডার ট্র্যাক" : "Track order"}
           </Link>
           <Link
@@ -602,19 +665,33 @@ function ShopPage() {
         {!online && (
           <div className="flex items-center justify-center gap-2 bg-warning/20 py-1 text-xs">
             <WifiOff className="size-3" />
-            {bn ? "অফলাইন মোড — ব্রাউজ ও কার্ট কাজ করবে" : "Offline mode — browsing and cart still work"}
+            {bn
+              ? "অফলাইন মোড — ব্রাউজ ও কার্ট কাজ করবে"
+              : "Offline mode — browsing and cart still work"}
           </div>
         )}
         {queued.length > 0 && (
           <div className="flex flex-wrap items-center justify-center gap-2 bg-primary/10 px-3 py-1.5 text-xs">
             <CloudUpload className="size-3.5 text-primary" />
             <span>
-              {bn ? `${num(queued.length, lang)}টি অর্ডার সিঙ্কের অপেক্ষায়` : `${queued.length} order(s) waiting to sync`}
+              {bn
+                ? `${num(queued.length, lang)}টি অর্ডার সিঙ্কের অপেক্ষায়`
+                : `${queued.length} order(s) waiting to sync`}
               {queued.some((q) => q.attempts > 0) &&
                 ` · ${bn ? "পুনঃচেষ্টা" : "retry"} ${queued[0].attempts}/${QUEUE_MAX_ATTEMPTS}`}
             </span>
-            <Button size="sm" variant="outline" className="h-6 px-2 text-[11px]" disabled={syncing} onClick={() => runSync(true)}>
-              {syncing ? <Loader2 className="mr-1 size-3 animate-spin" /> : <RefreshCw className="mr-1 size-3" />}
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[11px]"
+              disabled={syncing}
+              onClick={() => runSync(true)}
+            >
+              {syncing ? (
+                <Loader2 className="mr-1 size-3 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-1 size-3" />
+              )}
               {bn ? "এখনই পাঠান" : "Sync now"}
             </Button>
             {queued.some((q) => q.attempts >= QUEUE_MAX_ATTEMPTS) && (
@@ -623,7 +700,9 @@ function ShopPage() {
                 variant="ghost"
                 className="h-6 px-2 text-[11px] text-destructive"
                 onClick={() =>
-                  queued.filter((q) => q.attempts >= QUEUE_MAX_ATTEMPTS).forEach((q) => void dropQueuedOrder(q.id))
+                  queued
+                    .filter((q) => q.attempts >= QUEUE_MAX_ATTEMPTS)
+                    .forEach((q) => void dropQueuedOrder(q.id))
                 }
               >
                 {bn ? "ব্যর্থগুলো মুছুন" : "Discard failed"}
@@ -640,7 +719,12 @@ function ShopPage() {
             <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {bn ? "ক্যাটাগরি" : "Categories"}
             </p>
-            <SideCat active={!cat} onClick={() => setCat("")} label={bn ? "সব পণ্য" : "All products"} count={products.data?.length ?? 0} />
+            <SideCat
+              active={!cat}
+              onClick={() => setCat("")}
+              label={bn ? "সব পণ্য" : "All products"}
+              count={products.data?.length ?? 0}
+            />
             {(categories.data ?? []).map((c) => (
               <SideCat
                 key={c.id}
@@ -662,15 +746,33 @@ function ShopPage() {
             <div className="gradient-brand col-span-full rounded-2xl p-5 text-primary-foreground sm:col-span-2">
               <p className="text-xs opacity-80">{bn ? "অনলাইন সুপারশপ" : "Online supershop"}</p>
               <h1 className="font-display text-xl font-bold leading-tight sm:text-2xl">
-                {sc("shop.hero_title", bn ? "বাজার এখন দরজায়, ১ ঘণ্টায় ডেলিভারি" : "Your daily bazar, delivered in 1 hour")}
+                {sc(
+                  "shop.hero_title",
+                  bn
+                    ? "বাজার এখন দরজায়, ১ ঘণ্টায় ডেলিভারি"
+                    : "Your daily bazar, delivered in 1 hour",
+                )}
               </h1>
               <p className="mt-1 text-sm opacity-90">
-                {sc("shop.hero_subtitle", bn ? "৳১০০০+ অর্ডারে ফ্রি ডেলিভারি · ক্যাশ অন ডেলিভারি" : "Free delivery above ৳1000 · Cash on delivery")}
+                {sc(
+                  "shop.hero_subtitle",
+                  bn
+                    ? "৳১০০০+ অর্ডারে ফ্রি ডেলিভারি · ক্যাশ অন ডেলিভারি"
+                    : "Free delivery above ৳1000 · Cash on delivery",
+                )}
               </p>
             </div>
             <div className="grid gap-3">
-              <Perk icon={Clock} title={bn ? "সময় বেছে নিন" : "Pick your slot"} sub={bn ? "সকাল ৮টা - রাত ৮টা" : "8 AM – 8 PM"} />
-              <Perk icon={BadgePercent} title={bn ? "মেম্বার পয়েন্ট" : "Member points"} sub={bn ? "১০ টাকায় ১ পয়েন্ট" : "1 point per ৳10"} />
+              <Perk
+                icon={Clock}
+                title={bn ? "সময় বেছে নিন" : "Pick your slot"}
+                sub={bn ? "সকাল ৮টা - রাত ৮টা" : "8 AM – 8 PM"}
+              />
+              <Perk
+                icon={BadgePercent}
+                title={bn ? "মেম্বার পয়েন্ট" : "Member points"}
+                sub={bn ? "১০ টাকায় ১ পয়েন্ট" : "1 point per ৳10"}
+              />
             </div>
           </section>
 
@@ -692,9 +794,9 @@ function ShopPage() {
           <div className="mt-4 flex items-baseline justify-between">
             <h2 className="font-display text-lg font-bold">
               {cat
-                ? (bn
+                ? ((bn
                     ? categories.data?.find((c) => c.id === cat)?.name_bn
-                    : categories.data?.find((c) => c.id === cat)?.name_en) ?? ""
+                    : categories.data?.find((c) => c.id === cat)?.name_en) ?? "")
                 : bn
                   ? "সব পণ্য"
                   : "All products"}
@@ -762,7 +864,11 @@ function ShopPage() {
                     : `Add ${money(1000 - cart.subtotal, lang)} more for free delivery`}
                 </p>
               )}
-              <Button className="mt-2 w-full" disabled={cart.lines.length === 0} onClick={() => setCheckout(true)}>
+              <Button
+                className="mt-2 w-full"
+                disabled={cart.lines.length === 0}
+                onClick={() => setCheckout(true)}
+              >
                 {bn ? "চেকআউট" : "Checkout"}
               </Button>
             </div>
@@ -773,7 +879,9 @@ function ShopPage() {
       <footer className="mt-12 border-t border-border bg-card pb-24 lg:pb-0">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 text-sm sm:grid-cols-3">
           <div>
-            <p className="font-display text-base font-bold text-primary">{sc("brand.name", "Sokoler Bazar")}</p>
+            <p className="font-display text-base font-bold text-primary">
+              {sc("brand.name", "Sokoler Bazar")}
+            </p>
             <p className="mt-1 text-muted-foreground">
               {bn
                 ? "সুপারশপের সব পণ্য অনলাইনে — অর্ডার করুন, ঘরে বসে বুঝে নিন।"
@@ -812,7 +920,9 @@ function ShopPage() {
               <ShoppingBasket className="size-5 shrink-0 text-primary" />
               <span className="truncate">
                 {num(cart.count, lang)} {bn ? "পণ্য" : "items"} · <b>{money(total, lang)}</b>
-                <span className="block text-xs text-primary">{bn ? "কার্ট দেখুন / পরিমাণ বদলান" : "View cart / edit qty"}</span>
+                <span className="block text-xs text-primary">
+                  {bn ? "কার্ট দেখুন / পরিমাণ বদলান" : "View cart / edit qty"}
+                </span>
               </span>
             </button>
             <Button variant="outline" onClick={() => setCartOpen(true)}>
@@ -824,7 +934,10 @@ function ShopPage() {
       )}
 
       {cartOpen && !checkout && (
-        <div className="fixed inset-0 z-40 flex flex-col justify-end bg-foreground/40 lg:hidden" onClick={() => setCartOpen(false)}>
+        <div
+          className="fixed inset-0 z-40 flex flex-col justify-end bg-foreground/40 lg:hidden"
+          onClick={() => setCartOpen(false)}
+        >
           <div
             className="max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-border bg-card"
             onClick={(e) => e.stopPropagation()}
@@ -840,7 +953,9 @@ function ShopPage() {
                 <CartRow key={l.id} l={l} bn={bn} lang={lang} onSet={(q) => cart.setQty(l.id, q)} />
               ))}
               {cart.lines.length === 0 && (
-                <p className="p-6 text-center text-sm text-muted-foreground">{bn ? "কার্ট খালি" : "Cart is empty"}</p>
+                <p className="p-6 text-center text-sm text-muted-foreground">
+                  {bn ? "কার্ট খালি" : "Cart is empty"}
+                </p>
               )}
             </div>
             <div className="space-y-1 border-t border-border p-4 text-sm">
@@ -862,12 +977,13 @@ function ShopPage() {
         </div>
       )}
 
-
       {checkout && (
         <div className="fixed inset-0 z-40 overflow-y-auto bg-background/95 p-4 backdrop-blur">
           <div className="mx-auto max-w-lg space-y-4 py-6">
             <div className="flex items-center justify-between">
-              <h2 className="font-display text-xl font-bold">{bn ? "ডেলিভারি তথ্য" : "Delivery details"}</h2>
+              <h2 className="font-display text-xl font-bold">
+                {bn ? "ডেলিভারি তথ্য" : "Delivery details"}
+              </h2>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => setCheckout(false)}>
                   {bn ? "আরও পণ্য ক্রয় করুন" : "Buy more products"}
@@ -883,7 +999,9 @@ function ShopPage() {
                 <CartRow key={l.id} l={l} bn={bn} lang={lang} onSet={(q) => cart.setQty(l.id, q)} />
               ))}
               {cart.lines.length === 0 && (
-                <p className="p-4 text-sm text-muted-foreground">{bn ? "কার্ট খালি" : "Cart is empty"}</p>
+                <p className="p-4 text-sm text-muted-foreground">
+                  {bn ? "কার্ট খালি" : "Cart is empty"}
+                </p>
               )}
             </div>
 
@@ -918,16 +1036,30 @@ function ShopPage() {
             ) : (
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-dashed border-border p-3 text-sm">
                 <span className="text-muted-foreground">
-                  {bn ? "লগইন করলে ঠিকানা ও অর্ডার সংরক্ষিত থাকবে" : "Sign in to save addresses and track orders"}
+                  {bn
+                    ? "লগইন করলে ঠিকানা ও অর্ডার সংরক্ষিত থাকবে"
+                    : "Sign in to save addresses and track orders"}
                 </span>
                 <CustomerAccountMenu compact />
               </div>
             )}
 
             <div className="grid gap-3">
-              <F label={bn ? "নাম" : "Name"} v={form.name} on={(v) => setForm({ ...form, name: v })} />
-              <F label={bn ? "মোবাইল" : "Phone"} v={form.phone} on={(v) => setForm({ ...form, phone: v })} />
-              <F label={bn ? "এলাকা" : "Area"} v={form.area} on={(v) => setForm({ ...form, area: v })} />
+              <F
+                label={bn ? "নাম" : "Name"}
+                v={form.name}
+                on={(v) => setForm({ ...form, name: v })}
+              />
+              <F
+                label={bn ? "মোবাইল" : "Phone"}
+                v={form.phone}
+                on={(v) => setForm({ ...form, phone: v })}
+              />
+              <F
+                label={bn ? "এলাকা" : "Area"}
+                v={form.area}
+                on={(v) => setForm({ ...form, area: v })}
+              />
               <div className="space-y-1.5">
                 <Label>{bn ? "সম্পূর্ণ ঠিকানা" : "Full address"}</Label>
                 <Textarea
@@ -936,7 +1068,11 @@ function ShopPage() {
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                 />
               </div>
-              <F label={bn ? "নোট (ঐচ্ছিক)" : "Note (optional)"} v={form.note} on={(v) => setForm({ ...form, note: v })} />
+              <F
+                label={bn ? "নোট (ঐচ্ছিক)" : "Note (optional)"}
+                v={form.note}
+                on={(v) => setForm({ ...form, note: v })}
+              />
 
               <div className="space-y-2">
                 <Label>{bn ? "ডেলিভারির দিন" : "Delivery day"}</Label>
@@ -953,10 +1089,16 @@ function ShopPage() {
                         }}
                         className={cn(
                           "rounded-xl border px-3 py-2 text-xs",
-                          slotDay === key ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border",
+                          slotDay === key
+                            ? "border-primary bg-primary/10 font-semibold text-primary"
+                            : "border-border",
                         )}
                       >
-                        {d.toLocaleDateString(bn ? "bn-BD" : "en-GB", { weekday: "short", day: "numeric", month: "short" })}
+                        {d.toLocaleDateString(bn ? "bn-BD" : "en-GB", {
+                          weekday: "short",
+                          day: "numeric",
+                          month: "short",
+                        })}
                       </button>
                     );
                   })}
@@ -974,7 +1116,9 @@ function ShopPage() {
                         className={cn(
                           "rounded-xl border px-3 py-2 text-xs",
                           !ok && "cursor-not-allowed opacity-40",
-                          slotTime === t.id ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border",
+                          slotTime === t.id
+                            ? "border-primary bg-primary/10 font-semibold text-primary"
+                            : "border-border",
                         )}
                       >
                         {bn ? t.bn : t.en}
@@ -999,7 +1143,9 @@ function ShopPage() {
                       onClick={() => setForm({ ...form, payment: m.id })}
                       className={cn(
                         "rounded-full border px-3 py-1.5 text-sm",
-                        form.payment === m.id ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border",
+                        form.payment === m.id
+                          ? "border-primary bg-primary/10 font-semibold text-primary"
+                          : "border-border",
                       )}
                     >
                       {bn ? m.bn : m.en}
@@ -1064,14 +1210,24 @@ function ShopPage() {
   );
 }
 
-function CatChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function CatChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
         "rounded-full border px-3 py-1.5 text-sm",
-        active ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border text-muted-foreground",
+        active
+          ? "border-primary bg-primary/10 font-semibold text-primary"
+          : "border-border text-muted-foreground",
       )}
     >
       {label}
@@ -1111,7 +1267,9 @@ function ProductCard({
       <div className="flex flex-1 flex-col gap-1 p-3">
         <span className="line-clamp-2 text-sm font-medium">{bn ? p.name_bn : p.name_en}</span>
         <span className="text-xs text-muted-foreground">{p.pack_size}</span>
-        <span className="mt-auto font-display font-bold text-primary">{money(Number(p.price), lang)}</span>
+        <span className="mt-auto font-display font-bold text-primary">
+          {money(Number(p.price), lang)}
+        </span>
         {qty === 0 ? (
           <Button size="sm" className="mt-1 w-full" onClick={onAdd}>
             <Plus className="mr-1 size-3.5" /> {bn ? "যোগ" : "Add"}
@@ -1147,11 +1305,21 @@ function CartRow({
     <div className="flex items-center gap-3 p-3">
       <span className="min-w-0 flex-1 truncate text-sm">{bn ? l.name_bn : l.name_en}</span>
       <div className="flex items-center gap-1">
-        <Button size="icon" variant="ghost" className="size-9 sm:size-7" onClick={() => onSet(l.qty - 1)}>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="size-9 sm:size-7"
+          onClick={() => onSet(l.qty - 1)}
+        >
           <Minus className="size-3" />
         </Button>
         <span className="w-6 text-center text-sm">{num(l.qty, lang)}</span>
-        <Button size="icon" variant="ghost" className="size-9 sm:size-7" onClick={() => onSet(l.qty + 1)}>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="size-9 sm:size-7"
+          onClick={() => onSet(l.qty + 1)}
+        >
           <Plus className="size-3" />
         </Button>
       </div>
@@ -1178,14 +1346,26 @@ function F({ label, v, on }: { label: string; v: string; on: (v: string) => void
   );
 }
 
-function SideCat({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
+function SideCat({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
         "flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm",
-        active ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground hover:bg-muted",
+        active
+          ? "bg-primary/10 font-semibold text-primary"
+          : "text-muted-foreground hover:bg-muted",
       )}
     >
       <span className="truncate">{label}</span>

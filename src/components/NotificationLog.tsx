@@ -85,7 +85,18 @@ export function NotificationLog() {
     if (visible.length === 0) return toast.error(bn ? "কিছু নেই" : "Nothing to export");
     downloadCsv(
       `notification-log-${new Date().toISOString().slice(0, 10)}.csv`,
-      ["Order No", "Created", "Phone", "Channel", "Title", "Message", "Status", "Attempts", "Last attempt", "Error"],
+      [
+        "Order No",
+        "Created",
+        "Phone",
+        "Channel",
+        "Title",
+        "Message",
+        "Status",
+        "Attempts",
+        "Last attempt",
+        "Error",
+      ],
       visible.map((r) => [
         r.order_no ?? "",
         r.created_at.slice(0, 16).replace("T", " "),
@@ -122,7 +133,9 @@ export function NotificationLog() {
             onClick={() => setTab(t.id)}
             className={cn(
               "rounded-full border px-3 py-1 text-xs",
-              tab === t.id ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border text-muted-foreground",
+              tab === t.id
+                ? "border-primary bg-primary/10 font-semibold text-primary"
+                : "border-border text-muted-foreground",
             )}
           >
             {bn ? t.bn : t.en} ({counts[t.id]})
@@ -133,7 +146,9 @@ export function NotificationLog() {
       <ul className="mt-2 space-y-1.5">
         {list.isLoading && <li className="text-xs text-muted-foreground">…</li>}
         {!list.isLoading && visible.length === 0 && (
-          <li className="text-xs text-muted-foreground">{bn ? "কোনো বার্তা নেই" : "No messages"}</li>
+          <li className="text-xs text-muted-foreground">
+            {bn ? "কোনো বার্তা নেই" : "No messages"}
+          </li>
         )}
         {visible.map((r) => (
           <li key={r.id} className="rounded-md border border-border p-2 text-xs">
@@ -145,7 +160,8 @@ export function NotificationLog() {
             </div>
             <p className="mt-0.5 text-muted-foreground">{r.body}</p>
             <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {r.customer_phone ?? "—"} · {(r.last_attempt_at ?? r.created_at).slice(0, 16).replace("T", " ")} ·{" "}
+              {r.customer_phone ?? "—"} ·{" "}
+              {(r.last_attempt_at ?? r.created_at).slice(0, 16).replace("T", " ")} ·{" "}
               {bn ? "চেষ্টা" : "attempts"}: {r.send_attempts}
             </p>
             {r.last_error && r.send_status === "failed" && (
@@ -170,7 +186,8 @@ export function NotificationLog() {
                 disabled={send.isPending}
                 onClick={() => send.mutate({ row: r, channel: "whatsapp" })}
               >
-                <MessageCircle className="mr-1 size-3" /> {bn ? "রিট্রাই WhatsApp" : "Retry WhatsApp"}
+                <MessageCircle className="mr-1 size-3" />{" "}
+                {bn ? "রিট্রাই WhatsApp" : "Retry WhatsApp"}
               </Button>
             </div>
           </li>
