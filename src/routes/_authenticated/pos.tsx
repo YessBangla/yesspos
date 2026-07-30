@@ -69,6 +69,14 @@ import { isOfflineSupported, queueSale } from "@/lib/offline-queue";
 import { normalizePhone } from "@/lib/share-invoice";
 import { checkPackCart } from "@/lib/pack-size";
 import { checkOrderConsistency, formatIssues } from "@/lib/order-check";
+import {
+  TILE_IMAGE_HEIGHT,
+  TILE_MIN_WIDTH,
+  sortProducts,
+  usePosView,
+  type SortOrder,
+  type TileSize,
+} from "@/lib/pos-view";
 
 
 
