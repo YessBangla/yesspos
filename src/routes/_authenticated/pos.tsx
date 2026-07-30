@@ -884,6 +884,24 @@ function PosPage() {
 
           <div className="grid flex-1 grid-cols-2 content-start gap-3 overflow-y-auto bg-muted/30 p-3 sm:grid-cols-3 sm:gap-4 sm:p-4 xl:grid-cols-4 2xl:grid-cols-5">
             {products.isLoading && <p className="text-sm text-muted-foreground">{t("loading")}</p>}
+            {!products.isLoading && visible.length === 0 && (
+              <div className="col-span-full flex flex-col items-center gap-3 py-12 text-center">
+                <Package className="size-10 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">
+                  {lang === "bn" ? "এই অপশনে কোনো পণ্য পাওয়া যায়নি" : "No products in this option"}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setCat("all");
+                    setQuery("");
+                  }}
+                >
+                  {lang === "bn" ? "সব পণ্য দেখুন" : "Show all products"}
+                </Button>
+              </div>
+            )}
             {visible.map((p) => {
               const out = p.stock <= 0;
               const low = !out && p.stock <= 5;
