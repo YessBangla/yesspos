@@ -987,7 +987,8 @@ function ShopPage() {
               <h2 className="font-display text-xl font-bold">
                 {bn ? "ডেলিভারি তথ্য" : "Delivery details"}
               </h2>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <LangToggle className="bg-card" />
                 <Button variant="outline" size="sm" onClick={() => setCheckout(false)}>
                   {bn ? "আরও পণ্য ক্রয় করুন" : "Buy more products"}
                 </Button>
