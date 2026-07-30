@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BellRing, Bike, PackageSearch, Phone } from "lucide-react";
+import { BellRing, Bike, MapPin, PackageSearch, Phone, Route } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +34,26 @@ type Tracked = {
   rider_phone: string | null;
   rider_vehicle: string | null;
   eta_minutes: number | null;
+  rider_lat: number | null;
+  rider_lng: number | null;
+  rider_location_at: string | null;
 };
+
+const FLOW = ["pending", "confirmed", "packed", "shipped", "delivered"] as const;
+
+const STEP_LABEL: Record<string, { bn: string; en: string }> = {
+  pending: { bn: "অর্ডার গৃহীত", en: "Order placed" },
+  confirmed: { bn: "কনফার্মড", en: "Confirmed" },
+  packed: { bn: "প্যাকিং সম্পন্ন", en: "Packed" },
+  shipped: { bn: "রাস্তায়", en: "On the way" },
+  delivered: { bn: "ডেলিভার্ড", en: "Delivered" },
+};
+
+/** Free OpenStreetMap embed – no API key needed. */
+function mapSrc(lat: number, lng: number) {
+  const d = 0.01;
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - d}%2C${lat - d}%2C${lng + d}%2C${lat + d}&layer=mapnik&marker=${lat}%2C${lng}`;
+}
 
 
 type Notice = { id: string; title: string; body: string; created_at: string };
@@ -142,6 +161,72 @@ function TrackPage() {
                 <span>{result.updated_at.slice(0, 16).replace("T", " ")}</span>
               </div>
             )}
+
+            <div className="mt-3 rounded-lg border border-border p-3">
+              <p className="mb-2 flex items-center gap-1 font-semibold">
+                <Route className="size-4 text-primary" /> {bn ? "ডেলিভারি অগ্রগতি" : "Delivery progress"}
+              </p>
+              {result.status === "cancelled" ? (
+                <p className="text-sm text-destructive">{bn ? "অর্ডারটি বাতিল হয়েছে।" : "This order was cancelled."}</p>
+              ) : (
+                <ol className="space-y-1.5">
+                  {FLOW.map((step, i) => {
+                    const idx = FLOW.indexOf(result.status as (typeof FLOW)[number]);
+                    const done = idx >= i;
+                    const current = idx === i;
+                    return (
+                      <li key={step} className="flex items-center gap-2 text-xs">
+                        <span
+                          className={
+                            done
+                              ? "size-2.5 rounded-full bg-primary"
+                              : "size-2.5 rounded-full border border-border bg-background"
+                          }
+                        />
+                        <span className={done ? "font-semibold" : "text-muted-foreground"}>
+                          {bn ? STEP_LABEL[step].bn : STEP_LABEL[step].en}
+                        </span>
+                        {current && (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">
+                            {bn ? "চলমান" : "Now"}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+              {result.rider_lat != null && result.rider_lng != null ? (
+                <div className="mt-3">
+                  <iframe
+                    title={bn ? "রাইডারের লোকেশন" : "Rider location"}
+                    src={mapSrc(Number(result.rider_lat), Number(result.rider_lng))}
+                    className="h-56 w-full rounded-lg border border-border"
+                    loading="lazy"
+                  />
+                  <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <span>
+                      {bn ? "সর্বশেষ লোকেশন" : "Last location"}:{" "}
+                      {result.rider_location_at?.slice(0, 16).replace("T", " ") ?? "—"}
+                    </span>
+                    <a
+                      className="inline-flex items-center gap-1 font-semibold text-primary underline"
+                      href={`https://www.openstreetmap.org/?mlat=${result.rider_lat}&mlon=${result.rider_lng}#map=15/${result.rider_lat}/${result.rider_lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <MapPin className="size-3" /> {bn ? "বড় ম্যাপে দেখুন" : "Open in map"}
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {bn
+                    ? "রাইডারের লাইভ লোকেশন এখনো পাওয়া যায়নি।"
+                    : "Live rider location is not available yet."}
+                </p>
+              )}
+            </div>
 
             <div className="mt-3 rounded-lg bg-muted/60 p-3">
               <p className="mb-1 flex items-center gap-1 font-semibold">
