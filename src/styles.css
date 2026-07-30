@@ -166,6 +166,76 @@
 }
 
 /*
+ * Dashboard skin — soft periwinkle/lavender glass palette.
+ * Scoped to /dashboard so POS and other modules keep the teal system.
+ */
+.dashboard-skin {
+  --background: oklch(0.972 0.018 285);
+  --foreground: oklch(0.28 0.045 280);
+  --card: oklch(1 0 0 / 0.72);
+  --card-foreground: oklch(0.28 0.045 280);
+  --popover: oklch(0.995 0.006 285);
+  --popover-foreground: oklch(0.28 0.045 280);
+  --primary: oklch(0.55 0.19 274);
+  --primary-foreground: oklch(0.99 0.005 280);
+  --secondary: oklch(0.945 0.03 285);
+  --secondary-foreground: oklch(0.36 0.09 278);
+  --muted: oklch(0.952 0.022 285);
+  --muted-foreground: oklch(0.55 0.035 282);
+  --accent: oklch(0.82 0.11 330);
+  --accent-foreground: oklch(0.3 0.08 320);
+  --success: oklch(0.66 0.16 155);
+  --warning: oklch(0.8 0.14 78);
+  --destructive: oklch(0.62 0.21 18);
+  --border: oklch(0.9 0.025 285);
+  --input: oklch(0.9 0.025 285);
+  --ring: oklch(0.55 0.19 274);
+  --chart-1: oklch(0.55 0.19 274);
+  --chart-2: oklch(0.68 0.15 330);
+  --chart-3: oklch(0.66 0.16 155);
+  --chart-4: oklch(0.62 0.14 235);
+  --chart-5: oklch(0.72 0.15 55);
+  --shadow-panel: 0 1px 2px oklch(0.4 0.12 280 / 0.06), 0 12px 34px -18px oklch(0.4 0.14 280 / 0.35);
+  --shadow-lift: 0 2px 8px oklch(0.4 0.12 280 / 0.1), 0 22px 48px -24px oklch(0.4 0.14 280 / 0.45);
+
+  border-radius: var(--radius-3xl);
+  background-image:
+    radial-gradient(120% 90% at 88% -8%, oklch(0.72 0.16 288 / 0.3) 0%, transparent 58%),
+    radial-gradient(90% 80% at 4% 104%, oklch(0.8 0.13 335 / 0.28) 0%, transparent 60%),
+    linear-gradient(180deg, oklch(0.975 0.02 288) 0%, oklch(0.97 0.014 300) 100%);
+  color: var(--foreground);
+}
+
+.dashboard-skin .surface-panel,
+.dashboard-skin [class*="bg-card"] {
+  backdrop-filter: blur(14px);
+}
+
+.dark .dashboard-skin {
+  --background: oklch(0.21 0.035 285);
+  --foreground: oklch(0.95 0.015 285);
+  --card: oklch(0.27 0.04 285 / 0.75);
+  --card-foreground: oklch(0.95 0.015 285);
+  --popover: oklch(0.27 0.04 285);
+  --popover-foreground: oklch(0.95 0.015 285);
+  --primary: oklch(0.72 0.15 280);
+  --primary-foreground: oklch(0.19 0.04 285);
+  --secondary: oklch(0.32 0.045 285);
+  --secondary-foreground: oklch(0.95 0.015 285);
+  --muted: oklch(0.32 0.045 285);
+  --muted-foreground: oklch(0.74 0.03 285);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.72 0.15 280);
+
+  background-image:
+    radial-gradient(120% 90% at 88% -8%, oklch(0.55 0.16 288 / 0.35) 0%, transparent 58%),
+    radial-gradient(90% 80% at 4% 104%, oklch(0.5 0.13 335 / 0.3) 0%, transparent 60%),
+    linear-gradient(180deg, oklch(0.22 0.035 288) 0%, oklch(0.2 0.03 300) 100%);
+}
+
+
+/*
  * Storefront skin — "Editorial bento" direction for the consumer shop
  * (/homedelivery). Scoped so the operator dashboard keeps its own type scale.
  */
