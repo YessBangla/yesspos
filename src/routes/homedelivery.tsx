@@ -1,3 +1,4 @@
+import { LangToggle } from "@/components/LangToggle";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
