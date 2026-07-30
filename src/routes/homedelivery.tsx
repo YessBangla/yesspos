@@ -519,10 +519,12 @@ function ShopPage() {
               : "1-hour delivery in Dhaka · Free above ৳1000"}
           </span>
           <span className="flex items-center gap-3">
+            <LangToggle className="bg-card" />
             <Link to="/" className="flex items-center gap-1 font-semibold hover:underline">
               <Home className="size-3.5" />
               {bn ? "মূল ওয়েবসাইট" : "Main site"}
             </Link>
+
 
             <a href="tel:16710" className="flex items-center gap-1 hover:underline">
               <Phone className="size-3.5" /> 16710
