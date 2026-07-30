@@ -461,8 +461,12 @@ export type Database = {
           id: string
           is_read: boolean
           is_sent: boolean
+          last_attempt_at: string | null
+          last_error: string | null
           order_id: string | null
           order_no: number | null
+          send_attempts: number
+          send_status: string
           sent_at: string | null
           title: string
           to_value: string | null
@@ -479,8 +483,12 @@ export type Database = {
           id?: string
           is_read?: boolean
           is_sent?: boolean
+          last_attempt_at?: string | null
+          last_error?: string | null
           order_id?: string | null
           order_no?: number | null
+          send_attempts?: number
+          send_status?: string
           sent_at?: string | null
           title: string
           to_value?: string | null
@@ -497,8 +505,12 @@ export type Database = {
           id?: string
           is_read?: boolean
           is_sent?: boolean
+          last_attempt_at?: string | null
+          last_error?: string | null
           order_id?: string | null
           order_no?: number | null
+          send_attempts?: number
+          send_status?: string
           sent_at?: string | null
           title?: string
           to_value?: string | null
@@ -727,8 +739,11 @@ export type Database = {
         Row: {
           branch_id: string | null
           created_at: string
+          current_lat: number | null
+          current_lng: number | null
           id: string
           is_active: boolean
+          location_updated_at: string | null
           name: string
           nid: string | null
           note: string | null
@@ -740,8 +755,11 @@ export type Database = {
         Insert: {
           branch_id?: string | null
           created_at?: string
+          current_lat?: number | null
+          current_lng?: number | null
           id?: string
           is_active?: boolean
+          location_updated_at?: string | null
           name: string
           nid?: string | null
           note?: string | null
@@ -753,8 +771,11 @@ export type Database = {
         Update: {
           branch_id?: string | null
           created_at?: string
+          current_lat?: number | null
+          current_lng?: number | null
           id?: string
           is_active?: boolean
+          location_updated_at?: string | null
           name?: string
           nid?: string | null
           note?: string | null
@@ -2311,6 +2332,9 @@ export type Database = {
           eta_minutes: number
           order_no: number
           payment_method: string
+          rider_lat: number
+          rider_lng: number
+          rider_location_at: string
           rider_name: string
           rider_phone: string
           rider_vehicle: string
