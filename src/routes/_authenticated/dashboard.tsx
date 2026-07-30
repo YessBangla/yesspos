@@ -85,6 +85,8 @@ function DashboardPage() {
   const show = (w: DashboardWidget) => dash.active.widgets.includes(w);
   const [tab, setTab] = useState<"sale" | "purchase" | "payment" | "quotation">("sale");
   const [showAllActions, setShowAllActions] = useState(false);
+  const [moduleQuery, setModuleQuery] = useState("");
+
 
 
   const from = rangeStart(range);
