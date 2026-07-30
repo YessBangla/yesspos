@@ -1234,6 +1234,12 @@ function ShopPage() {
             </div>
             <div className="space-y-1.5 border-t border-border bg-muted/40 p-5 text-sm">
               <Row label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
+              {discount > 0 && (
+                <Row
+                  label={`${bn ? "ছাড়" : "Discount"}${coupon ? ` (${coupon.code})` : ""}`}
+                  value={`− ${money(discount, lang)}`}
+                />
+              )}
               <Row label={bn ? "ডেলিভারি" : "Delivery"} value={money(fee, lang)} />
               <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
               {cart.subtotal > 0 && cart.subtotal < 1000 && (
@@ -1341,6 +1347,12 @@ function ShopPage() {
             </div>
             <div className="space-y-1 border-t border-border p-4 text-sm">
               <Row label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
+              {discount > 0 && (
+                <Row
+                  label={`${bn ? "ছাড়" : "Discount"}${coupon ? ` (${coupon.code})` : ""}`}
+                  value={`− ${money(discount, lang)}`}
+                />
+              )}
               <Row label={bn ? "ডেলিভারি" : "Delivery"} value={money(fee, lang)} />
               <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
               <Button
@@ -1660,6 +1672,12 @@ function ShopPage() {
 
             <div className="surface-panel space-y-1 p-4 text-sm">
               <Row label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
+              {discount > 0 && (
+                <Row
+                  label={`${bn ? "ছাড়" : "Discount"}${coupon ? ` (${coupon.code})` : ""}`}
+                  value={`− ${money(discount, lang)}`}
+                />
+              )}
               <Row label={bn ? "ডেলিভারি" : "Delivery"} value={money(fee, lang)} />
               <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
             </div>
