@@ -10,6 +10,7 @@ import { useCustomerSession } from "@/lib/customer-auth";
 import { CustomerAuthDialog } from "@/components/CustomerAccountMenu";
 import { useShopCart } from "@/lib/shop-cart";
 import { LangToggle } from "@/components/LangToggle";
+import { OrderActions } from "@/components/OrderActions";
 
 const SITE = "https://yesspos.lovable.app";
 
@@ -258,6 +259,15 @@ function MyOrdersPage() {
                       <RotateCcw className="mr-1 size-4" />
                       {bn ? "আবার অর্ডার" : "Reorder"}
                     </Button>
+                    <OrderActions
+                      order={{
+                        id: o.id,
+                        order_no: Number(o.order_no),
+                        status: o.status,
+                        slot: o.slot,
+                        customer_phone: o.customer_phone,
+                      }}
+                    />
                     <Button asChild size="sm" variant="ghost">
                       <Link to="/homedelivery" search={{ checkout: true }}>
                         <ShoppingBasket className="mr-1 size-4" />

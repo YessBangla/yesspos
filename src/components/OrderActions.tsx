@@ -70,7 +70,7 @@ export function OrderActions({ order }: { order: Order }) {
       const { data, error } = await supabase.rpc("customer_cancel_order", {
         _order_id: order.id,
         _phone: order.customer_phone ?? "",
-        _reason: reason.trim() || null,
+        _reason: reason.trim() || undefined,
       });
       if (error) throw error;
       if (data !== "ok") throw new Error(reasonText(String(data), bn));
