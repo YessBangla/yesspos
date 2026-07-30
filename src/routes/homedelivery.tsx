@@ -1326,7 +1326,7 @@ function ShopPage() {
               <h2 className="font-display text-xl font-bold">
                 {bn ? "চেকআউট" : "Checkout"}
                 <span className="ml-2 text-sm font-medium text-muted-foreground">
-                  {bn ? "ধাপ" : "Step"} {num(step + 1, lang)}/৩{""}
+                  {bn ? "ধাপ" : "Step"} {num(step + 1, lang)}/{num(3, lang)}
                 </span>
               </h2>
               <div className="flex flex-wrap items-center justify-end gap-2">
