@@ -620,7 +620,9 @@ function ShopPage() {
       }
 
       setPlacedInfo({ phone: parsed.data.phone, slot: slotLabel, total });
+      clearCoupon();
       cart.clear();
+
       setCheckout(false);
       setStep(0);
       setErrors([]);
