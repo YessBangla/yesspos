@@ -882,7 +882,7 @@ function PosPage() {
             ))}
           </div>
 
-          <div className="grid flex-1 grid-cols-2 content-start gap-3 overflow-y-auto bg-muted/30 p-3 sm:grid-cols-3 sm:gap-4 sm:p-4 xl:grid-cols-4 2xl:grid-cols-5">
+          <div className="grid flex-1 auto-rows-max grid-cols-2 content-start gap-3 overflow-y-auto bg-muted/30 p-3 sm:grid-cols-3 sm:gap-4 sm:p-4 xl:grid-cols-4 2xl:grid-cols-5">
             {products.isLoading && <p className="text-sm text-muted-foreground">{t("loading")}</p>}
             {!products.isLoading && visible.length === 0 && (
               <div className="col-span-full flex flex-col items-center gap-3 py-12 text-center">
@@ -914,7 +914,7 @@ function PosPage() {
                   onClick={() => add(p)}
                   className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-[var(--shadow-lift)] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
                 >
-                  <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl bg-muted transition-colors group-hover:bg-primary/5">
+                  <span className="relative grid h-32 w-full shrink-0 place-items-center overflow-hidden rounded-xl bg-muted transition-colors group-hover:bg-primary/5 sm:h-36">
                     {p.image_url ? (
                       <img
                         src={p.image_url}
