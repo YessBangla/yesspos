@@ -24,6 +24,9 @@ import { DeliveryTrackingQr } from "@/components/DeliveryTrackingQr";
 import { OrderNotifications } from "@/components/OrderNotifications";
 import { RiderSchedule } from "@/components/RiderSchedule";
 import { NotificationLog } from "@/components/NotificationLog";
+import { ProofOfDelivery } from "@/components/ProofOfDelivery";
+import { OrderFeedback } from "@/components/OrderFeedback";
+
 
 export const Route = createFileRoute("/_authenticated/delivery-orders")({
   head: () => ({
