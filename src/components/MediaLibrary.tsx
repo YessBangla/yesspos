@@ -71,10 +71,23 @@ export function MediaLibrary({
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const [view, setView] = useState<"gallery" | "trash" | "log">("gallery");
+
+  const me = useMyRole();
+  const mayEdit = canEditMedia(me.data?.role);
+  const mayDelete = canDeleteMedia(me.data?.role);
+  const mayViewLog = canViewMediaLog(me.data?.role);
 
   const assets = useQuery({ queryKey: ["media-assets"], queryFn: listMedia });
   const usage = useQuery({ queryKey: ["media-usage"], queryFn: fetchMediaUsage, staleTime: 30_000 });
+  const trash = useQuery({
+    queryKey: ["media-trash"],
+    queryFn: listTrashedMedia,
+    enabled: view === "trash" && mayDelete,
+  });
+  const log = useQuery({ queryKey: ["media-log"], queryFn: listMediaLog, enabled: view === "log" && mayViewLog });
   const usageFor = (a: MediaAsset): MediaUsage[] => usage.data?.[a.url] ?? [];
+
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
