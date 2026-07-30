@@ -1921,14 +1921,87 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
   );
 }
 
-function F({ label, v, on }: { label: string; v: string; on: (v: string) => void }) {
+function F({
+  id,
+  label,
+  v,
+  on,
+  err,
+  hint,
+  inputMode,
+  autoComplete,
+}: {
+  id?: string;
+  label: string;
+  v: string;
+  on: (v: string) => void;
+  err?: string;
+  hint?: string;
+  inputMode?: "text" | "tel" | "numeric" | "email";
+  autoComplete?: string;
+}) {
   return (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <Input value={v} maxLength={120} onChange={(e) => on(e.target.value)} />
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        value={v}
+        maxLength={120}
+        inputMode={inputMode}
+        autoComplete={autoComplete}
+        aria-invalid={!!err}
+        aria-describedby={err ? `${id}-err` : hint ? `${id}-hint` : undefined}
+        onChange={(e) => on(e.target.value)}
+      />
+      {err ? (
+        <p id={`${id}-err`} role="alert" className="text-xs text-destructive">
+          {err}
+        </p>
+      ) : hint ? (
+        <p id={`${id}-hint`} className="text-xs text-muted-foreground">
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }
+
+/** Checkout steps shown in the stepper. */
+const STEPS = [
+  { id: "address", bn: "ঠিকানা", en: "Address" },
+  { id: "slot", bn: "স্লট ও পেমেন্ট", en: "Slot & payment" },
+  { id: "review", bn: "রিভিউ", en: "Review" },
+] as const;
+
+/** Read-only timeline showing how an order progresses after checkout. */
+function StatusPreview({ bn }: { bn: boolean }) {
+  const steps = [
+    { bn: "অর্ডার গৃহীত", en: "Order placed" },
+    { bn: "কনফার্মড", en: "Confirmed" },
+    { bn: "প্যাকিং সম্পন্ন", en: "Packed" },
+    { bn: "রাস্তায়", en: "On the way" },
+    { bn: "ডেলিভার্ড", en: "Delivered" },
+  ];
+  return (
+    <ol className="space-y-1.5">
+      {steps.map((s, i) => (
+        <li key={s.en} className="flex items-center gap-2 text-xs">
+          <span
+            aria-hidden="true"
+            className={cn(
+              "size-2.5 rounded-full",
+              i === 0 ? "bg-primary" : "border border-border bg-background",
+            )}
+          />
+          <span className={i === 0 ? "font-semibold" : "text-muted-foreground"}>
+            {bn ? s.bn : s.en}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 
 function SideCat({
   label,
