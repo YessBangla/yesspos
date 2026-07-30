@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bike, Check, Phone, Truck, X } from "lucide-react";
+import { Bike, Check, ClipboardList, History, Phone, Truck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { useActiveBranch } from "@/lib/active-branch";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { logAudit } from "@/lib/audit";
+import { DeliveryTrackingQr } from "@/components/DeliveryTrackingQr";
 
 export const Route = createFileRoute("/_authenticated/delivery-orders")({
   head: () => ({
@@ -53,6 +54,16 @@ type Item = {
   line_total: number;
 };
 
+type OrderEvent = {
+  id: string;
+  order_id: string;
+  event_type: string;
+  from_value: string | null;
+  to_value: string | null;
+  actor_name: string | null;
+  created_at: string;
+};
+
 const FLOW = ["pending", "confirmed", "packed", "shipped", "delivered"] as const;
 
 const STATUS_LABEL: Record<string, { bn: string; en: string }> = {
@@ -64,6 +75,11 @@ const STATUS_LABEL: Record<string, { bn: string; en: string }> = {
   cancelled: { bn: "বাতিল", en: "Cancelled" },
 };
 
+function statusText(s: string | null, bn: boolean) {
+  if (!s) return bn ? "—" : "—";
+  return bn ? (STATUS_LABEL[s]?.bn ?? s) : (STATUS_LABEL[s]?.en ?? s);
+}
+
 function DeliveryOrdersPage() {
   const { lang } = useI18n();
   const bn = lang === "bn";
@@ -71,6 +87,11 @@ function DeliveryOrdersPage() {
   const branch = useActiveBranch();
   const [filter, setFilter] = useState<string>("open");
   const [q, setQ] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [area, setArea] = useState("");
+  const [riderFilter, setRiderFilter] = useState("");
+  const [openTimeline, setOpenTimeline] = useState<string | null>(null);
 
   const orders = useQuery({
     queryKey: ["delivery-orders"],
@@ -93,13 +114,11 @@ function DeliveryOrdersPage() {
       const { data, error } = await supabase
         .from("delivery_riders")
         .select("id,name,phone,vehicle,is_active")
-        .eq("is_active", true)
         .order("name");
       if (error) throw error;
       return data as { id: string; name: string; phone: string; vehicle: string; is_active: boolean }[];
     },
   });
-
 
   const items = useQuery({
     queryKey: ["delivery-order-items"],
@@ -111,19 +130,38 @@ function DeliveryOrdersPage() {
     },
   });
 
+  const events = useQuery({
+    queryKey: ["delivery-order-events", openTimeline],
+    enabled: !!openTimeline,
+    staleTime: 10_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("delivery_order_events")
+        .select("id,order_id,event_type,from_value,to_value,actor_name,created_at")
+        .eq("order_id", openTimeline!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as unknown as OrderEvent[];
+    },
+  });
+
   const assignRider = useMutation({
     mutationFn: async ({ id, riderId }: { id: string; riderId: string | null }) => {
       const { error } = await supabase.from("delivery_orders").update({ rider_id: riderId }).eq("id", id);
       if (error) throw error;
-      await logAudit("delivery_order", { entity: "delivery_orders", entityId: id, details: `rider:${riderId ?? "none"}` });
+      await logAudit("delivery_order", {
+        entity: "delivery_orders",
+        entityId: id,
+        details: `rider:${riderId ?? "none"}`,
+      });
     },
-    onSuccess: () => {
+    onSuccess: (_d, v) => {
       qc.invalidateQueries({ queryKey: ["delivery-orders"] });
-      toast.success(bn ? "রাইডার নির্ধারণ হয়েছে" : "Rider assigned");
+      qc.invalidateQueries({ queryKey: ["delivery-order-events"] });
+      toast.success(v.riderId ? (bn ? "রাইডার নির্ধারণ হয়েছে" : "Rider assigned") : bn ? "রাইডার সরানো হয়েছে" : "Rider removed");
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
-
 
   const byOrder = useMemo(() => {
     const map = new Map<string, Item[]>();
@@ -135,8 +173,16 @@ function DeliveryOrdersPage() {
     return map;
   }, [items.data]);
 
+  const areaOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const o of orders.data ?? []) if (o.area?.trim()) set.add(o.area.trim());
+    return [...set].sort();
+  }, [orders.data]);
+
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
+    const fromTs = from ? new Date(`${from}T00:00:00`).getTime() : null;
+    const toTs = to ? new Date(`${to}T23:59:59`).getTime() : null;
     return (orders.data ?? []).filter((o) => {
       const statusOk =
         filter === "all"
@@ -144,10 +190,32 @@ function DeliveryOrdersPage() {
           : filter === "open"
             ? !["delivered", "cancelled"].includes(o.status)
             : o.status === filter;
-      const hay = `${o.order_no} ${o.customer_name} ${o.customer_phone} ${o.area ?? ""}`.toLowerCase();
-      return statusOk && (!needle || hay.includes(needle));
+      const ts = new Date(o.created_at).getTime();
+      const dateOk = (fromTs === null || ts >= fromTs) && (toTs === null || ts <= toTs);
+      const areaOk = !area || (o.area?.trim() ?? "") === area;
+      const riderOk =
+        !riderFilter || (riderFilter === "none" ? !o.rider_id : o.rider_id === riderFilter);
+      const hay = `${o.order_no} ${o.customer_name} ${o.customer_phone} ${o.area ?? ""} ${o.address}`.toLowerCase();
+      return statusOk && dateOk && areaOk && riderOk && (!needle || hay.includes(needle));
     });
-  }, [orders.data, filter, q]);
+  }, [orders.data, filter, q, from, to, area, riderFilter]);
+
+  /** Checkout → delivery order reconciliation over the currently filtered rows. */
+  const summary = useMemo(() => {
+    const rows = visible;
+    const withItems = rows.filter((o) => (byOrder.get(o.id)?.length ?? 0) > 0).length;
+    const missingItems = rows.length - withItems;
+    const cancelled = rows.filter((o) => o.status === "cancelled").length;
+    const delivered = rows.filter((o) => o.status === "delivered").length;
+    const converted = rows.filter((o) => o.sale_id).length;
+    const unassigned = rows.filter((o) => !o.rider_id && !["delivered", "cancelled"].includes(o.status)).length;
+    const value = rows.filter((o) => o.status !== "cancelled").reduce((s, o) => s + Number(o.total), 0);
+    const itemsCount = rows.reduce(
+      (s, o) => s + (byOrder.get(o.id) ?? []).reduce((n, l) => n + l.quantity, 0),
+      0,
+    );
+    return { total: rows.length, withItems, missingItems, cancelled, delivered, converted, unassigned, value, itemsCount };
+  }, [visible, byOrder]);
 
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -157,6 +225,7 @@ function DeliveryOrdersPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["delivery-orders"] });
+      qc.invalidateQueries({ queryKey: ["delivery-order-events"] });
       toast.success(bn ? "আপডেট হয়েছে" : "Updated");
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
@@ -210,6 +279,27 @@ function DeliveryOrdersPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
+  const summaryCards = [
+    { label: bn ? "মোট অর্ডার" : "Orders", value: num(summary.total, lang) },
+    { label: bn ? "সফল এন্ট্রি (আইটেমসহ)" : "Complete entries", value: num(summary.withItems, lang) },
+    { label: bn ? "আইটেম ছাড়া" : "Missing items", value: num(summary.missingItems, lang) },
+    { label: bn ? "মোট পণ্য" : "Item units", value: num(summary.itemsCount, lang) },
+    { label: bn ? "ডেলিভার্ড" : "Delivered", value: num(summary.delivered, lang) },
+    { label: bn ? "বিক্রয়ে রূপান্তরিত" : "Converted to sale", value: num(summary.converted, lang) },
+    { label: bn ? "রাইডার ছাড়া" : "Unassigned", value: num(summary.unassigned, lang) },
+    { label: bn ? "বাতিল" : "Cancelled", value: num(summary.cancelled, lang) },
+    { label: bn ? "মোট মূল্য" : "Order value", value: money(summary.value, lang) },
+  ];
+
+  function resetFilters() {
+    setFilter("open");
+    setQ("");
+    setFrom("");
+    setTo("");
+    setArea("");
+    setRiderFilter("");
+  }
+
   return (
     <div className="p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -221,8 +311,8 @@ function DeliveryOrdersPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           maxLength={40}
-          placeholder={bn ? "অর্ডার/নাম/ফোন" : "Order, name or phone"}
-          className="w-56"
+          placeholder={bn ? "অর্ডার/নাম/ফোন/ঠিকানা" : "Order, name, phone or address"}
+          className="w-64"
         />
       </div>
 
@@ -234,12 +324,89 @@ function DeliveryOrdersPage() {
             onClick={() => setFilter(s)}
             className={cn(
               "rounded-full border px-3 py-1.5 text-sm",
-              filter === s ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border text-muted-foreground",
+              filter === s
+                ? "border-primary bg-primary/10 font-semibold text-primary"
+                : "border-border text-muted-foreground",
             )}
           >
-            {s === "open" ? (bn ? "চলমান" : "Open") : s === "all" ? (bn ? "সব" : "All") : bn ? STATUS_LABEL[s].bn : STATUS_LABEL[s].en}
+            {s === "open"
+              ? bn
+                ? "চলমান"
+                : "Open"
+              : s === "all"
+                ? bn
+                  ? "সব"
+                  : "All"
+                : statusText(s, bn)}
           </button>
         ))}
+      </div>
+
+      <div className="surface-panel mt-3 flex flex-wrap items-end gap-3 p-3">
+        <label className="text-xs text-muted-foreground">
+          {bn ? "শুরুর তারিখ" : "From"}
+          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 h-9 w-40" />
+        </label>
+        <label className="text-xs text-muted-foreground">
+          {bn ? "শেষ তারিখ" : "To"}
+          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 h-9 w-40" />
+        </label>
+        <label className="text-xs text-muted-foreground">
+          {bn ? "এলাকা" : "Area"}
+          <select
+            value={area}
+            onChange={(e) => setArea(e.target.value)}
+            className="mt-1 h-9 w-44 rounded-md border border-input bg-background px-2 text-sm"
+          >
+            <option value="">{bn ? "সব এলাকা" : "All areas"}</option>
+            {areaOptions.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs text-muted-foreground">
+          {bn ? "রাইডার" : "Rider"}
+          <select
+            value={riderFilter}
+            onChange={(e) => setRiderFilter(e.target.value)}
+            className="mt-1 h-9 w-44 rounded-md border border-input bg-background px-2 text-sm"
+          >
+            <option value="">{bn ? "সব রাইডার" : "All riders"}</option>
+            <option value="none">{bn ? "নির্ধারিত নয়" : "Unassigned"}</option>
+            {(riders.data ?? []).map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <Button variant="ghost" size="sm" onClick={resetFilters}>
+          {bn ? "ফিল্টার মুছুন" : "Clear filters"}
+        </Button>
+      </div>
+
+      <div className="surface-panel mt-3 p-3">
+        <p className="mb-2 text-sm font-semibold">
+          <ClipboardList className="mr-1 inline size-4 text-primary" />
+          {bn ? "চেকআউট → অর্ডার সামারি রিপোর্ট" : "Checkout → order summary report"}
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+          {summaryCards.map((c) => (
+            <div key={c.label} className="rounded-lg border border-border p-2">
+              <p className="text-xs text-muted-foreground">{c.label}</p>
+              <p className="font-display text-lg font-bold">{c.value}</p>
+            </div>
+          ))}
+        </div>
+        {summary.missingItems > 0 && (
+          <p className="mt-2 text-xs font-medium text-destructive">
+            {bn
+              ? `${num(summary.missingItems, lang)} টি অর্ডারে চেকআউটের পণ্য তালিকা জমা হয়নি — যাচাই করুন।`
+              : `${summary.missingItems} order(s) arrived without checkout items — please review.`}
+          </p>
+        )}
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
@@ -247,12 +414,13 @@ function DeliveryOrdersPage() {
         {visible.map((o) => {
           const lines = byOrder.get(o.id) ?? [];
           const next = FLOW[FLOW.indexOf(o.status as (typeof FLOW)[number]) + 1];
+          const rider = (riders.data ?? []).find((r) => r.id === o.rider_id);
           return (
             <div key={o.id} className="surface-panel space-y-2 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-display font-bold">#{num(o.order_no, lang)}</span>
                 <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-                  {bn ? STATUS_LABEL[o.status]?.bn : STATUS_LABEL[o.status]?.en}
+                  {statusText(o.status, bn)}
                 </span>
                 <span className="text-xs text-muted-foreground">{o.created_at.slice(0, 16).replace("T", " ")}</span>
               </div>
@@ -268,7 +436,7 @@ function DeliveryOrdersPage() {
                 </p>
                 {o.slot && (
                   <p className="mt-1 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-                    {lang === "bn" ? "স্লট" : "Slot"}: {o.slot}
+                    {bn ? "স্লট" : "Slot"}: {o.slot}
                   </p>
                 )}
                 {o.note && <p className="text-xs italic text-muted-foreground">{o.note}</p>}
@@ -283,6 +451,9 @@ function DeliveryOrdersPage() {
                     <span>{money(Number(l.line_total), lang)}</span>
                   </li>
                 ))}
+                {lines.length === 0 && (
+                  <li className="text-destructive">{bn ? "কোনো পণ্য জমা হয়নি" : "No items recorded"}</li>
+                )}
               </ul>
 
               <div className="flex justify-between text-sm">
@@ -293,40 +464,52 @@ function DeliveryOrdersPage() {
                 <span className="font-bold">{money(Number(o.total), lang)}</span>
               </div>
 
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">{bn ? "রাইডার" : "Rider"}</span>
-                <select
-                  value={o.rider_id ?? ""}
-                  onChange={(e) => assignRider.mutate({ id: o.id, riderId: e.target.value || null })}
-                  className="h-9 flex-1 rounded-md border border-input bg-background px-2 text-sm"
-                >
-                  <option value="">{bn ? "নির্ধারিত নয়" : "Unassigned"}</option>
-                  {(riders.data ?? []).map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {(() => {
-                const rider = (riders.data ?? []).find((r) => r.id === o.rider_id);
-                if (!rider) return null;
-                return (
-                  <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <div className="rounded-lg border border-border p-2">
+                <p className="mb-1 text-xs font-semibold">
+                  <Bike className="mr-1 inline size-3.5 text-primary" />
+                  {rider ? (bn ? "রাইডার পরিবর্তন" : "Re-assign rider") : bn ? "রাইডার নির্ধারণ" : "Assign rider"}
+                </p>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={o.rider_id ?? ""}
+                    onChange={(e) => assignRider.mutate({ id: o.id, riderId: e.target.value || null })}
+                    disabled={assignRider.isPending}
+                    className="h-9 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+                  >
+                    <option value="">{bn ? "নির্ধারিত নয়" : "Unassigned"}</option>
+                    {(riders.data ?? []).map((r) => (
+                      <option key={r.id} value={r.id} disabled={!r.is_active && r.id !== o.rider_id}>
+                        {r.name}
+                        {r.is_active ? "" : bn ? " (নিষ্ক্রিয়)" : " (inactive)"}
+                      </option>
+                    ))}
+                  </select>
+                  {o.rider_id && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => assignRider.mutate({ id: o.id, riderId: null })}
+                      disabled={assignRider.isPending}
+                    >
+                      {bn ? "সরান" : "Remove"}
+                    </Button>
+                  )}
+                </div>
+                {rider && (
+                  <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <a href={`tel:${rider.phone}`} className="inline-flex items-center gap-1 font-semibold text-primary">
                       <Phone className="size-3" /> {rider.phone}
                     </a>
                     <span>· {rider.vehicle}</span>
                   </p>
-                );
-              })()}
-
+                )}
+              </div>
 
               <div className="flex flex-wrap gap-2">
                 {next && o.status !== "cancelled" && (
                   <Button size="sm" onClick={() => setStatus.mutate({ id: o.id, status: next })}>
                     <Bike className="mr-1 size-4" />
-                    {bn ? STATUS_LABEL[next].bn : STATUS_LABEL[next].en}
+                    {statusText(next, bn)}
                   </Button>
                 )}
                 {!o.sale_id && o.status !== "cancelled" && (
@@ -334,6 +517,15 @@ function DeliveryOrdersPage() {
                     <Check className="mr-1 size-4" /> {bn ? "বিক্রয়ে রূপান্তর" : "Convert to sale"}
                   </Button>
                 )}
+                <DeliveryTrackingQr orderNo={o.order_no} phone={o.customer_phone} />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setOpenTimeline((cur) => (cur === o.id ? null : o.id))}
+                >
+                  <History className="mr-1 size-4" />
+                  {bn ? "টাইমলাইন" : "Timeline"}
+                </Button>
                 {!["delivered", "cancelled"].includes(o.status) && (
                   <Button
                     size="sm"
@@ -345,6 +537,43 @@ function DeliveryOrdersPage() {
                   </Button>
                 )}
               </div>
+
+              {openTimeline === o.id && (
+                <ol className="space-y-1 rounded-lg border border-border p-2 text-xs">
+                  {events.isLoading && <li className="text-muted-foreground">…</li>}
+                  {(events.data ?? []).map((ev) => (
+                    <li key={ev.id} className="flex flex-wrap items-center gap-1 border-b border-border/60 pb-1 last:border-0">
+                      <span className="font-semibold text-primary">
+                        {ev.event_type === "created"
+                          ? bn
+                            ? "অর্ডার তৈরি"
+                            : "Order placed"
+                          : ev.event_type === "rider"
+                            ? bn
+                              ? "রাইডার"
+                              : "Rider"
+                            : bn
+                              ? "স্ট্যাটাস"
+                              : "Status"}
+                      </span>
+                      <span>
+                        {ev.event_type === "rider"
+                          ? `${ev.from_value ?? (bn ? "নির্ধারিত নয়" : "Unassigned")} → ${ev.to_value ?? (bn ? "নির্ধারিত নয়" : "Unassigned")}`
+                          : ev.from_value
+                            ? `${statusText(ev.from_value, bn)} → ${statusText(ev.to_value, bn)}`
+                            : statusText(ev.to_value, bn)}
+                      </span>
+                      <span className="text-muted-foreground">
+                        · {ev.created_at.slice(0, 16).replace("T", " ")} ·{" "}
+                        {ev.actor_name ?? (bn ? "সিস্টেম" : "system")}
+                      </span>
+                    </li>
+                  ))}
+                  {!events.isLoading && (events.data ?? []).length === 0 && (
+                    <li className="text-muted-foreground">{bn ? "কোনো ইতিহাস নেই" : "No history yet"}</li>
+                  )}
+                </ol>
+              )}
             </div>
           );
         })}
