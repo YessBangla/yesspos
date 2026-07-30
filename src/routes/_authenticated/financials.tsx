@@ -107,7 +107,7 @@ function FinancialsPage() {
       cur.credit += Number(l.credit);
       map.set(key, cur);
     }
-    return { revenue, returns, purchaseCost, expense, netProfit, stockValue, receivable, payable, cash, trial: [...map.values()] };
+    return { revenue, returns, purchaseReturns, purchaseCost, expense, netProfit, stockValue, receivable, payable, cash, trial: [...map.values()] };
   }, [q.data, lang]);
 
   const totalAssets = f.stockValue + f.receivable + f.cash;
