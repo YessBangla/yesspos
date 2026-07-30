@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   BadgePercent,
+  Check,
   Clock,
   CloudUpload,
   Loader2,
@@ -47,10 +48,33 @@ import {
 
 const SITE = "https://yesspos.lovable.app";
 
-/** Deep-linkable portal state: ?q=rice&cat=<id>&checkout=1 */
+/** Sort options for the storefront grid. */
+export const SORTS = ["relevance", "price_asc", "price_desc", "name_asc", "name_desc"] as const;
+export type SortKey = (typeof SORTS)[number];
+
+/** Human-readable slug used for SEO-friendly category URLs. */
+export function slugify(s: string) {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 60);
+}
+
+function titleCase(slug: string) {
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+/** Deep-linkable portal state: ?q=rice&cat=<id>&c=fresh-fruits&sort=price_asc&checkout=1 */
 const searchSchema = z.object({
   q: z.string().trim().max(60).optional(),
   cat: z.string().trim().max(64).optional(),
+  c: z.string().trim().max(64).optional(),
+  sort: z.enum(SORTS).optional(),
   checkout: z.boolean().optional(),
 });
 
@@ -64,30 +88,52 @@ export const Route = createFileRoute("/homedelivery")({
     const parsed = searchSchema.safeParse({
       q: typeof input.q === "string" && input.q.trim() ? input.q : undefined,
       cat: typeof input.cat === "string" && input.cat.trim() ? input.cat : undefined,
+      c: typeof input.c === "string" && input.c.trim() ? slugify(input.c) : undefined,
+      sort: typeof input.sort === "string" ? (input.sort as SortKey) : undefined,
       checkout: truthy ? true : undefined,
     });
     return parsed.success ? parsed.data : {};
   },
 
-  head: () => ({
-    meta: [
-      { title: "Online grocery & home delivery — Sokoler Bazar" },
-      {
-        name: "description",
-        content:
-          "Order fresh groceries online and get home delivery, or pay in store. Rice, oil, dairy, snacks and daily essentials.",
-      },
-      { property: "og:title", content: "Online grocery & home delivery — Sokoler Bazar" },
-      {
-        property: "og:description",
-        content: "Fresh groceries delivered to your door, free above ৳1000.",
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: `${SITE}/homedelivery` },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [{ rel: "canonical", href: `${SITE}/homedelivery` }],
-  }),
+  // Per-category / per-search SEO: unique title, description, OG tags and canonical.
+  head: ({ match }) => {
+    const s = (match.search ?? {}) as z.infer<typeof searchSchema>;
+    const catName = s.c ? titleCase(s.c) : "";
+    const query = s.q?.trim() ?? "";
+
+    const title = catName
+      ? `${catName} online in Dhaka — home delivery | Sokoler Bazar`
+      : query
+        ? `"${query}" grocery search — Sokoler Bazar`
+        : "Online grocery & home delivery — Sokoler Bazar";
+
+    const description = catName
+      ? `Buy ${catName.toLowerCase()} online at Sokoler Bazar. Fresh stock, transparent prices, 1-hour home delivery in Dhaka and free delivery above ৳1000.`
+      : query
+        ? `Grocery search results for "${query}" at Sokoler Bazar — order online with fast home delivery in Dhaka.`
+        : "Order fresh groceries online and get home delivery, or pay in store. Rice, oil, dairy, snacks and daily essentials.";
+
+    const params = new URLSearchParams();
+    if (s.c) params.set("c", s.c);
+    if (s.cat) params.set("cat", s.cat);
+    const canonical = `${SITE}/homedelivery${params.size ? `?${params.toString()}` : ""}`;
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonical },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+      ],
+      links: [{ rel: "canonical", href: canonical }],
+    };
+  },
+
   component: ShopPage,
 });
 
@@ -150,9 +196,13 @@ function ShopPage() {
   const navigate = Route.useNavigate();
   const [query, setQuery] = useState(search.q ?? "");
   const [cat, setCat] = useState<string>(search.cat ?? "");
+  const [sort, setSort] = useState<SortKey>(search.sort ?? "relevance");
   const [limit, setLimit] = useState(PAGE);
   const [checkout, setCheckout] = useState(!!search.checkout);
+  const [step, setStep] = useState(0);
   const [cartOpen, setCartOpen] = useState(false);
+  const [sugOpen, setSugOpen] = useState(false);
+  const [sugIdx, setSugIdx] = useState(-1);
 
   const [online, setOnline] = useState(true);
   const [form, setForm] = useState({
@@ -167,6 +217,10 @@ function ShopPage() {
   const [slotDay, setSlotDay] = useState(() => nextDays(1)[0].toISOString().slice(0, 10));
   const [slotTime, setSlotTime] = useState<string>("");
   const [errors, setErrors] = useState<string[]>([]);
+  const [fieldErrs, setFieldErrs] = useState<Record<string, string>>({});
+  const [placedInfo, setPlacedInfo] = useState<{ phone: string; slot: string; total: number } | null>(
+    null,
+  );
   const [queued, setQueued] = useState<QueuedOrder[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [placing, setPlacing] = useState(false);
@@ -201,21 +255,14 @@ function ShopPage() {
     if (savedAddresses.data) setPrefilled(true);
   }, [user, isCustomer, accName, accPhone, savedAddresses.data, prefilled]);
 
-  // Keep search / category / checkout shareable and reload-safe in the URL.
-  useEffect(() => {
-    const q = query.trim() || undefined;
-    const c = cat || undefined;
-    const ck = checkout;
-    if (search.q === q && search.cat === c && (search.checkout ?? false) === ck) return;
-    void navigate({ search: { q, cat: c, checkout: ck || undefined }, replace: true });
-  }, [query, cat, checkout, navigate, search.q, search.cat, search.checkout]);
-
   // Back/forward navigation should move the portal too.
   useEffect(() => {
     setQuery(search.q ?? "");
     setCat(search.cat ?? "");
+    setSort(search.sort ?? "relevance");
     setCheckout(!!search.checkout);
-  }, [search.q, search.cat, search.checkout]);
+  }, [search.q, search.cat, search.sort, search.checkout]);
+
 
   const refreshQueue = useCallback(async () => setQueued(await listQueuedOrders()), []);
 
@@ -296,9 +343,47 @@ function ShopPage() {
     },
   });
 
+  const activeCat = useMemo(
+    () => (categories.data ?? []).find((c) => c.id === cat) ?? null,
+    [categories.data, cat],
+  );
+
+  // Keep search / category / sort / checkout shareable and reload-safe in the URL.
+  useEffect(() => {
+    const q = query.trim() || undefined;
+    const c = cat || undefined;
+    const slug = activeCat ? slugify(activeCat.name_en) : undefined;
+    const so = sort === "relevance" ? undefined : sort;
+    const ck = checkout;
+    if (
+      search.q === q &&
+      search.cat === c &&
+      search.c === slug &&
+      search.sort === so &&
+      (search.checkout ?? false) === ck
+    )
+      return;
+    void navigate({
+      search: { q, cat: c, c: slug, sort: so, checkout: ck || undefined },
+      replace: true,
+    });
+  }, [
+    query,
+    cat,
+    sort,
+    checkout,
+    activeCat,
+    navigate,
+    search.q,
+    search.cat,
+    search.c,
+    search.sort,
+    search.checkout,
+  ]);
+
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (products.data ?? []).filter(
+    const list = (products.data ?? []).filter(
       (p) =>
         (!cat || p.category_id === cat) &&
         (!q ||
@@ -306,9 +391,23 @@ function ShopPage() {
           p.name_bn.includes(query.trim()) ||
           (p.brand ?? "").toLowerCase().includes(q)),
     );
-  }, [products.data, query, cat]);
+    const nameOf = (p: P) => (bn ? p.name_bn : p.name_en);
+    switch (sort) {
+      case "price_asc":
+        return [...list].sort((a, b) => Number(a.price) - Number(b.price));
+      case "price_desc":
+        return [...list].sort((a, b) => Number(b.price) - Number(a.price));
+      case "name_asc":
+        return [...list].sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
+      case "name_desc":
+        return [...list].sort((a, b) => nameOf(b).localeCompare(nameOf(a)));
+      default:
+        return list;
+    }
+  }, [products.data, query, cat, sort, bn]);
 
   const shown = visible.slice(0, limit);
+
   const fee = deliveryFeeFor(cart.subtotal);
   const total = cart.subtotal + fee;
 
@@ -320,36 +419,33 @@ function ShopPage() {
 
   function validate() {
     const found: string[] = [];
+    const fields: Record<string, string> = {};
     const parsed = checkoutSchema.safeParse(form);
     if (!parsed.success) {
       const codes = new Set(parsed.error.issues.map((i) => String(i.message)));
       if (codes.has("name"))
-        found.push(
-          bn ? "পুরো নাম লিখুন (কমপক্ষে ২ অক্ষর)" : "Enter your full name (min 2 characters)",
-        );
+        fields.name = bn
+          ? "পুরো নাম লিখুন (কমপক্ষে ২ অক্ষর)"
+          : "Enter your full name (min 2 characters)";
       if (codes.has("phone"))
-        found.push(
-          bn
-            ? "সঠিক বাংলাদেশি মোবাইল নম্বর দিন (01XXXXXXXXX)"
-            : "Enter a valid Bangladeshi mobile number (01XXXXXXXXX)",
-        );
+        fields.phone = bn
+          ? "সঠিক বাংলাদেশি মোবাইল নম্বর দিন (01XXXXXXXXX)"
+          : "Enter a valid Bangladeshi mobile number (01XXXXXXXXX)";
       if (codes.has("address"))
-        found.push(
-          bn
-            ? "সম্পূর্ণ ঠিকানা দিন — বাসা/রোড/এলাকা (কমপক্ষে ১০ অক্ষর)"
-            : "Enter a full address — house/road/area (min 10 characters)",
-        );
-      if (codes.has("area")) found.push(bn ? "এলাকা লিখুন" : "Enter your area");
+        fields.address = bn
+          ? "সম্পূর্ণ ঠিকানা দিন — বাসা/রোড/এলাকা (কমপক্ষে ১০ অক্ষর)"
+          : "Enter a full address — house/road/area (min 10 characters)";
+      if (codes.has("area")) fields.area = bn ? "এলাকা লিখুন" : "Enter your area";
       if (parsed.error.issues.some((i) => i.path[0] === "note"))
-        found.push(bn ? "নোট সর্বোচ্চ ২০০ অক্ষর" : "Note can be at most 200 characters");
+        fields.note = bn ? "নোট সর্বোচ্চ ২০০ অক্ষর" : "Note can be at most 200 characters";
     }
-    if (!slotTime) found.push(bn ? "ডেলিভারির সময় বেছে নিন" : "Choose a delivery slot");
+    if (!slotTime) fields.slot = bn ? "ডেলিভারির সময় বেছে নিন" : "Choose a delivery slot";
     else if (!slotAvailable(new Date(slotDay), slotTime))
-      found.push(
-        bn
-          ? "এই স্লটটি আর নেওয়া যাবে না, অন্যটি বেছে নিন"
-          : "That slot has passed — pick another one",
-      );
+      fields.slot = bn
+        ? "এই স্লটটি আর নেওয়া যাবে না, অন্যটি বেছে নিন"
+        : "That slot has passed — pick another one";
+
+    Object.values(fields).forEach((m) => found.push(m));
     if (cart.lines.length === 0) found.push(bn ? "কার্ট খালি" : "Cart is empty");
 
     checkPackCart(
@@ -360,16 +456,32 @@ function ShopPage() {
       })),
     ).forEach((i) => found.push(bn ? i.bn : i.en));
 
-    return { ok: found.length === 0, found, parsed };
+    return { ok: found.length === 0, found, fields, parsed };
   }
 
+  /** Per-step gate so shoppers cannot advance with invalid data. */
+  function stepErrors(index: number) {
+    const { fields } = validate();
+    if (index === 0)
+      return [fields.name, fields.phone, fields.area, fields.address, fields.note].filter(
+        Boolean,
+      ) as string[];
+    if (index === 1) return [fields.slot].filter(Boolean) as string[];
+    return [];
+  }
+
+
   async function placeOrder() {
-    const { ok, found, parsed } = validate();
+    const { ok, found, fields, parsed } = validate();
     setErrors(found);
+    setFieldErrs(fields);
     if (!ok || !parsed.success) {
+      if (fields.name || fields.phone || fields.area || fields.address) setStep(0);
+      else if (fields.slot) setStep(1);
       toast.error(found[0] ?? (bn ? "তথ্য ঠিক করুন" : "Please fix the highlighted fields"));
       return;
     }
+
 
     const orderRow = {
       user_id: user && isCustomer ? user.id : null,
@@ -462,9 +574,12 @@ function ShopPage() {
         }
       }
 
+      setPlacedInfo({ phone: parsed.data.phone, slot: slotLabel, total });
       cart.clear();
       setCheckout(false);
+      setStep(0);
       setErrors([]);
+      setFieldErrs({});
       setPlaced(Number(data.order_no));
     } catch (e) {
       // Network/server hiccup → queue it instead of losing the order.
@@ -507,6 +622,14 @@ function ShopPage() {
       pack_size: p.pack_size,
       image_url: p.image_url,
     });
+
+  const pickSuggestion = (p: P) => {
+    addToCart(p);
+    setQuery("");
+    setSugOpen(false);
+    setSugIdx(-1);
+    toast.success(bn ? "কার্টে যোগ হয়েছে" : "Added to cart");
+  };
 
   return (
     <main className="storefront min-h-screen bg-background pb-28 lg:pb-10">
@@ -561,51 +684,106 @@ function ShopPage() {
           </Link>
 
           <div className="relative min-w-[160px] flex-1">
-            <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <label htmlFor="shop-search" className="sr-only">
+              {bn ? "পণ্য খুঁজুন" : "Search products"}
+            </label>
+            <Search
+              aria-hidden="true"
+              className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            />
             <Input
+              id="shop-search"
+              type="search"
+              role="combobox"
+              aria-expanded={sugOpen && suggestions.length > 0}
+              aria-controls="shop-search-suggestions"
+              aria-autocomplete="list"
+              aria-activedescendant={
+                sugIdx >= 0 && suggestions[sugIdx] ? `sug-${suggestions[sugIdx].id}` : undefined
+              }
+              aria-describedby="shop-search-hint"
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
                 setLimit(PAGE);
+                setSugOpen(true);
+                setSugIdx(-1);
+              }}
+              onFocus={() => setSugOpen(true)}
+              onBlur={() => window.setTimeout(() => setSugOpen(false), 120)}
+              onKeyDown={(e) => {
+                if (!suggestions.length) return;
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSugOpen(true);
+                  setSugIdx((i) => (i + 1) % suggestions.length);
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSugIdx((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+                } else if (e.key === "Enter" && sugIdx >= 0) {
+                  e.preventDefault();
+                  pickSuggestion(suggestions[sugIdx]);
+                } else if (e.key === "Escape") {
+                  setSugOpen(false);
+                  setSugIdx(-1);
+                }
               }}
               maxLength={60}
               placeholder={bn ? "চাল, তেল, ডিম… খুঁজুন" : "Search rice, oil, eggs…"}
               className="h-12 rounded-full border-transparent bg-muted pl-10 text-base shadow-none focus-visible:bg-card"
             />
+            <span id="shop-search-hint" className="sr-only">
+              {bn
+                ? "লিখুন, তারপর তীর চিহ্ন দিয়ে সাজেশন বেছে নিন এবং এন্টার চাপুন"
+                : "Type to search, use arrow keys to browse suggestions and press Enter to add"}
+            </span>
+            <p aria-live="polite" className="sr-only">
+              {`${visible.length} ${bn ? "পণ্য পাওয়া গেছে" : "products found"}`}
+            </p>
 
-            {suggestions.length > 0 && (
-              <div className="absolute inset-x-0 top-12 z-40 overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
-                {suggestions.map((sug) => (
-                  <button
-                    key={sug.id}
-                    type="button"
-                    className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-muted"
-                    onClick={() => {
-                      addToCart(sug);
-                      setQuery("");
-                      toast.success(bn ? "কার্টে যোগ হয়েছে" : "Added to cart");
-                    }}
-                  >
-                    {sug.image_url ? (
-                      <img
-                        src={sug.image_url}
-                        alt=""
-                        loading="lazy"
-                        className="size-8 rounded object-cover"
-                      />
-                    ) : (
-                      <span className="size-8 rounded bg-muted" />
-                    )}
-                    <span className="min-w-0 flex-1 truncate text-sm">
-                      {bn ? sug.name_bn : sug.name_en}
-                    </span>
-                    <span className="text-xs font-semibold text-primary">
-                      {money(Number(sug.price), lang)}
-                    </span>
-                  </button>
+            {sugOpen && suggestions.length > 0 && (
+              <ul
+                id="shop-search-suggestions"
+                role="listbox"
+                aria-label={bn ? "পণ্যের সাজেশন" : "Product suggestions"}
+                className="absolute inset-x-0 top-12 z-40 overflow-hidden rounded-2xl border border-border bg-card shadow-lg"
+              >
+                {suggestions.map((sug, i) => (
+                  <li key={sug.id} role="none">
+                    <button
+                      id={`sug-${sug.id}`}
+                      role="option"
+                      aria-selected={i === sugIdx}
+                      type="button"
+                      className={cn(
+                        "flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-muted focus-visible:bg-muted focus-visible:outline-none",
+                        i === sugIdx && "bg-muted",
+                      )}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => pickSuggestion(sug)}
+                    >
+                      {sug.image_url ? (
+                        <img
+                          src={sug.image_url}
+                          alt=""
+                          loading="lazy"
+                          className="size-8 rounded object-cover"
+                        />
+                      ) : (
+                        <span className="size-8 rounded bg-muted" />
+                      )}
+                      <span className="min-w-0 flex-1 truncate text-sm">
+                        {bn ? sug.name_bn : sug.name_en}
+                      </span>
+                      <span className="text-xs font-semibold text-primary">
+                        {money(Number(sug.price), lang)}
+                      </span>
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
+
           </div>
 
           <div className="hidden shrink-0 items-center gap-2 sm:flex">
@@ -848,9 +1026,15 @@ function ShopPage() {
             </div>
           </section>
 
-
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
-            <CatChip active={!cat} onClick={() => setCat("")} label={bn ? "সব" : "All"} />
+          <nav
+            aria-label={bn ? "ক্যাটাগরি ফিল্টার" : "Category filters"}
+            className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden"
+          >
+            <CatChip
+              active={!cat}
+              onClick={() => setCat("")}
+              label={bn ? "সব" : "All"}
+            />
             {(categories.data ?? []).map((c) => (
               <CatChip
                 key={c.id}
@@ -862,41 +1046,103 @@ function ShopPage() {
                 label={bn ? c.name_bn : c.name_en}
               />
             ))}
-          </div>
+          </nav>
 
-          <div className="mt-8 flex flex-wrap items-end justify-between gap-2 border-b border-border pb-3">
+          <div className="mt-8 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 {bn ? "আজকের বাজার" : "Today's aisle"}
               </p>
               <h2 className="font-display text-2xl font-extrabold">
-                {cat
-                  ? ((bn
-                      ? categories.data?.find((c) => c.id === cat)?.name_bn
-                      : categories.data?.find((c) => c.id === cat)?.name_en) ?? "")
-                  : bn
-                    ? "সব পণ্য"
-                    : "All products"}
+                {activeCat
+                  ? (bn ? activeCat.name_bn : activeCat.name_en)
+                  : query.trim()
+                    ? `“${query.trim()}”`
+                    : bn
+                      ? "সব পণ্য"
+                      : "All products"}
               </h2>
             </div>
-            <span className="text-sm text-muted-foreground">
-              {num(visible.length, lang)} {bn ? "পণ্য" : "items"}
-            </span>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted-foreground" aria-live="polite">
+                {num(visible.length, lang)} {bn ? "পণ্য" : "items"}
+              </span>
+
+              <label htmlFor="shop-category" className="sr-only">
+                {bn ? "ক্যাটাগরি" : "Category"}
+              </label>
+              <select
+                id="shop-category"
+                value={cat}
+                onChange={(e) => {
+                  setCat(e.target.value);
+                  setLimit(PAGE);
+                }}
+                className="h-9 rounded-full border border-border bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
+              >
+                <option value="">{bn ? "সব ক্যাটাগরি" : "All categories"}</option>
+                {(categories.data ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {bn ? c.name_bn : c.name_en}
+                  </option>
+                ))}
+              </select>
+
+              <label htmlFor="shop-sort" className="sr-only">
+                {bn ? "সাজান" : "Sort products"}
+              </label>
+              <select
+                id="shop-sort"
+                value={sort}
+                onChange={(e) => {
+                  setSort(e.target.value as SortKey);
+                  setLimit(PAGE);
+                }}
+                className="h-9 rounded-full border border-border bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="relevance">{bn ? "ডিফল্ট" : "Recommended"}</option>
+                <option value="price_asc">{bn ? "দাম: কম → বেশি" : "Price: low to high"}</option>
+                <option value="price_desc">{bn ? "দাম: বেশি → কম" : "Price: high to low"}</option>
+                <option value="name_asc">{bn ? "নাম: ক → হ" : "Name: A to Z"}</option>
+                <option value="name_desc">{bn ? "নাম: হ → ক" : "Name: Z to A"}</option>
+              </select>
+
+              {(cat || query.trim() || sort !== "relevance") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 rounded-full"
+                  onClick={() => {
+                    setCat("");
+                    setQuery("");
+                    setSort("relevance");
+                    setLimit(PAGE);
+                  }}
+                >
+                  {bn ? "ফিল্টার মুছুন" : "Clear filters"}
+                </Button>
+              )}
+            </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
-
+          <ul
+            aria-label={bn ? "পণ্যের তালিকা" : "Product list"}
+            className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4"
+          >
             {shown.map((p) => (
-              <ProductCard
-                key={p.id}
-                p={p}
-                bn={bn}
-                qty={cart.lines.find((l) => l.id === p.id)?.qty ?? 0}
-                onAdd={() => addToCart(p)}
-                onSet={(q) => cart.setQty(p.id, q)}
-              />
+              <li key={p.id} className="contents">
+                <ProductCard
+                  p={p}
+                  bn={bn}
+                  qty={cart.lines.find((l) => l.id === p.id)?.qty ?? 0}
+                  onAdd={() => addToCart(p)}
+                  onSet={(q) => cart.setQty(p.id, q)}
+                />
+              </li>
             ))}
-          </div>
+          </ul>
+
 
           {products.isLoading && <p className="py-10 text-center text-muted-foreground">…</p>}
           {!products.isLoading && visible.length === 0 && (
@@ -1066,183 +1312,304 @@ function ShopPage() {
       )}
 
       {checkout && (
-        <div className="fixed inset-0 z-40 overflow-y-auto bg-background/95 p-4 backdrop-blur">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={bn ? "চেকআউট" : "Checkout"}
+          className="fixed inset-0 z-40 overflow-y-auto bg-background/95 p-4 backdrop-blur"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setCheckout(false);
+          }}
+        >
           <div className="mx-auto max-w-lg space-y-4 py-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="font-display text-xl font-bold">
-                {bn ? "ডেলিভারি তথ্য" : "Delivery details"}
+                {bn ? "চেকআউট" : "Checkout"}
+                <span className="ml-2 text-sm font-medium text-muted-foreground">
+                  {bn ? "ধাপ" : "Step"} {num(step + 1, lang)}/{num(3, lang)}
+                </span>
               </h2>
               <div className="flex flex-wrap items-center justify-end gap-2">
                 <LangToggle className="bg-card" />
                 <Button variant="outline" size="sm" onClick={() => setCheckout(false)}>
                   {bn ? "আরও পণ্য ক্রয় করুন" : "Buy more products"}
                 </Button>
-                <Button variant="ghost" onClick={() => setCheckout(false)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={bn ? "চেকআউট বন্ধ করুন" : "Close checkout"}
+                  onClick={() => setCheckout(false)}
+                >
                   ✕
                 </Button>
               </div>
             </div>
 
-            <div className="surface-panel divide-y divide-border">
-              {cart.lines.map((l) => (
-                <CartRow key={l.id} l={l} bn={bn} lang={lang} onSet={(q) => cart.setQty(l.id, q)} />
+            {/* ---- Step indicator ---- */}
+            <ol className="flex items-center gap-2" aria-label={bn ? "চেকআউট ধাপ" : "Checkout steps"}>
+              {STEPS.map((s, i) => (
+                <li key={s.id} className="flex flex-1 items-center gap-2">
+                  <button
+                    type="button"
+                    aria-current={step === i ? "step" : undefined}
+                    onClick={() => {
+                      if (i <= step) setStep(i);
+                    }}
+                    disabled={i > step}
+                    className={cn(
+                      "flex min-h-11 w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      step === i
+                        ? "border-primary bg-primary/10 font-semibold text-primary"
+                        : i < step
+                          ? "border-primary/40 text-primary"
+                          : "border-border text-muted-foreground",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-bold",
+                        i <= step
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                      aria-hidden="true"
+                    >
+                      {i < step ? <Check className="size-3.5" /> : i + 1}
+                    </span>
+                    <span className="truncate">{bn ? s.bn : s.en}</span>
+                  </button>
+                </li>
               ))}
-              {cart.lines.length === 0 && (
-                <p className="p-4 text-sm text-muted-foreground">
-                  {bn ? "কার্ট খালি" : "Cart is empty"}
-                </p>
-              )}
-            </div>
+            </ol>
 
-            {user && isCustomer ? (
-              (savedAddresses.data ?? []).length > 0 && (
+            {/* ---- Step 1: address ---- */}
+            {step === 0 && (
+              <div className="space-y-4">
+                {user && isCustomer ? (
+                  (savedAddresses.data ?? []).length > 0 && (
+                    <div className="space-y-2">
+                      <Label id="saved-addr-label">
+                        {bn ? "সংরক্ষিত ঠিকানা" : "Saved addresses"}
+                      </Label>
+                      <div className="flex flex-wrap gap-2" aria-labelledby="saved-addr-label">
+                        {(savedAddresses.data ?? []).map((a) => (
+                          <button
+                            key={a.id}
+                            type="button"
+                            className="min-h-11 rounded-xl border border-border px-3 py-2 text-left text-xs hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            onClick={() =>
+                              setForm((f) => ({
+                                ...f,
+                                name: a.full_name,
+                                phone: a.phone,
+                                address: a.address,
+                                area: a.area,
+                                note: a.note ?? "",
+                              }))
+                            }
+                          >
+                            <span className="font-semibold">{a.label}</span>
+                            <span className="block text-muted-foreground">{a.area}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                ) : (
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-dashed border-border p-3 text-sm">
+                    <span className="text-muted-foreground">
+                      {bn
+                        ? "লগইন করলে ঠিকানা ও অর্ডার সংরক্ষিত থাকবে"
+                        : "Sign in to save addresses and track orders"}
+                    </span>
+                    <CustomerAccountMenu compact />
+                  </div>
+                )}
+
+                <div className="grid gap-3">
+                  <F
+                    id="co-name"
+                    label={bn ? "নাম" : "Name"}
+                    v={form.name}
+                    err={fieldErrs.name}
+                    autoComplete="name"
+                    on={(v) => setForm({ ...form, name: v })}
+                  />
+                  <F
+                    id="co-phone"
+                    label={bn ? "মোবাইল" : "Phone"}
+                    v={form.phone}
+                    err={fieldErrs.phone}
+                    inputMode="tel"
+                    autoComplete="tel"
+                    hint={bn ? "উদাহরণ: 01712345678" : "Example: 01712345678"}
+                    on={(v) => setForm({ ...form, phone: v })}
+                  />
+                  <F
+                    id="co-area"
+                    label={bn ? "এলাকা" : "Area"}
+                    v={form.area}
+                    err={fieldErrs.area}
+                    autoComplete="address-level2"
+                    on={(v) => setForm({ ...form, area: v })}
+                  />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="co-address">{bn ? "সম্পূর্ণ ঠিকানা" : "Full address"}</Label>
+                    <Textarea
+                      id="co-address"
+                      value={form.address}
+                      maxLength={300}
+                      autoComplete="street-address"
+                      aria-invalid={!!fieldErrs.address}
+                      aria-describedby={fieldErrs.address ? "co-address-err" : undefined}
+                      onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    />
+                    {fieldErrs.address && (
+                      <p id="co-address-err" role="alert" className="text-xs text-destructive">
+                        {fieldErrs.address}
+                      </p>
+                    )}
+                  </div>
+                  <F
+                    id="co-note"
+                    label={bn ? "নোট (ঐচ্ছিক)" : "Note (optional)"}
+                    v={form.note}
+                    err={fieldErrs.note}
+                    on={(v) => setForm({ ...form, note: v })}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* ---- Step 2: slot + payment ---- */}
+            {step === 1 && (
+              <div className="grid gap-4">
                 <div className="space-y-2">
-                  <Label>{bn ? "সংরক্ষিত ঠিকানা" : "Saved addresses"}</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {(savedAddresses.data ?? []).map((a) => (
+                  <Label id="day-label">{bn ? "ডেলিভারির দিন" : "Delivery day"}</Label>
+                  <div className="flex flex-wrap gap-2" role="group" aria-labelledby="day-label">
+                    {nextDays(5).map((d) => {
+                      const key = d.toISOString().slice(0, 10);
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          aria-pressed={slotDay === key}
+                          onClick={() => {
+                            setSlotDay(key);
+                            if (slotTime && !slotAvailable(d, slotTime)) setSlotTime("");
+                          }}
+                          className={cn(
+                            "min-h-11 rounded-xl border px-3 py-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            slotDay === key
+                              ? "border-primary bg-primary/10 font-semibold text-primary"
+                              : "border-border",
+                          )}
+                        >
+                          {d.toLocaleDateString(bn ? "bn-BD" : "en-GB", {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <Label id="time-label">{bn ? "ডেলিভারির সময়" : "Delivery time"}</Label>
+                  <div className="grid grid-cols-2 gap-2" role="group" aria-labelledby="time-label">
+                    {TIME_SLOTS.map((t) => {
+                      const ok = slotAvailable(new Date(slotDay), t.id);
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          disabled={!ok}
+                          aria-pressed={slotTime === t.id}
+                          onClick={() => setSlotTime(t.id)}
+                          className={cn(
+                            "min-h-11 rounded-xl border px-3 py-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            !ok && "cursor-not-allowed opacity-40",
+                            slotTime === t.id
+                              ? "border-primary bg-primary/10 font-semibold text-primary"
+                              : "border-border",
+                          )}
+                        >
+                          {bn ? t.bn : t.en}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {fieldErrs.slot && (
+                    <p role="alert" className="text-xs text-destructive">
+                      {fieldErrs.slot}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label id="pay-label">{bn ? "পেমেন্ট" : "Payment"}</Label>
+                  <div className="flex flex-wrap gap-2" role="group" aria-labelledby="pay-label">
+                    {[
+                      { id: "cod", bn: "ক্যাশ অন ডেলিভারি", en: "Cash on delivery" },
+                      { id: "bkash", bn: "বিকাশ", en: "bKash" },
+                      { id: "nagad", bn: "নগদ", en: "Nagad" },
+                      { id: "card", bn: "কার্ড", en: "Card" },
+                    ].map((m) => (
                       <button
-                        key={a.id}
+                        key={m.id}
                         type="button"
-                        className="rounded-xl border border-border px-3 py-2 text-left text-xs hover:border-primary"
-                        onClick={() =>
-                          setForm((f) => ({
-                            ...f,
-                            name: a.full_name,
-                            phone: a.phone,
-                            address: a.address,
-                            area: a.area,
-                            note: a.note ?? "",
-                          }))
-                        }
+                        aria-pressed={form.payment === m.id}
+                        onClick={() => setForm({ ...form, payment: m.id })}
+                        className={cn(
+                          "min-h-11 rounded-full border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          form.payment === m.id
+                            ? "border-primary bg-primary/10 font-semibold text-primary"
+                            : "border-border",
+                        )}
                       >
-                        <span className="font-semibold">{a.label}</span>
-                        <span className="block text-muted-foreground">{a.area}</span>
+                        {bn ? m.bn : m.en}
                       </button>
                     ))}
                   </div>
                 </div>
-              )
-            ) : (
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-dashed border-border p-3 text-sm">
-                <span className="text-muted-foreground">
-                  {bn
-                    ? "লগইন করলে ঠিকানা ও অর্ডার সংরক্ষিত থাকবে"
-                    : "Sign in to save addresses and track orders"}
-                </span>
-                <CustomerAccountMenu compact />
               </div>
             )}
 
-            <div className="grid gap-3">
-              <F
-                label={bn ? "নাম" : "Name"}
-                v={form.name}
-                on={(v) => setForm({ ...form, name: v })}
-              />
-              <F
-                label={bn ? "মোবাইল" : "Phone"}
-                v={form.phone}
-                on={(v) => setForm({ ...form, phone: v })}
-              />
-              <F
-                label={bn ? "এলাকা" : "Area"}
-                v={form.area}
-                on={(v) => setForm({ ...form, area: v })}
-              />
-              <div className="space-y-1.5">
-                <Label>{bn ? "সম্পূর্ণ ঠিকানা" : "Full address"}</Label>
-                <Textarea
-                  value={form.address}
-                  maxLength={300}
-                  onChange={(e) => setForm({ ...form, address: e.target.value })}
-                />
-              </div>
-              <F
-                label={bn ? "নোট (ঐচ্ছিক)" : "Note (optional)"}
-                v={form.note}
-                on={(v) => setForm({ ...form, note: v })}
-              />
-
-              <div className="space-y-2">
-                <Label>{bn ? "ডেলিভারির দিন" : "Delivery day"}</Label>
-                <div className="flex flex-wrap gap-2">
-                  {nextDays(5).map((d) => {
-                    const key = d.toISOString().slice(0, 10);
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => {
-                          setSlotDay(key);
-                          if (slotTime && !slotAvailable(d, slotTime)) setSlotTime("");
-                        }}
-                        className={cn(
-                          "rounded-xl border px-3 py-2 text-xs",
-                          slotDay === key
-                            ? "border-primary bg-primary/10 font-semibold text-primary"
-                            : "border-border",
-                        )}
-                      >
-                        {d.toLocaleDateString(bn ? "bn-BD" : "en-GB", {
-                          weekday: "short",
-                          day: "numeric",
-                          month: "short",
-                        })}
-                      </button>
-                    );
-                  })}
-                </div>
-                <Label>{bn ? "ডেলিভারির সময়" : "Delivery time"}</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {TIME_SLOTS.map((t) => {
-                    const ok = slotAvailable(new Date(slotDay), t.id);
-                    return (
-                      <button
-                        key={t.id}
-                        type="button"
-                        disabled={!ok}
-                        onClick={() => setSlotTime(t.id)}
-                        className={cn(
-                          "rounded-xl border px-3 py-2 text-xs",
-                          !ok && "cursor-not-allowed opacity-40",
-                          slotTime === t.id
-                            ? "border-primary bg-primary/10 font-semibold text-primary"
-                            : "border-border",
-                        )}
-                      >
-                        {bn ? t.bn : t.en}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>{bn ? "পেমেন্ট" : "Payment"}</Label>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { id: "cod", bn: "ক্যাশ অন ডেলিভারি", en: "Cash on delivery" },
-                    { id: "bkash", bn: "বিকাশ", en: "bKash" },
-                    { id: "nagad", bn: "নগদ", en: "Nagad" },
-                    { id: "card", bn: "কার্ড", en: "Card" },
-                  ].map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => setForm({ ...form, payment: m.id })}
-                      className={cn(
-                        "rounded-full border px-3 py-1.5 text-sm",
-                        form.payment === m.id
-                          ? "border-primary bg-primary/10 font-semibold text-primary"
-                          : "border-border",
-                      )}
-                    >
-                      {bn ? m.bn : m.en}
-                    </button>
+            {/* ---- Step 3: review ---- */}
+            {step === 2 && (
+              <div className="space-y-4">
+                <div className="surface-panel divide-y divide-border">
+                  {cart.lines.map((l) => (
+                    <CartRow
+                      key={l.id}
+                      l={l}
+                      bn={bn}
+                      lang={lang}
+                      onSet={(q) => cart.setQty(l.id, q)}
+                    />
                   ))}
+                  {cart.lines.length === 0 && (
+                    <p className="p-4 text-sm text-muted-foreground">
+                      {bn ? "কার্ট খালি" : "Cart is empty"}
+                    </p>
+                  )}
+                </div>
+
+                <div className="surface-panel space-y-1 p-4 text-sm">
+                  <Row label={bn ? "নাম" : "Name"} value={form.name || "—"} />
+                  <Row label={bn ? "মোবাইল" : "Phone"} value={form.phone || "—"} />
+                  <Row label={bn ? "ঠিকানা" : "Address"} value={form.address || "—"} />
+                  <Row label={bn ? "স্লট" : "Slot"} value={slotLabel || "—"} />
+                  <Row label={bn ? "পেমেন্ট" : "Payment"} value={form.payment.toUpperCase()} />
+                </div>
+
+                <div className="surface-panel space-y-2 p-4">
+                  <p className="text-sm font-semibold">
+                    {bn ? "অর্ডারের পরের ধাপগুলো" : "What happens next"}
+                  </p>
+                  <StatusPreview bn={bn} />
                 </div>
               </div>
-            </div>
+            )}
 
             <div className="surface-panel space-y-1 p-4 text-sm">
               <Row label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
@@ -1251,35 +1618,95 @@ function ShopPage() {
             </div>
 
             {errors.length > 0 && (
-              <ul className="space-y-1 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+              <ul
+                role="alert"
+                className="space-y-1 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive"
+              >
                 {errors.map((e) => (
                   <li key={e}>• {e}</li>
                 ))}
               </ul>
             )}
 
-            <Button
-              className="w-full"
-              size="lg"
-              disabled={cart.lines.length === 0 || placing}
-              onClick={placeOrder}
-            >
-              {placing && <Loader2 className="mr-2 size-4 animate-spin" />}
-              {bn ? "অর্ডার কনফার্ম করুন" : "Place order"}
-            </Button>
+            <div className="flex gap-2">
+              {step > 0 && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="flex-1"
+                  onClick={() => setStep((s) => s - 1)}
+                >
+                  {bn ? "পিছনে" : "Back"}
+                </Button>
+              )}
+              {step < 2 ? (
+                <Button
+                  className="flex-1"
+                  size="lg"
+                  disabled={cart.lines.length === 0}
+                  onClick={() => {
+                    const errs = stepErrors(step);
+                    const { fields } = validate();
+                    setFieldErrs(fields);
+                    setErrors(errs);
+                    if (errs.length) {
+                      toast.error(errs[0]);
+                      return;
+                    }
+                    setErrors([]);
+                    setStep((s) => s + 1);
+                  }}
+                >
+                  {bn ? "পরবর্তী ধাপ" : "Continue"}
+                </Button>
+              ) : (
+                <Button
+                  className="flex-1"
+                  size="lg"
+                  disabled={cart.lines.length === 0 || placing}
+                  onClick={placeOrder}
+                >
+                  {placing && <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />}
+                  {bn ? "অর্ডার কনফার্ম করুন" : "Place order"}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
 
       {placed !== null && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-background/95 p-6 backdrop-blur">
-          <div className="surface-panel max-w-sm space-y-3 p-6 text-center">
-            <h2 className="font-display text-xl font-bold text-primary">
-              {bn ? "অর্ডার নেওয়া হয়েছে!" : "Order placed!"}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {bn ? "আপনার অর্ডার নম্বর" : "Your order number"}: <b>#{placed}</b>
-            </p>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={bn ? "অর্ডার নিশ্চিত" : "Order confirmation"}
+          className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-background/95 p-6 backdrop-blur"
+        >
+          <div className="surface-panel w-full max-w-sm space-y-4 p-6">
+            <div className="text-center">
+              <span className="mx-auto grid size-12 place-items-center rounded-full bg-primary/10 text-primary">
+                <Check className="size-6" aria-hidden="true" />
+              </span>
+              <h2 className="mt-3 font-display text-xl font-bold text-primary">
+                {bn ? "অর্ডার নেওয়া হয়েছে!" : "Order placed!"}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {bn ? "আপনার অর্ডার নম্বর" : "Your order number"}: <b>#{placed}</b>
+              </p>
+              {placedInfo?.slot && (
+                <p className="text-xs text-muted-foreground">
+                  {bn ? "ডেলিভারি স্লট" : "Delivery slot"}: {placedInfo.slot}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-border p-3">
+              <p className="mb-2 text-sm font-semibold">
+                {bn ? "অর্ডার স্ট্যাটাস" : "Order status"}
+              </p>
+              <StatusPreview bn={bn} />
+            </div>
+
             <Button
               className="w-full"
               onClick={() => {
@@ -1289,12 +1716,16 @@ function ShopPage() {
             >
               {bn ? "আরও কেনাকাটা" : "Continue shopping"}
             </Button>
-            <Link to="/track" className="block text-sm text-primary underline">
-              {bn ? "অর্ডার ট্র্যাক করুন" : "Track this order"}
-            </Link>
+            <a
+              href={`/track?order=${placed}&phone=${encodeURIComponent(placedInfo?.phone ?? "")}`}
+              className="block text-center text-sm text-primary underline"
+            >
+              {bn ? "লাইভ ট্র্যাকিং দেখুন" : "Track this order live"}
+            </a>
           </div>
         </div>
       )}
+
     </main>
   );
 }
@@ -1312,13 +1743,15 @@ function CatChip({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
-        "rounded-full border px-3 py-1.5 text-sm",
+        "min-h-11 rounded-full border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         active
           ? "border-primary bg-primary/10 font-semibold text-primary"
           : "border-border text-muted-foreground",
       )}
     >
+
       {label}
     </button>
   );
@@ -1376,33 +1809,42 @@ function ProductCard({
           {qty === 0 ? (
             <Button
               size="icon"
-              className="size-9 shrink-0 rounded-full"
-              aria-label={bn ? "কার্টে যোগ করুন" : "Add to cart"}
+              className="size-11 shrink-0 rounded-full"
+              aria-label={`${bn ? "কার্টে যোগ করুন" : "Add to cart"}: ${bn ? p.name_bn : p.name_en}`}
               onClick={onAdd}
             >
-              <Plus className="size-4" />
+              <Plus className="size-4" aria-hidden="true" />
             </Button>
           ) : (
-            <div className="flex shrink-0 items-center gap-0.5 rounded-full bg-primary p-0.5 text-primary-foreground">
+            <div
+              role="group"
+              aria-label={`${bn ? "পরিমাণ" : "Quantity"}: ${bn ? p.name_bn : p.name_en}`}
+              className="flex shrink-0 items-center gap-0.5 rounded-full bg-primary p-0.5 text-primary-foreground"
+            >
               <Button
                 size="icon"
                 variant="ghost"
-                className="size-8 rounded-full hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                aria-label={`${bn ? "পরিমাণ কমান" : "Decrease quantity"}: ${bn ? p.name_bn : p.name_en}`}
+                className="size-9 rounded-full hover:bg-primary-foreground/20 hover:text-primary-foreground"
                 onClick={() => onSet(qty - 1)}
               >
-                <Minus className="size-3.5" />
+                <Minus className="size-3.5" aria-hidden="true" />
               </Button>
-              <span className="min-w-5 text-center text-sm font-bold">{num(qty, lang)}</span>
+              <span aria-live="polite" className="min-w-5 text-center text-sm font-bold">
+                {num(qty, lang)}
+              </span>
               <Button
                 size="icon"
                 variant="ghost"
-                className="size-8 rounded-full hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                aria-label={`${bn ? "পরিমাণ বাড়ান" : "Increase quantity"}: ${bn ? p.name_bn : p.name_en}`}
+                className="size-9 rounded-full hover:bg-primary-foreground/20 hover:text-primary-foreground"
                 onClick={() => onSet(qty + 1)}
               >
-                <Plus className="size-3.5" />
+                <Plus className="size-3.5" aria-hidden="true" />
               </Button>
             </div>
           )}
+
         </div>
       </div>
     </div>
@@ -1437,25 +1879,34 @@ function CartRow({
         <span className="line-clamp-1 text-sm font-medium">{bn ? l.name_bn : l.name_en}</span>
         <span className="text-xs text-muted-foreground">{money(l.price * l.qty, lang)}</span>
       </div>
-      <div className="flex shrink-0 items-center gap-0.5 rounded-full border border-border">
+      <div
+        role="group"
+        aria-label={`${bn ? "পরিমাণ" : "Quantity"}: ${bn ? l.name_bn : l.name_en}`}
+        className="flex shrink-0 items-center gap-0.5 rounded-full border border-border"
+      >
         <Button
           size="icon"
           variant="ghost"
-          className="size-8 rounded-full"
+          aria-label={`${bn ? "পরিমাণ কমান" : "Decrease quantity"}: ${bn ? l.name_bn : l.name_en}`}
+          className="size-9 rounded-full"
           onClick={() => onSet(l.qty - 1)}
         >
-          <Minus className="size-3" />
+          <Minus className="size-3" aria-hidden="true" />
         </Button>
-        <span className="w-5 text-center text-sm font-semibold">{num(l.qty, lang)}</span>
+        <span aria-live="polite" className="w-5 text-center text-sm font-semibold">
+          {num(l.qty, lang)}
+        </span>
         <Button
           size="icon"
           variant="ghost"
-          className="size-8 rounded-full"
+          aria-label={`${bn ? "পরিমাণ বাড়ান" : "Increase quantity"}: ${bn ? l.name_bn : l.name_en}`}
+          className="size-9 rounded-full"
           onClick={() => onSet(l.qty + 1)}
         >
-          <Plus className="size-3" />
+          <Plus className="size-3" aria-hidden="true" />
         </Button>
       </div>
+
     </div>
   );
 
@@ -1470,14 +1921,87 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
   );
 }
 
-function F({ label, v, on }: { label: string; v: string; on: (v: string) => void }) {
+function F({
+  id,
+  label,
+  v,
+  on,
+  err,
+  hint,
+  inputMode,
+  autoComplete,
+}: {
+  id?: string;
+  label: string;
+  v: string;
+  on: (v: string) => void;
+  err?: string;
+  hint?: string;
+  inputMode?: "text" | "tel" | "numeric" | "email";
+  autoComplete?: string;
+}) {
   return (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <Input value={v} maxLength={120} onChange={(e) => on(e.target.value)} />
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        value={v}
+        maxLength={120}
+        inputMode={inputMode}
+        autoComplete={autoComplete}
+        aria-invalid={!!err}
+        aria-describedby={err ? `${id}-err` : hint ? `${id}-hint` : undefined}
+        onChange={(e) => on(e.target.value)}
+      />
+      {err ? (
+        <p id={`${id}-err`} role="alert" className="text-xs text-destructive">
+          {err}
+        </p>
+      ) : hint ? (
+        <p id={`${id}-hint`} className="text-xs text-muted-foreground">
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }
+
+/** Checkout steps shown in the stepper. */
+const STEPS = [
+  { id: "address", bn: "ঠিকানা", en: "Address" },
+  { id: "slot", bn: "স্লট ও পেমেন্ট", en: "Slot & payment" },
+  { id: "review", bn: "রিভিউ", en: "Review" },
+] as const;
+
+/** Read-only timeline showing how an order progresses after checkout. */
+function StatusPreview({ bn }: { bn: boolean }) {
+  const steps = [
+    { bn: "অর্ডার গৃহীত", en: "Order placed" },
+    { bn: "কনফার্মড", en: "Confirmed" },
+    { bn: "প্যাকিং সম্পন্ন", en: "Packed" },
+    { bn: "রাস্তায়", en: "On the way" },
+    { bn: "ডেলিভার্ড", en: "Delivered" },
+  ];
+  return (
+    <ol className="space-y-1.5">
+      {steps.map((s, i) => (
+        <li key={s.en} className="flex items-center gap-2 text-xs">
+          <span
+            aria-hidden="true"
+            className={cn(
+              "size-2.5 rounded-full",
+              i === 0 ? "bg-primary" : "border border-border bg-background",
+            )}
+          />
+          <span className={i === 0 ? "font-semibold" : "text-muted-foreground"}>
+            {bn ? s.bn : s.en}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 
 function SideCat({
   label,
@@ -1494,13 +2018,15 @@ function SideCat({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
-        "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
+        "flex min-h-11 w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         active
           ? "bg-primary font-semibold text-primary-foreground"
           : "text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
     >
+
       <span className="truncate">{label}</span>
       <span
         className={cn(
