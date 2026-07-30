@@ -806,3 +806,52 @@ function LedgerCard({ title, rows }: { title: string; rows: [string, string][] }
     </div>
   );
 }
+
+const MODULE_GROUPS: { match: string[]; bn: string; en: string; tone: string }[] = [
+  {
+    match: ["/pos", "/sales", "/labels", "/promotions", "/reviews"],
+    bn: "বিক্রয়",
+    en: "Sales",
+    tone: "bg-primary/15 text-primary",
+  },
+  {
+    match: ["/products", "/catalog", "/inventory", "/stock-adjustments", "/stock-count", "/stock-transfers", "/product-audit"],
+    bn: "স্টক",
+    en: "Stock",
+    tone: "bg-chart-2/20 text-chart-2",
+  },
+  {
+    match: ["/purchases", "/purchase-orders", "/contacts", "/party-statement"],
+    bn: "সরবরাহ",
+    en: "Supply",
+    tone: "bg-chart-3/20 text-chart-3",
+  },
+  {
+    match: ["/payments", "/expenses", "/accounts", "/chart-of-accounts", "/journal", "/day-book", "/financials", "/mobile-payments"],
+    bn: "হিসাব",
+    en: "Finance",
+    tone: "bg-chart-4/20 text-chart-4",
+  },
+  {
+    match: ["/commerce", "/delivery-orders", "/riders", "/delivery-zones"],
+    bn: "ডেলিভারি",
+    en: "Delivery",
+    tone: "bg-warning/25 text-warning-foreground",
+  },
+  {
+    match: ["/users", "/settings", "/api-hub", "/site-content", "/audit-logs", "/branches", "/media"],
+    bn: "সেটিংস",
+    en: "Admin",
+    tone: "bg-muted text-muted-foreground",
+  },
+];
+
+/** Badge group + short hint shown on each workspace card. */
+function moduleMeta(to: string, bn: boolean) {
+  const g = MODULE_GROUPS.find((x) => x.match.includes(to));
+  return {
+    group: g ? (bn ? g.bn : g.en) : bn ? "টুল" : "Tool",
+    tone: g?.tone ?? "bg-secondary text-secondary-foreground",
+    hint: bn ? `মডিউল · ${to}` : `Module · ${to}`,
+  };
+}
