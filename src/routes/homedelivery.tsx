@@ -1662,6 +1662,64 @@ function ShopPage() {
                 </div>
 
                 <div className="surface-panel space-y-2 p-4">
+                  <Label htmlFor="coupon-code" className="text-sm font-semibold">
+                    {bn ? "কুপন / প্রোমো কোড" : "Coupon / promo code"}
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="coupon-code"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void checkCoupon(couponInput);
+                        }
+                      }}
+                      placeholder={bn ? "যেমন SAVE10" : "e.g. SAVE10"}
+                      maxLength={24}
+                      disabled={!!coupon}
+                      aria-describedby="coupon-msg"
+                      className="uppercase"
+                    />
+                    {coupon ? (
+                      <Button type="button" variant="outline" onClick={clearCoupon}>
+                        {bn ? "সরান" : "Remove"}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={() => void checkCoupon(couponInput)}
+                        disabled={couponBusy || couponInput.trim().length === 0}
+                      >
+                        {bn ? "প্রয়োগ" : "Apply"}
+                      </Button>
+                    )}
+                  </div>
+                  <p
+                    id="coupon-msg"
+                    role="status"
+                    aria-live="polite"
+                    className={cn(
+                      "text-xs",
+                      couponMsg
+                        ? couponMsg.ok
+                          ? "font-medium text-primary"
+                          : "text-destructive"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {couponMsg
+                      ? couponMsg.ok && discount > 0
+                        ? `${couponMsg.text} — ${money(discount, lang)}`
+                        : couponMsg.text
+                      : bn
+                        ? "কোড থাকলে এখানে লিখুন, ছাড় সঙ্গে সঙ্গে যোগ হবে।"
+                        : "Have a code? Enter it here and the discount applies instantly."}
+                  </p>
+                </div>
+
+                <div className="surface-panel space-y-2 p-4">
                   <p className="text-sm font-semibold">
                     {bn ? "অর্ডারের পরের ধাপগুলো" : "What happens next"}
                   </p>
