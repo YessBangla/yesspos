@@ -80,6 +80,7 @@ function DashboardPage() {
   const { branch, canSwitch, branchId } = useActiveBranch();
   const scopeId = canSwitch ? null : branchId;
   const dash = useDashboards(me.data?.userId ?? null);
+  const dashTheme = useDashboardTheme();
   const range = dash.active.range as RangeKey;
   const setRange = (r: RangeKey) => dash.update({ range: r });
   const show = (w: DashboardWidget) => dash.active.widgets.includes(w);
