@@ -756,39 +756,98 @@ function ShopPage() {
 
         {/* ---- Main column ---- */}
         <div>
-          <section className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="gradient-brand col-span-full rounded-2xl p-5 text-primary-foreground sm:col-span-2">
-              <p className="text-xs opacity-80">{bn ? "অনলাইন সুপারশপ" : "Online supershop"}</p>
-              <h1 className="font-display text-xl font-bold leading-tight sm:text-2xl">
-                {sc(
-                  "shop.hero_title",
-                  bn
-                    ? "বাজার এখন দরজায়, ১ ঘণ্টায় ডেলিভারি"
-                    : "Your daily bazar, delivered in 1 hour",
-                )}
-              </h1>
-              <p className="mt-1 text-sm opacity-90">
-                {sc(
-                  "shop.hero_subtitle",
-                  bn
-                    ? "৳১০০০+ অর্ডারে ফ্রি ডেলিভারি · ক্যাশ অন ডেলিভারি"
-                    : "Free delivery above ৳1000 · Cash on delivery",
-                )}
-              </p>
+          <section className="mt-6 grid gap-4 lg:grid-cols-6">
+            <div className="gradient-brand relative col-span-full flex flex-col justify-between overflow-hidden rounded-[2rem] p-6 text-primary-foreground sm:p-8 lg:col-span-4">
+              <span className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-primary-foreground/10" />
+              <span className="pointer-events-none absolute -bottom-24 right-10 size-48 rounded-full bg-primary-foreground/5" />
+              <div className="relative">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]">
+                  <Truck className="size-3.5" />
+                  {bn ? "অনলাইন সুপারশপ" : "Online supershop"}
+                </span>
+                <h1 className="mt-4 max-w-lg font-display text-3xl font-extrabold leading-[1.1] sm:text-[2.6rem]">
+                  {sc(
+                    "shop.hero_title",
+                    bn
+                      ? "বাজার এখন দরজায়, ১ ঘণ্টায় ডেলিভারি"
+                      : "Your daily bazar, delivered in 1 hour",
+                  )}
+                </h1>
+                <p className="mt-3 max-w-md text-sm opacity-90 sm:text-base">
+                  {sc(
+                    "shop.hero_subtitle",
+                    bn
+                      ? "৳১০০০+ অর্ডারে ফ্রি ডেলিভারি · ক্যাশ অন ডেলিভারি"
+                      : "Free delivery above ৳1000 · Cash on delivery",
+                  )}
+                </p>
+              </div>
+              <div className="relative mt-6 flex flex-wrap gap-2">
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="rounded-full font-semibold"
+                  onClick={() => {
+                    setCat("");
+                    setQuery("");
+                    setLimit(PAGE);
+                  }}
+                >
+                  {bn ? "কেনাকাটা শুরু করুন" : "Start shopping"}
+                </Button>
+                <Link
+                  to="/track"
+                  className="inline-flex items-center rounded-full border border-primary-foreground/40 px-5 text-sm font-semibold transition-colors hover:bg-primary-foreground/10"
+                >
+                  {bn ? "অর্ডার ট্র্যাক" : "Track order"}
+                </Link>
+              </div>
             </div>
-            <div className="grid gap-3">
+
+            <div className="col-span-full grid gap-4 sm:grid-cols-2 lg:col-span-2 lg:grid-cols-1">
+              <div className="flex flex-col justify-between rounded-[2rem] bg-accent p-6 text-accent-foreground">
+                <BadgePercent className="size-6" />
+                <p className="mt-4 font-display text-2xl font-extrabold leading-none">
+                  {bn ? "১০ টাকায় ১ পয়েন্ট" : "1 point per ৳10"}
+                </p>
+                <p className="mt-1.5 text-sm opacity-80">
+                  {bn
+                    ? "১০০০ পয়েন্ট হলেই ছাড় শুরু — মেম্বার হোন ফ্রি।"
+                    : "Discounts unlock at 1000 points — membership is free."}
+                </p>
+              </div>
+              <div className="shop-card flex flex-col justify-between p-6">
+                <Clock className="size-6 text-primary" />
+                <p className="mt-4 font-display text-2xl font-extrabold leading-none">
+                  {bn ? "সকাল ৮টা – রাত ৮টা" : "8 AM – 8 PM"}
+                </p>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  {bn
+                    ? "নিজের সুবিধামতো ডেলিভারি স্লট বেছে নিন।"
+                    : "Choose the delivery window that suits you."}
+                </p>
+              </div>
+            </div>
+
+            <div className="col-span-full grid gap-3 sm:grid-cols-3">
               <Perk
-                icon={Clock}
-                title={bn ? "সময় বেছে নিন" : "Pick your slot"}
-                sub={bn ? "সকাল ৮টা - রাত ৮টা" : "8 AM – 8 PM"}
+                icon={Truck}
+                title={bn ? "ফ্রি ডেলিভারি" : "Free delivery"}
+                sub={bn ? "৳১০০০+ অর্ডারে" : "On orders above ৳1000"}
               />
               <Perk
-                icon={BadgePercent}
-                title={bn ? "মেম্বার পয়েন্ট" : "Member points"}
-                sub={bn ? "১০ টাকায় ১ পয়েন্ট" : "1 point per ৳10"}
+                icon={ShoppingBasket}
+                title={bn ? "তাজা ও যাচাইকৃত" : "Fresh & checked"}
+                sub={bn ? "প্রতিটি পণ্য হাতে বাছাই" : "Every item hand-picked"}
+              />
+              <Perk
+                icon={Phone}
+                title={bn ? "২৪/৭ সাপোর্ট" : "24/7 support"}
+                sub={bn ? "কল করুন ১৬৭১০" : "Call 16710"}
               />
             </div>
           </section>
+
 
           <div className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
             <CatChip active={!cat} onClick={() => setCat("")} label={bn ? "সব" : "All"} />
