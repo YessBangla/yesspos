@@ -224,6 +224,11 @@ function ShopPage() {
   const [queued, setQueued] = useState<QueuedOrder[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [placing, setPlacing] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponMsg, setCouponMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [couponBusy, setCouponBusy] = useState(false);
+
   const { user, isCustomer, name: accName, phone: accPhone } = useCustomerSession();
   const [prefilled, setPrefilled] = useState(false);
 
