@@ -12,26 +12,41 @@ import {
   FolderOpen,
   Link2,
   AlertTriangle,
+  Undo2,
+  History,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { useMyRole } from "@/lib/use-my-role";
+import { canDeleteMedia, canEditMedia, canViewMediaLog } from "@/lib/permissions";
 import {
   MEDIA_FOLDERS,
+  TRASH_RETENTION_DAYS,
+  daysLeftInTrash,
   deleteMedia,
   fetchMediaUsage,
   folderLabel,
   formatBytes,
   listMedia,
+  listMediaLog,
+  listTrashedMedia,
+  logMediaAction,
+  pickVariant,
+  purgeMedia,
+  restoreMedia,
   uploadMedia,
   usageKindLabel,
+  variantSrcSet,
   syncSiteImages,
   validateImageFile,
   type MediaAsset,
   type MediaUsage,
 } from "@/lib/media";
+
 
 type UsageFilter = "all" | "used" | "unused";
 
@@ -56,10 +71,23 @@ export function MediaLibrary({
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const [view, setView] = useState<"gallery" | "trash" | "log">("gallery");
+
+  const me = useMyRole();
+  const mayEdit = canEditMedia(me.data?.role);
+  const mayDelete = canDeleteMedia(me.data?.role);
+  const mayViewLog = canViewMediaLog(me.data?.role);
 
   const assets = useQuery({ queryKey: ["media-assets"], queryFn: listMedia });
   const usage = useQuery({ queryKey: ["media-usage"], queryFn: fetchMediaUsage, staleTime: 30_000 });
+  const trash = useQuery({
+    queryKey: ["media-trash"],
+    queryFn: listTrashedMedia,
+    enabled: view === "trash" && mayDelete,
+  });
+  const log = useQuery({ queryKey: ["media-log"], queryFn: listMediaLog, enabled: view === "log" && mayViewLog });
   const usageFor = (a: MediaAsset): MediaUsage[] => usage.data?.[a.url] ?? [];
+
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
@@ -98,6 +126,10 @@ export function MediaLibrary({
 
   async function handleFiles(files: FileList | null) {
     if (!files?.length) return;
+    if (!mayEdit) {
+      toast.error(bn ? "ছবি আপলোডের অনুমতি নেই" : "You are not allowed to upload images");
+      return;
+    }
     setBusy(true);
     let ok = 0;
     let saved = 0;
@@ -152,27 +184,61 @@ export function MediaLibrary({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assets.isLoading, assets.data]);
 
+  const invalidateAll = () => {
+    qc.invalidateQueries({ queryKey: ["media-assets"] });
+    qc.invalidateQueries({ queryKey: ["media-usage"] });
+    qc.invalidateQueries({ queryKey: ["media-trash"] });
+    qc.invalidateQueries({ queryKey: ["media-log"] });
+  };
+
   const remove = useMutation({
-    mutationFn: (a: MediaAsset) => deleteMedia(a),
+    mutationFn: (a: MediaAsset) => deleteMedia(a, usageFor(a).map((u) => ({ kind: u.kind, label: u.label }))),
     onSuccess: () => {
-      toast.success(bn ? "ছবি মুছে ফেলা হয়েছে" : "Image deleted");
-      qc.invalidateQueries({ queryKey: ["media-assets"] });
-      qc.invalidateQueries({ queryKey: ["media-usage"] });
+      toast.success(
+        bn
+          ? `ছবিটি রিসাইকেল বিনে গেছে — ${TRASH_RETENTION_DAYS} দিনের মধ্যে ফেরানো যাবে`
+          : `Moved to trash — restorable for ${TRASH_RETENTION_DAYS} days`,
+      );
+      invalidateAll();
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+  const restore = useMutation({
+    mutationFn: (a: MediaAsset) => restoreMedia(a),
+    onSuccess: () => {
+      toast.success(bn ? "ছবি ফিরিয়ে আনা হয়েছে" : "Image restored");
+      invalidateAll();
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+  const purge = useMutation({
+    mutationFn: (a: MediaAsset) => purgeMedia(a),
+    onSuccess: () => {
+      toast.success(bn ? "স্থায়ীভাবে মুছে ফেলা হয়েছে" : "Permanently deleted");
+      invalidateAll();
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
   const saveMeta = useMutation({
-    mutationFn: async (a: { id: string; alt_text: string; tags: string[] }) => {
+    mutationFn: async (a: { id: string; name: string; alt_text: string; tags: string[] }) => {
       const { error } = await supabase
         .from("media_assets")
         .update({ alt_text: a.alt_text || null, tags: a.tags })
         .eq("id", a.id);
       if (error) throw error;
+      await logMediaAction(
+        "tag_edit",
+        a.id,
+        `${a.name} · alt="${a.alt_text}" · tags=${a.tags.join(", ") || "—"}`,
+      );
     },
     onSuccess: () => {
       toast.success(bn ? "সংরক্ষিত" : "Saved");
       qc.invalidateQueries({ queryKey: ["media-assets"] });
+      qc.invalidateQueries({ queryKey: ["media-log"] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
@@ -180,9 +246,58 @@ export function MediaLibrary({
   const selectable = Boolean(onPickMany);
   const selectedAssets = (assets.data ?? []).filter((a) => selected.includes(a.id));
 
+
+  const tabs: { key: "gallery" | "trash" | "log"; label: string; show: boolean }[] = [
+    { key: "gallery", label: bn ? "গ্যালারি" : "Gallery", show: true },
+    { key: "trash", label: bn ? "রিসাইকেল বিন" : "Trash", show: mayDelete && !onPick && !onPickMany },
+    { key: "log", label: bn ? "অ্যাক্টিভিটি লগ" : "Activity log", show: mayViewLog && !onPick && !onPickMany },
+  ];
+
   return (
     <div className="space-y-4">
+      {tabs.filter((t) => t.show).length > 1 && (
+        <div className="flex flex-wrap items-center gap-2">
+          {tabs
+            .filter((t) => t.show)
+            .map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setView(t.key)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-sm font-semibold transition",
+                  view === t.key
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/50",
+                )}
+              >
+                {t.key === "trash" ? <Undo2 className="size-4" /> : t.key === "log" ? <History className="size-4" /> : null}
+                {t.label}
+              </button>
+            ))}
+          {!mayEdit && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Lock className="size-3.5" />
+              {bn ? "আপনার শুধু দেখার অনুমতি আছে" : "You have view-only access"}
+            </span>
+          )}
+        </div>
+      )}
+
+      {view === "trash" ? (
+        <TrashView
+          bn={bn}
+          items={trash.data ?? []}
+          loading={trash.isLoading}
+          onRestore={(a) => restore.mutate(a)}
+          onPurge={(a) => purge.mutate(a)}
+        />
+      ) : view === "log" ? (
+        <ActivityLog bn={bn} rows={log.data ?? []} loading={log.isLoading} />
+      ) : (
+        <>
       <div className="flex flex-wrap items-end gap-2">
+        {mayEdit && (
         <div>
           <label className="mb-1 block text-xs text-muted-foreground">
             {bn ? "ফোল্ডার (আপলোডের জন্য)" : "Folder (for upload)"}
@@ -199,6 +314,7 @@ export function MediaLibrary({
             ))}
           </select>
         </div>
+        )}
         <input
           ref={fileRef}
           type="file"
@@ -207,18 +323,23 @@ export function MediaLibrary({
           hidden
           onChange={(e) => handleFiles(e.target.files)}
         />
-        <Button onClick={() => fileRef.current?.click()} disabled={busy}>
-          {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Upload className="mr-2 size-4" />}
-          {bn ? "ছবি আপলোড" : "Upload images"}
-        </Button>
-        <Button variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
-          {sync.isPending ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : (
-            <RefreshCw className="mr-2 size-4" />
-          )}
-          {bn ? "সাইটের ছবি আনুন" : "Import site images"}
-        </Button>
+        {mayEdit && (
+          <>
+            <Button onClick={() => fileRef.current?.click()} disabled={busy}>
+              {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Upload className="mr-2 size-4" />}
+              {bn ? "ছবি আপলোড" : "Upload images"}
+            </Button>
+            <Button variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
+              {sync.isPending ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 size-4" />
+              )}
+              {bn ? "সাইটের ছবি আনুন" : "Import site images"}
+            </Button>
+          </>
+        )}
+
 
         <div className="ml-auto flex flex-wrap items-end gap-2">
           <div className="relative">
@@ -341,13 +462,15 @@ export function MediaLibrary({
                 bn={bn}
                 usage={usageFor(a)}
                 onPick={onPick}
+                canEdit={mayEdit}
+                canDelete={mayDelete}
                 selectable={selectable}
                 checked={selected.includes(a.id)}
                 onToggle={() =>
                   setSelected((s) => (s.includes(a.id) ? s.filter((x) => x !== a.id) : [...s, a.id]))
                 }
                 onDelete={() => remove.mutate(a)}
-                onSaveMeta={(alt, tags) => saveMeta.mutate({ id: a.id, alt_text: alt, tags })}
+                onSaveMeta={(alt, tags) => saveMeta.mutate({ id: a.id, name: a.name, alt_text: alt, tags })}
               />
             ))}
           </div>
@@ -355,12 +478,163 @@ export function MediaLibrary({
       </div>
       <p className="text-xs text-muted-foreground">
         {bn
-          ? "টিপস: বড় ছবি আপলোডের সময় স্বয়ংক্রিয়ভাবে ছোট (WEBP) করা হয়। ব্যবহৃত ছবি মুছতে গেলে সতর্কবার্তা দেখাবে।"
-          : "Tip: large uploads are auto-compressed to WEBP, and images in use warn before deletion."}
+          ? `টিপস: আপলোডের সময় প্রতিটি ছবির থাম্বনেইল/মিডিয়াম/লার্জ সাইজ তৈরি হয় (দ্রুত স্টোরফ্রন্ট), আর মুছে ফেলা ছবি ${TRASH_RETENTION_DAYS} দিন রিসাইকেল বিনে থাকে।`
+          : `Tip: every upload gets thumbnail/medium/large copies for a faster storefront, and deleted images stay restorable for ${TRASH_RETENTION_DAYS} days.`}
       </p>
+        </>
+      )}
     </div>
   );
 }
+
+function TrashView({
+  bn,
+  items,
+  loading,
+  onRestore,
+  onPurge,
+}: {
+  bn: boolean;
+  items: MediaAsset[];
+  loading: boolean;
+  onRestore: (a: MediaAsset) => void;
+  onPurge: (a: MediaAsset) => void;
+}) {
+  if (loading) return <p className="p-6 text-center text-sm text-muted-foreground">{bn ? "লোড হচ্ছে…" : "Loading…"}</p>;
+  if (!items.length)
+    return (
+      <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+        {bn ? "রিসাইকেল বিন খালি।" : "The recycle bin is empty."}
+      </p>
+    );
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        {bn
+          ? `মুছে ফেলা ছবি ${TRASH_RETENTION_DAYS} দিন পর্যন্ত এখানে থাকে, তারপর স্থায়ীভাবে চলে যায়।`
+          : `Deleted images stay here for ${TRASH_RETENTION_DAYS} days before they are gone for good.`}
+      </p>
+      <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}>
+        {items.map((a) => {
+          const impact = a.deleted_usage ?? [];
+          return (
+            <div key={a.id} className="overflow-hidden rounded-xl border border-border bg-card">
+              <img
+                src={pickVariant(a, 320)}
+                alt={a.alt_text ?? a.name}
+                loading="lazy"
+                className="aspect-square w-full bg-muted object-cover opacity-70"
+              />
+              <div className="space-y-1 p-2">
+                <p className="truncate text-xs font-medium" title={a.name}>
+                  {a.name}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {bn ? "বাকি" : "Expires in"} {daysLeftInTrash(a.deleted_at!)} {bn ? "দিন" : "days"} ·{" "}
+                  {folderLabel(a.folder, bn)}
+                </p>
+                <div className="rounded-lg bg-muted/60 p-1.5 text-[11px]">
+                  {impact.length ? (
+                    <>
+                      <p className="flex items-center gap-1 font-semibold text-destructive">
+                        <AlertTriangle className="size-3" />
+                        {bn ? `${impact.length} জায়গায় ব্যবহৃত ছিল` : `Was used in ${impact.length} place(s)`}
+                      </p>
+                      {impact.slice(0, 4).map((u, i) => (
+                        <p key={i} className="truncate">
+                          {usageKindLabel(u.kind as MediaUsage["kind"], bn)}: {u.label}
+                        </p>
+                      ))}
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground">{bn ? "কোথাও ব্যবহৃত ছিল না" : "Was not used anywhere"}</p>
+                  )}
+                </div>
+                <div className="flex gap-1 pt-1">
+                  <Button size="sm" className="h-7 flex-1 text-xs" onClick={() => onRestore(a)}>
+                    <Undo2 className="mr-1 size-3.5" />
+                    {bn ? "ফিরিয়ে আনুন" : "Restore"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2 text-destructive"
+                    title={bn ? "স্থায়ীভাবে মুছুন" : "Delete permanently"}
+                    onClick={() => {
+                      if (confirm(bn ? "স্থায়ীভাবে মুছে ফেলবেন? আর ফেরানো যাবে না।" : "Delete permanently? This cannot be undone.")) {
+                        onPurge(a);
+                      }
+                    }}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ActivityLog({
+  bn,
+  rows,
+  loading,
+}: {
+  bn: boolean;
+  rows: { id: string; action: string; details: string | null; username: string | null; created_at: string }[];
+  loading: boolean;
+}) {
+  const label = (action: string) => {
+    const key = action.replace("media.", "");
+    const map: Record<string, [string, string]> = {
+      upload: ["আপলোড", "Upload"],
+      tag_edit: ["ট্যাগ/অল্ট সম্পাদনা", "Tag / alt edit"],
+      delete: ["ট্র্যাশে পাঠানো", "Moved to trash"],
+      restore: ["পুনরুদ্ধার", "Restored"],
+      purge: ["স্থায়ী ডিলিট", "Permanent delete"],
+      assign: ["পণ্যে বসানো", "Assigned to products"],
+    };
+    const hit = map[key];
+    return hit ? (bn ? hit[0] : hit[1]) : key;
+  };
+  if (loading) return <p className="p-6 text-center text-sm text-muted-foreground">{bn ? "লোড হচ্ছে…" : "Loading…"}</p>;
+  if (!rows.length)
+    return (
+      <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+        {bn ? "এখনো কোনো মিডিয়া অ্যাক্টিভিটি নেই।" : "No media activity recorded yet."}
+      </p>
+    );
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-border">
+      <table className="w-full text-sm">
+        <thead className="bg-muted/60 text-left text-xs uppercase text-muted-foreground">
+          <tr>
+            <th className="px-3 py-2">{bn ? "সময়" : "When"}</th>
+            <th className="px-3 py-2">{bn ? "ব্যবহারকারী" : "User"}</th>
+            <th className="px-3 py-2">{bn ? "কাজ" : "Action"}</th>
+            <th className="px-3 py-2">{bn ? "বিস্তারিত" : "Details"}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.id} className="border-t border-border/70">
+              <td className="whitespace-nowrap px-3 py-2 text-xs text-muted-foreground">
+                {new Date(r.created_at).toLocaleString(bn ? "bn-BD" : "en-GB")}
+              </td>
+              <td className="px-3 py-2 text-xs font-semibold">{r.username ?? "—"}</td>
+              <td className="px-3 py-2 text-xs">{label(r.action)}</td>
+              <td className="px-3 py-2 text-xs text-muted-foreground">{r.details ?? "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 
 function MediaCard({
   asset,
@@ -372,6 +646,8 @@ function MediaCard({
   selectable,
   checked,
   onToggle,
+  canEdit = true,
+  canDelete = true,
 }: {
   asset: MediaAsset;
   bn: boolean;
@@ -382,6 +658,8 @@ function MediaCard({
   selectable?: boolean;
   checked?: boolean;
   onToggle?: () => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [showUsage, setShowUsage] = useState(false);
@@ -399,18 +677,21 @@ function MediaCard({
         .join("\n");
       const more = usage.length > 5 ? (bn ? `\n… আরও ${usage.length - 5}টি` : `\n… ${usage.length - 5} more`) : "";
       const msg = bn
-        ? `সতর্কতা! এই ছবিটি এখন ${usage.length} জায়গায় ব্যবহার হচ্ছে:\n${list}${more}\n\nমুছে ফেললে ওইসব জায়গায় ছবি ভাঙা দেখাবে। তবুও মুছবেন?`
-        : `Warning! This image is used in ${usage.length} place(s):\n${list}${more}\n\nDeleting it will break those images. Delete anyway?`;
+        ? `সতর্কতা! এই ছবিটি এখন ${usage.length} জায়গায় ব্যবহার হচ্ছে:\n${list}${more}\n\nমুছে ফেললে ওইসব জায়গায় ছবি ভাঙা দেখাবে। ছবিটি ${TRASH_RETENTION_DAYS} দিন রিসাইকেল বিনে থাকবে। মুছবেন?`
+        : `Warning! This image is used in ${usage.length} place(s):\n${list}${more}\n\nIt will move to the recycle bin and stay restorable for ${TRASH_RETENTION_DAYS} days. Continue?`;
       if (!confirm(msg)) return;
-      const second = bn
-        ? "নিশ্চিত করতে আবার চাপুন — এটি ফেরানো যাবে না।"
-        : "Press OK once more to confirm — this cannot be undone.";
-      if (!confirm(second)) return;
-    } else if (!confirm(bn ? "ছবিটি মুছে ফেলবেন?" : "Delete this image?")) {
+    } else if (
+      !confirm(
+        bn
+          ? `ছবিটি রিসাইকেল বিনে পাঠাবেন? ${TRASH_RETENTION_DAYS} দিনের মধ্যে ফেরানো যাবে।`
+          : `Move to recycle bin? You can restore it within ${TRASH_RETENTION_DAYS} days.`,
+      )
+    ) {
       return;
     }
     onDelete();
   }
+
 
   return (
     <div
@@ -427,11 +708,14 @@ function MediaCard({
           title={onPick ? (bn ? "এই ছবিটি বেছে নিন" : "Use this image") : asset.name}
         >
           <img
-            src={asset.url}
+            src={pickVariant(asset, 320)}
+            srcSet={variantSrcSet(asset)}
+            sizes="(max-width: 768px) 45vw, 200px"
             alt={asset.alt_text ?? asset.name}
             loading="lazy"
             className="aspect-square w-full bg-muted object-cover transition group-hover:scale-[1.02]"
           />
+
         </button>
         {selectable && (
           <span
@@ -547,24 +831,29 @@ function MediaCard({
             >
               {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 px-2 text-xs"
-              onClick={() => setEditing(true)}
-              title={bn ? "তথ্য সম্পাদনা" : "Edit info"}
-            >
-              ✎
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className={cn("h-7 px-2", used ? "text-warning-foreground" : "text-destructive")}
-              title={used ? (bn ? "ব্যবহৃত ছবি — সতর্কতা" : "In use — warning") : bn ? "মুছুন" : "Delete"}
-              onClick={confirmDelete}
-            >
-              {used ? <AlertTriangle className="size-3.5" /> : <Trash2 className="size-3.5" />}
-            </Button>
+            {canEdit && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-xs"
+                onClick={() => setEditing(true)}
+                title={bn ? "তথ্য সম্পাদনা" : "Edit info"}
+              >
+                ✎
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                size="sm"
+                variant="outline"
+                className={cn("h-7 px-2", used ? "text-warning-foreground" : "text-destructive")}
+                title={used ? (bn ? "ব্যবহৃত ছবি — সতর্কতা" : "In use — warning") : bn ? "মুছুন" : "Delete"}
+                onClick={confirmDelete}
+              >
+                {used ? <AlertTriangle className="size-3.5" /> : <Trash2 className="size-3.5" />}
+              </Button>
+            )}
+
           </div>
         )}
       </div>

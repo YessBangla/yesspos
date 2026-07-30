@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Images, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { MediaPicker } from "@/components/MediaPicker";
+import { useMyRole } from "@/lib/use-my-role";
+import { canEditMedia } from "@/lib/permissions";
 import { assignImageToProducts } from "@/lib/media";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -86,6 +88,8 @@ const schema = z.object({
 
 function ProductsPage() {
   const { t, lang } = useI18n();
+  const myRole = useMyRole();
+  const mayEditImages = canEditMedia(myRole.data?.role);
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(50);
@@ -299,7 +303,7 @@ function ProductsPage() {
         </div>
       </div>
 
-      {picked.length > 0 && (
+      {picked.length > 0 && mayEditImages && (
         <div className="surface-panel mt-4 flex flex-wrap items-center gap-3 p-3">
           <Images className="size-4 text-primary" />
           <span className="text-sm font-semibold">
@@ -532,6 +536,14 @@ function ProductsPage() {
                 maxLength={500}
               />
               <div className="mt-2 flex flex-wrap items-center gap-2">
+                {!mayEditImages && (
+                  <p className="text-xs text-muted-foreground">
+                    {lang === "bn"
+                      ? "ছবি পরিবর্তনের অনুমতি নেই — ম্যানেজার/অ্যাডমিনের সাথে যোগাযোগ করুন।"
+                      : "You are not allowed to change images — ask a manager or admin."}
+                  </p>
+                )}
+                {mayEditImages && (
                 <MediaPicker
                   variant="default"
                   onSelect={(url) => setForm((f) => ({ ...f, image_url: url }))}
@@ -548,6 +560,7 @@ function ProductsPage() {
                   }}
                   label={lang === "bn" ? "গ্যালারি থেকে কভার ছবি বাছুন" : "Choose cover from gallery"}
                 />
+                )}
                 {form.image_url && (
                   <Button
                     type="button"
