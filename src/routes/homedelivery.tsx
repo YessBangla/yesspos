@@ -544,19 +544,24 @@ function ShopPage() {
       </div>
 
       {/* ---- Header ---- */}
-      <header className="sticky top-0 z-30 border-b border-border bg-card/95 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
-          <Link to="/" className="flex shrink-0 items-center gap-2">
-            <span className="gradient-brand grid size-9 place-items-center rounded-xl text-primary-foreground">
+      <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3.5">
+          <Link to="/" className="flex shrink-0 items-center gap-2.5">
+            <span className="gradient-brand grid size-11 place-items-center rounded-2xl text-primary-foreground shadow-sm">
               <ShoppingBasket className="size-5" />
             </span>
-            <span className="hidden font-display text-lg font-bold text-primary sm:block">
-              {sc("brand.name", "Sokoler Bazar")}
+            <span className="hidden leading-tight sm:block">
+              <span className="block font-display text-lg font-extrabold text-primary">
+                {sc("brand.name", "Sokoler Bazar")}
+              </span>
+              <span className="block text-[11px] font-medium text-muted-foreground">
+                {bn ? "অনলাইন সুপারশপ" : "Online supershop"}
+              </span>
             </span>
           </Link>
 
           <div className="relative min-w-[160px] flex-1">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
               onChange={(e) => {
@@ -565,8 +570,9 @@ function ShopPage() {
               }}
               maxLength={60}
               placeholder={bn ? "চাল, তেল, ডিম… খুঁজুন" : "Search rice, oil, eggs…"}
-              className="h-11 rounded-full pl-9"
+              className="h-12 rounded-full border-transparent bg-muted pl-10 text-base shadow-none focus-visible:bg-card"
             />
+
             {suggestions.length > 0 && (
               <div className="absolute inset-x-0 top-12 z-40 overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
                 {suggestions.map((sug) => (
