@@ -280,7 +280,7 @@ function PosPage() {
     if (pct != null) setTaxPct(String(pct));
   }, [settings.data?.default_tax_pct]);
 
-  const visible = useMemo(() => {
+  const matchingQuery = useMemo(() => {
     const q = query.trim().toLowerCase();
     const stockMap = branchStock.data;
     return (products.data ?? [])
@@ -289,15 +289,31 @@ function PosPage() {
       .map((p) => (stockMap && stockMap.has(p.id) ? { ...p, stock: stockMap.get(p.id) ?? 0 } : p))
       .filter(
         (p) =>
-          (cat === "all" || p.category_id === cat) &&
-          (!q ||
-            p.name_en.toLowerCase().includes(q) ||
-            p.name_bn.includes(query.trim()) ||
-            p.sku.toLowerCase().includes(q) ||
-            (p.barcode ?? "").toLowerCase().includes(q) ||
-            matchesSerial(query, branchCode, p.seq)),
+          !q ||
+          p.name_en.toLowerCase().includes(q) ||
+          p.name_bn.includes(query.trim()) ||
+          p.sku.toLowerCase().includes(q) ||
+          (p.barcode ?? "").toLowerCase().includes(q) ||
+          matchesSerial(query, branchCode, p.seq),
       );
-  }, [products.data, branchStock.data, query, cat, branchCode]);
+  }, [products.data, branchStock.data, query, branchCode]);
+
+  const visible = useMemo(
+    () =>
+      sortProducts(
+        matchingQuery.filter((p) => cat === "all" || p.category_id === cat),
+        sort,
+      ),
+    [matchingQuery, cat, sort],
+  );
+
+  /** Categories that would show results for the current search — powers the empty-state hints. */
+  const suggestedCats = useMemo(() => {
+    if (visible.length > 0) return [];
+    const ids = new Set(matchingQuery.map((p) => p.category_id ?? ""));
+    return (categories.data ?? []).filter((c) => ids.has(c.id)).slice(0, 4);
+  }, [visible.length, matchingQuery, categories.data]);
+
 
 
   const subtotal = cart.reduce((s, l) => s + Number(l.product.price) * l.qty, 0);
