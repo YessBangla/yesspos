@@ -704,11 +704,14 @@ function MediaCard({
           title={onPick ? (bn ? "এই ছবিটি বেছে নিন" : "Use this image") : asset.name}
         >
           <img
-            src={asset.url}
+            src={pickVariant(asset, 320)}
+            srcSet={variantSrcSet(asset)}
+            sizes="(max-width: 768px) 45vw, 200px"
             alt={asset.alt_text ?? asset.name}
             loading="lazy"
             className="aspect-square w-full bg-muted object-cover transition group-hover:scale-[1.02]"
           />
+
         </button>
         {selectable && (
           <span
