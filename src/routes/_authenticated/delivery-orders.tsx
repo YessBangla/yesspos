@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bike, Check, ClipboardList, Download, History, Phone, Truck, X } from "lucide-react";
+import { Bike, Check, CheckSquare, ClipboardList, Download, History, Phone, Truck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { downloadCsv, logAudit } from "@/lib/audit";
 import { DeliveryTrackingQr } from "@/components/DeliveryTrackingQr";
 import { OrderNotifications } from "@/components/OrderNotifications";
 import { RiderSchedule } from "@/components/RiderSchedule";
+import { NotificationLog } from "@/components/NotificationLog";
 
 
 export const Route = createFileRoute("/_authenticated/delivery-orders")({
@@ -95,6 +96,8 @@ function DeliveryOrdersPage() {
   const [area, setArea] = useState("");
   const [riderFilter, setRiderFilter] = useState("");
   const [openTimeline, setOpenTimeline] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkStatus, setBulkStatus] = useState<string>("confirmed");
 
   const orders = useQuery({
     queryKey: ["delivery-orders"],
@@ -236,6 +239,28 @@ function DeliveryOrdersPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
+  const bulkStatusUpdate = useMutation({
+    mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
+      const { error } = await supabase.from("delivery_orders").update({ status }).in("id", ids);
+      if (error) throw error;
+      await logAudit("delivery_order", {
+        entity: "delivery_orders",
+        details: `bulk ${status} × ${ids.length}`,
+      });
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["delivery-orders"] });
+      qc.invalidateQueries({ queryKey: ["delivery-order-events"] });
+      qc.invalidateQueries({ queryKey: ["order-notifications"] });
+      qc.invalidateQueries({ queryKey: ["notification-log"] });
+      setSelected([]);
+      toast.success(
+        bn ? `${v.ids.length} টি অর্ডার আপডেট হয়েছে` : `${v.ids.length} order(s) updated`,
+      );
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
   const toSale = useMutation({
     mutationFn: async (order: Order) => {
       const lines = byOrder.get(order.id) ?? [];
@@ -303,6 +328,30 @@ function DeliveryOrdersPage() {
     setTo("");
     setArea("");
     setRiderFilter("");
+  }
+
+  async function exportTimelineCsv(o: Order) {
+    const { data, error } = await supabase
+      .from("delivery_order_events")
+      .select("id,order_id,event_type,from_value,to_value,actor_name,created_at")
+      .eq("order_id", o.id)
+      .order("created_at", { ascending: true });
+    if (error) return toast.error(error.message);
+    const rows = (data as unknown as OrderEvent[]) ?? [];
+    if (rows.length === 0) return toast.error(bn ? "কোনো ইতিহাস নেই" : "No history yet");
+    downloadCsv(
+      `order-${o.order_no}-timeline.csv`,
+      ["Order No", "Time", "Event", "Before", "After", "Changed by"],
+      rows.map((ev) => [
+        o.order_no,
+        ev.created_at.slice(0, 19).replace("T", " "),
+        ev.event_type,
+        ev.event_type === "status" && ev.from_value ? statusText(ev.from_value, false) : (ev.from_value ?? ""),
+        ev.event_type === "status" && ev.to_value ? statusText(ev.to_value, false) : (ev.to_value ?? ""),
+        ev.actor_name ?? "system",
+      ]),
+    );
+    toast.success(bn ? "টাইমলাইন CSV ডাউনলোড হয়েছে" : "Timeline CSV downloaded");
   }
 
   function exportCsv() {
