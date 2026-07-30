@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Images, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { MediaPicker } from "@/components/MediaPicker";
+import { assignImageToProducts } from "@/lib/media";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,6 +92,7 @@ function ProductsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Row | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
+  const [picked, setPicked] = useState<string[]>([]);
 
   const categories = useQuery({
     queryKey: ["categories"],
@@ -211,6 +213,30 @@ function ProductsPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
+  const bulkImage = useMutation({
+    mutationFn: async (urls: string[]) => {
+      if (!picked.length || !urls.length) return 0;
+      if (urls.length === 1) return assignImageToProducts(urls[0], picked);
+      // Multiple images: assign them to the selected products in order.
+      let n = 0;
+      for (let i = 0; i < picked.length; i++) {
+        await assignImageToProducts(urls[i % urls.length], [picked[i]]);
+        n += 1;
+      }
+      return n;
+    },
+    onSuccess: (n) => {
+      toast.success(
+        lang === "bn" ? `${n}টি পণ্যে ছবি বসানো হয়েছে` : `Image applied to ${n} product(s)`,
+      );
+      setPicked([]);
+      queryClient.invalidateQueries({ queryKey: ["products-all"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["media-usage"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("products").delete().eq("id", id);
@@ -273,10 +299,44 @@ function ProductsPage() {
         </div>
       </div>
 
+      {picked.length > 0 && (
+        <div className="surface-panel mt-4 flex flex-wrap items-center gap-3 p-3">
+          <Images className="size-4 text-primary" />
+          <span className="text-sm font-semibold">
+            {lang === "bn" ? `${picked.length}টি পণ্য নির্বাচিত` : `${picked.length} products selected`}
+          </span>
+          <MediaPicker
+            variant="default"
+            label={lang === "bn" ? "গ্যালারি থেকে ছবি বসান" : "Assign image from gallery"}
+            onSelect={(url) => bulkImage.mutate([url])}
+            onSelectMany={(assets) => bulkImage.mutate(assets.map((a) => a.url))}
+          />
+          <Button variant="ghost" size="sm" onClick={() => setPicked([])}>
+            {lang === "bn" ? "নির্বাচন বাতিল" : "Clear selection"}
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {lang === "bn"
+              ? "একটি ছবি বাছলে সব পণ্যে বসবে; একাধিক বাছলে ক্রমানুসারে বসবে।"
+              : "One image applies to all; several are applied in order."}
+          </span>
+        </div>
+      )}
+
       <div className="surface-panel mt-4 overflow-x-auto">
         <table className="w-full min-w-[820px] text-sm">
           <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
             <tr>
+              <th className="w-10 px-3 py-3">
+                <input
+                  type="checkbox"
+                  aria-label={lang === "bn" ? "সব নির্বাচন" : "Select all"}
+                  className="size-4 accent-[hsl(var(--primary))]"
+                  checked={picked.length > 0 && picked.length === visible.slice(0, limit).length}
+                  onChange={(e) =>
+                    setPicked(e.target.checked ? visible.slice(0, limit).map((p) => p.id) : [])
+                  }
+                />
+              </th>
               <th className="px-4 py-3">{lang === "bn" ? "পণ্য" : "Product"}</th>
               <th className="px-4 py-3">{lang === "bn" ? "সিরিয়াল" : "Serial"}</th>
               <th className="px-4 py-3">{t("sku")}</th>
@@ -290,7 +350,7 @@ function ProductsPage() {
           <tbody>
             {products.isLoading && (
               <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={8}>
+                <td className="px-4 py-6 text-muted-foreground" colSpan={9}>
                   {t("loading")}
                 </td>
               </tr>
@@ -300,6 +360,17 @@ function ProductsPage() {
               const low = p.branch_stock <= p.low_stock_at;
               return (
                 <tr key={p.id} className="border-b border-border last:border-0">
+                  <td className="px-3 py-3">
+                    <input
+                      type="checkbox"
+                      aria-label={p.name_en}
+                      className="size-4 accent-[hsl(var(--primary))]"
+                      checked={picked.includes(p.id)}
+                      onChange={() =>
+                        setPicked((s) => (s.includes(p.id) ? s.filter((x) => x !== p.id) : [...s, p.id]))
+                      }
+                    />
+                  </td>
                   <td className="px-4 py-3 font-medium">
                     <div className="flex items-center gap-3">
                       {p.image_url ? (
@@ -386,7 +457,7 @@ function ProductsPage() {
             })}
             {visible.length > limit && (
               <tr>
-                <td className="px-4 py-4" colSpan={8}>
+                <td className="px-4 py-4" colSpan={9}>
                   <Button variant="outline" size="sm" onClick={() => setLimit((n) => n + 100)}>
                     {lang === "bn" ? "আরও দেখুন" : "Load more"} ({num(visible.length - limit, lang)})
                   </Button>
@@ -395,7 +466,7 @@ function ProductsPage() {
             )}
             {!products.isLoading && visible.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={8}>
+                <td className="px-4 py-6 text-muted-foreground" colSpan={9}>
                   {t("noData")}
                 </td>
               </tr>
@@ -455,7 +526,7 @@ function ProductsPage() {
             />
             <div className="sm:col-span-2">
               <Field
-                label={lang === "bn" ? "ছবির লিংক" : "Image URL"}
+                label={lang === "bn" ? "প্রাইম/কভার ছবির লিংক" : "Prime / cover image URL"}
                 value={form.image_url}
                 onChange={(v) => setForm({ ...form, image_url: v })}
                 maxLength={500}
@@ -464,7 +535,18 @@ function ProductsPage() {
                 <MediaPicker
                   variant="default"
                   onSelect={(url) => setForm((f) => ({ ...f, image_url: url }))}
-                  label={lang === "bn" ? "গ্যালারি থেকে ছবি বাছুন" : "Choose from gallery"}
+                  onSelectMany={(assets) => {
+                    if (!assets.length) return;
+                    setForm((f) => ({ ...f, image_url: assets[0].url }));
+                    if (assets.length > 1) {
+                      toast.info(
+                        lang === "bn"
+                          ? "প্রথম ছবিটি কভার হিসেবে বসানো হয়েছে; বাকিগুলো তালিকা থেকে অন্য পণ্যে বসাতে পারবেন।"
+                          : "First image set as cover; use the product list to apply the rest.",
+                      );
+                    }
+                  }}
+                  label={lang === "bn" ? "গ্যালারি থেকে কভার ছবি বাছুন" : "Choose cover from gallery"}
                 />
                 {form.image_url && (
                   <Button
