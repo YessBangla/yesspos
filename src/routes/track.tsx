@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BellRing, Bike, PackageSearch, Phone } from "lucide-react";
+import { BellRing, Bike, MapPin, PackageSearch, Phone, Route as RouteIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,11 @@ export const Route = createFileRoute("/track")({
   head: () => ({
     meta: [
       { title: "Track your grocery order — Sokoler Bazar" },
-      { name: "description", content: "Check the live status of your home delivery grocery order with order number and phone." },
+      {
+        name: "description",
+        content:
+          "Check the live status of your home delivery grocery order with order number and phone.",
+      },
       { property: "og:title", content: "Track your grocery order — Sokoler Bazar" },
       { property: "og:description", content: "Live status of your home delivery order." },
       { property: "og:type", content: "website" },
@@ -34,8 +38,26 @@ type Tracked = {
   rider_phone: string | null;
   rider_vehicle: string | null;
   eta_minutes: number | null;
+  rider_lat: number | null;
+  rider_lng: number | null;
+  rider_location_at: string | null;
 };
 
+const FLOW = ["pending", "confirmed", "packed", "shipped", "delivered"] as const;
+
+const STEP_LABEL: Record<string, { bn: string; en: string }> = {
+  pending: { bn: "অর্ডার গৃহীত", en: "Order placed" },
+  confirmed: { bn: "কনফার্মড", en: "Confirmed" },
+  packed: { bn: "প্যাকিং সম্পন্ন", en: "Packed" },
+  shipped: { bn: "রাস্তায়", en: "On the way" },
+  delivered: { bn: "ডেলিভার্ড", en: "Delivered" },
+};
+
+/** Free OpenStreetMap embed – no API key needed. */
+function mapSrc(lat: number, lng: number) {
+  const d = 0.01;
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - d}%2C${lat - d}%2C${lng + d}%2C${lat + d}&layer=mapnik&marker=${lat}%2C${lng}`;
+}
 
 type Notice = { id: string; title: string; body: string; created_at: string };
 
@@ -48,29 +70,31 @@ function TrackPage() {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const search = useCallback(async (no = orderNo, ph = phone) => {
-    setLoading(true);
-    const { data } = await supabase.rpc("track_delivery_order", {
-      _order_no: Number(no),
-      _phone: ph.trim(),
-    });
-    const row = (data as unknown as Tracked[] | null)?.[0] ?? null;
-    setResult(row ?? "none");
-    if (row) {
-      const { data: notes } = await supabase
-        .from("customer_notifications")
-        .select("id,title,body,created_at")
-        .eq("order_no", row.order_no)
-        .eq("customer_phone", ph.trim())
-        .order("created_at", { ascending: false })
-        .limit(20);
-      setNotices((notes as unknown as Notice[] | null) ?? []);
-    } else {
-      setNotices([]);
-    }
-    setLoading(false);
-  }, [orderNo, phone]);
-
+  const search = useCallback(
+    async (no = orderNo, ph = phone) => {
+      setLoading(true);
+      const { data } = await supabase.rpc("track_delivery_order", {
+        _order_no: Number(no),
+        _phone: ph.trim(),
+      });
+      const row = (data as unknown as Tracked[] | null)?.[0] ?? null;
+      setResult(row ?? "none");
+      if (row) {
+        const { data: notes } = await supabase
+          .from("customer_notifications")
+          .select("id,title,body,created_at")
+          .eq("order_no", row.order_no)
+          .eq("customer_phone", ph.trim())
+          .order("created_at", { ascending: false })
+          .limit(20);
+        setNotices((notes as unknown as Notice[] | null) ?? []);
+      } else {
+        setNotices([]);
+      }
+      setLoading(false);
+    },
+    [orderNo, phone],
+  );
 
   // Auto-track when opened from a QR code / shared link: /track?order=123&phone=01…
   const autoRan = useRef(false);
@@ -88,25 +112,38 @@ function TrackPage() {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-16">
-      <h1 className="font-display text-2xl font-bold">{bn ? "অর্ডার ট্র্যাক করুন" : "Track your order"}</h1>
+      <h1 className="font-display text-2xl font-bold">
+        {bn ? "অর্ডার ট্র্যাক করুন" : "Track your order"}
+      </h1>
       <p className="mt-1 text-sm text-muted-foreground">
         {bn ? "অর্ডার নম্বর ও ফোন নম্বর দিন।" : "Enter your order number and phone."}
       </p>
       <div className="surface-panel mt-6 space-y-3 p-4">
         <div className="space-y-1.5">
           <Label>{bn ? "অর্ডার নম্বর" : "Order no."}</Label>
-          <Input value={orderNo} onChange={(e) => setOrderNo(e.target.value)} inputMode="numeric" maxLength={12} />
+          <Input
+            value={orderNo}
+            onChange={(e) => setOrderNo(e.target.value)}
+            inputMode="numeric"
+            maxLength={12}
+          />
         </div>
         <div className="space-y-1.5">
           <Label>{bn ? "ফোন" : "Phone"}</Label>
           <Input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} />
         </div>
-        <Button className="w-full" onClick={() => search()} disabled={loading || !orderNo || !phone}>
+        <Button
+          className="w-full"
+          onClick={() => search()}
+          disabled={loading || !orderNo || !phone}
+        >
           <PackageSearch className="mr-1 size-4" /> {bn ? "খুঁজুন" : "Track"}
         </Button>
 
         {result === "none" && (
-          <p className="text-sm text-destructive">{bn ? "অর্ডার পাওয়া যায়নি।" : "No matching order found."}</p>
+          <p className="text-sm text-destructive">
+            {bn ? "অর্ডার পাওয়া যায়নি।" : "No matching order found."}
+          </p>
         )}
         {result && result !== "none" && (
           <div className="rounded-xl border border-border p-3 text-sm">
@@ -130,7 +167,9 @@ function TrackPage() {
             )}
             {result.eta_minutes != null && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">{bn ? "আনুমানিক সময়" : "Estimated time"}</span>
+                <span className="text-muted-foreground">
+                  {bn ? "আনুমানিক সময়" : "Estimated time"}
+                </span>
                 <span className="font-semibold">
                   {result.eta_minutes} {bn ? "মিনিট" : "min"}
                 </span>
@@ -138,10 +177,81 @@ function TrackPage() {
             )}
             {result.updated_at && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">{bn ? "সর্বশেষ আপডেট" : "Last update"}</span>
+                <span className="text-muted-foreground">
+                  {bn ? "সর্বশেষ আপডেট" : "Last update"}
+                </span>
                 <span>{result.updated_at.slice(0, 16).replace("T", " ")}</span>
               </div>
             )}
+
+            <div className="mt-3 rounded-lg border border-border p-3">
+              <p className="mb-2 flex items-center gap-1 font-semibold">
+                <RouteIcon className="size-4 text-primary" />{" "}
+                {bn ? "ডেলিভারি অগ্রগতি" : "Delivery progress"}
+              </p>
+              {result.status === "cancelled" ? (
+                <p className="text-sm text-destructive">
+                  {bn ? "অর্ডারটি বাতিল হয়েছে।" : "This order was cancelled."}
+                </p>
+              ) : (
+                <ol className="space-y-1.5">
+                  {FLOW.map((step, i) => {
+                    const idx = FLOW.indexOf(result.status as (typeof FLOW)[number]);
+                    const done = idx >= i;
+                    const current = idx === i;
+                    return (
+                      <li key={step} className="flex items-center gap-2 text-xs">
+                        <span
+                          className={
+                            done
+                              ? "size-2.5 rounded-full bg-primary"
+                              : "size-2.5 rounded-full border border-border bg-background"
+                          }
+                        />
+                        <span className={done ? "font-semibold" : "text-muted-foreground"}>
+                          {bn ? STEP_LABEL[step].bn : STEP_LABEL[step].en}
+                        </span>
+                        {current && (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">
+                            {bn ? "চলমান" : "Now"}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+              {result.rider_lat != null && result.rider_lng != null ? (
+                <div className="mt-3">
+                  <iframe
+                    title={bn ? "রাইডারের লোকেশন" : "Rider location"}
+                    src={mapSrc(Number(result.rider_lat), Number(result.rider_lng))}
+                    className="h-56 w-full rounded-lg border border-border"
+                    loading="lazy"
+                  />
+                  <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <span>
+                      {bn ? "সর্বশেষ লোকেশন" : "Last location"}:{" "}
+                      {result.rider_location_at?.slice(0, 16).replace("T", " ") ?? "—"}
+                    </span>
+                    <a
+                      className="inline-flex items-center gap-1 font-semibold text-primary underline"
+                      href={`https://www.openstreetmap.org/?mlat=${result.rider_lat}&mlon=${result.rider_lng}#map=15/${result.rider_lat}/${result.rider_lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <MapPin className="size-3" /> {bn ? "বড় ম্যাপে দেখুন" : "Open in map"}
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {bn
+                    ? "রাইডারের লাইভ লোকেশন এখনো পাওয়া যায়নি।"
+                    : "Live rider location is not available yet."}
+                </p>
+              )}
+            </div>
 
             <div className="mt-3 rounded-lg bg-muted/60 p-3">
               <p className="mb-1 flex items-center gap-1 font-semibold">
@@ -188,9 +298,7 @@ function TrackPage() {
               </div>
             )}
           </div>
-
         )}
-
       </div>
       <Link to="/homedelivery" className="mt-6 inline-block text-sm text-primary underline">
         {bn ? "← দোকানে ফিরে যান" : "← Back to shop"}

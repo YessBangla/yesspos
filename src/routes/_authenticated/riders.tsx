@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bike, Phone, Plus, Trash2 } from "lucide-react";
+import { Bike, MapPin, Phone, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,15 @@ export const Route = createFileRoute("/_authenticated/riders")({
   head: () => ({
     meta: [
       { title: "Delivery riders — Sokoler Bazar" },
-      { name: "description", content: "Manage delivery riders, contact numbers, vehicles and live order load." },
+      {
+        name: "description",
+        content: "Manage delivery riders, contact numbers, vehicles and live order load.",
+      },
       { property: "og:title", content: "Delivery riders — Sokoler Bazar" },
-      { property: "og:description", content: "Rider roster and assignment load for home delivery operations." },
+      {
+        property: "og:description",
+        content: "Rider roster and assignment load for home delivery operations.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -34,6 +40,9 @@ type Rider = {
   is_active: boolean;
   branch_id: string | null;
   note: string | null;
+  current_lat: number | null;
+  current_lng: number | null;
+  location_updated_at: string | null;
 };
 
 const VEHICLES = ["bike", "cycle", "van", "foot"];
@@ -48,7 +57,10 @@ function RidersPage() {
   const riders = useQuery({
     queryKey: ["riders"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("delivery_riders").select("*").order("created_at");
+      const { data, error } = await supabase
+        .from("delivery_riders")
+        .select("*")
+        .order("created_at");
       if (error) throw error;
       return data as unknown as Rider[];
     },
@@ -81,7 +93,8 @@ function RidersPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!form.name.trim() || !form.phone.trim()) throw new Error(bn ? "নাম ও ফোন দিন" : "Name and phone required");
+      if (!form.name.trim() || !form.phone.trim())
+        throw new Error(bn ? "নাম ও ফোন দিন" : "Name and phone required");
       const { error } = await supabase.from("delivery_riders").insert({
         name: form.name.trim(),
         phone: form.phone.trim(),
@@ -107,6 +120,32 @@ function RidersPage() {
       await logAudit("rider_update", { entity: "delivery_riders", entityId: id });
     },
     onSuccess: invalidate,
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
+  const setLocation = useMutation({
+    mutationFn: async (id: string) => {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+        if (!navigator.geolocation) return reject(new Error("Geolocation unavailable"));
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 15_000,
+        });
+      });
+      const { error } = await supabase
+        .from("delivery_riders")
+        .update({
+          current_lat: pos.coords.latitude,
+          current_lng: pos.coords.longitude,
+          location_updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidate();
+      toast.success(bn ? "লোকেশন আপডেট হয়েছে" : "Location updated");
+    },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
@@ -173,12 +212,22 @@ function RidersPage() {
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="font-display font-bold">{r.name}</p>
-                <a href={`tel:${r.phone}`} className="flex items-center gap-1 text-sm text-muted-foreground">
+                <a
+                  href={`tel:${r.phone}`}
+                  className="flex items-center gap-1 text-sm text-muted-foreground"
+                >
                   <Phone className="size-3" /> {r.phone}
                 </a>
                 <p className="text-xs text-muted-foreground">
                   {r.vehicle}
                   {r.nid ? ` · NID ${r.nid}` : ""}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {r.location_updated_at
+                    ? `${bn ? "লোকেশন" : "Location"}: ${r.location_updated_at.slice(0, 16).replace("T", " ")}`
+                    : bn
+                      ? "লোকেশন নেই"
+                      : "No location"}
                 </p>
               </div>
               <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold">
@@ -196,7 +245,21 @@ function RidersPage() {
               >
                 {r.is_active ? (bn ? "ডিউটিতে" : "On duty") : bn ? "বন্ধ" : "Off duty"}
               </button>
-              <Button size="icon" variant="ghost" className="ml-auto" onClick={() => remove.mutate(r.id)}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setLocation.mutate(r.id)}
+                disabled={setLocation.isPending}
+              >
+                <MapPin className="mr-1 size-3.5" />
+                {bn ? "লোকেশন আপডেট" : "Update location"}
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="ml-auto"
+                onClick={() => remove.mutate(r.id)}
+              >
                 <Trash2 className="size-4 text-destructive" />
               </Button>
             </div>
