@@ -1495,26 +1495,36 @@ function SideCat({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm",
+        "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
         active
-          ? "bg-primary/10 font-semibold text-primary"
-          : "text-muted-foreground hover:bg-muted",
+          ? "bg-primary font-semibold text-primary-foreground"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
     >
       <span className="truncate">{label}</span>
-      <span className="text-[11px]">{count}</span>
+      <span
+        className={cn(
+          "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+          active ? "bg-primary-foreground/20" : "bg-muted",
+        )}
+      >
+        {count}
+      </span>
     </button>
   );
 }
 
 function Perk({ icon: Icon, title, sub }: { icon: LucideIcon; title: string; sub: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
-      <Icon className="size-5 shrink-0 text-primary" />
+    <div className="shop-card flex items-center gap-3 p-4">
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary text-primary">
+        <Icon className="size-5" />
+      </span>
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold">{title}</p>
         <p className="truncate text-xs text-muted-foreground">{sub}</p>
       </div>
     </div>
   );
+
 }
