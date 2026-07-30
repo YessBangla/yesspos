@@ -109,6 +109,120 @@ export async function compressImage(file: File): Promise<File> {
   }
 }
 
+/** Responsive widths generated for every raster upload. */
+export const VARIANT_WIDTHS = { thumb: 320, medium: 800, large: 1600 } as const;
+export type VariantKey = keyof typeof VARIANT_WIDTHS;
+export type MediaVariants = Partial<Record<VariantKey, string>>;
+
+async function resizeToWebp(file: File, width: number): Promise<File | null> {
+  if (typeof document === "undefined") return null;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, width / bitmap.width);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close?.();
+    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/webp", 0.8));
+    if (!blob) return null;
+    return new File([blob], `w${width}.webp`, { type: "image/webp" });
+  } catch {
+    return null;
+  }
+}
+
+/** Builds and uploads thumbnail / medium / large copies next to the original. */
+async function uploadVariants(file: File, basePath: string): Promise<MediaVariants> {
+  if (file.type === "image/svg+xml" || file.type === "image/gif") return {};
+  const out: MediaVariants = {};
+  for (const key of Object.keys(VARIANT_WIDTHS) as VariantKey[]) {
+    const resized = await resizeToWebp(file, VARIANT_WIDTHS[key]);
+    if (!resized) continue;
+    const path = `${basePath.replace(/\.[^./]+$/, "")}-${key}.webp`;
+    const up = await supabase.storage.from(MEDIA_BUCKET).upload(path, resized, {
+      cacheControl: "31536000",
+      contentType: "image/webp",
+      upsert: true,
+    });
+    if (up.error) continue;
+    try {
+      out[key] = await signedUrl(path);
+    } catch {
+      /* keep going — the original still works */
+    }
+  }
+  return out;
+}
+
+/** Picks the smallest stored copy that still covers the requested width. */
+export function pickVariant(asset: Pick<MediaAsset, "url" | "variants">, width: number) {
+  const v = asset.variants ?? {};
+  const order: VariantKey[] = ["thumb", "medium", "large"];
+  for (const key of order) {
+    if (v[key] && VARIANT_WIDTHS[key] >= width) return v[key]!;
+  }
+  return v.large ?? asset.url;
+}
+
+/** srcSet string for <img> so the storefront downloads the lightest copy. */
+export function variantSrcSet(asset: Pick<MediaAsset, "url" | "variants">) {
+  const v = asset.variants ?? {};
+  const parts = (Object.keys(VARIANT_WIDTHS) as VariantKey[])
+    .filter((k) => v[k])
+    .map((k) => `${v[k]} ${VARIANT_WIDTHS[k]}w`);
+  return parts.length ? parts.join(", ") : undefined;
+}
+
+export type MediaAction = "upload" | "tag_edit" | "delete" | "restore" | "purge" | "assign";
+
+/** Writes one row into the shared audit log so media changes are traceable. */
+export async function logMediaAction(action: MediaAction, entityId: string | null, details: string) {
+  try {
+    const { data: auth } = await supabase.auth.getUser();
+    const user = auth.user;
+    if (!user) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle();
+    await supabase.from("audit_logs").insert({
+      user_id: user.id,
+      username: profile?.username ?? user.email?.split("@")[0] ?? null,
+      entity: "media",
+      entity_id: entityId,
+      action: `media.${action}`,
+      details,
+    });
+  } catch {
+    /* logging must never block the media action */
+  }
+}
+
+export type MediaLogRow = {
+  id: string;
+  action: string;
+  details: string | null;
+  entity_id: string | null;
+  username: string | null;
+  created_at: string;
+};
+
+/** Recent media audit entries (readable by admins). */
+export async function listMediaLog(): Promise<MediaLogRow[]> {
+  const { data, error } = await supabase
+    .from("audit_logs")
+    .select("id,action,details,entity_id,username,created_at")
+    .eq("entity", "media")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return (data ?? []) as MediaLogRow[];
+}
+
 /** Uploads one file to the gallery bucket and records it in media_assets. */
 export async function uploadMedia(rawFile: File, folder: string) {
   const file = await compressImage(rawFile);
@@ -121,6 +235,7 @@ export async function uploadMedia(rawFile: File, folder: string) {
   if (up.error) throw up.error;
 
   const url = await signedUrl(path);
+  const variants = await uploadVariants(file, path);
   const { data: userRes } = await supabase.auth.getUser();
 
   const { data, error } = await supabase
@@ -133,28 +248,99 @@ export async function uploadMedia(rawFile: File, folder: string) {
       mime_type: file.type || null,
       size_bytes: file.size,
       uploaded_by: userRes.user?.id ?? null,
+      variants,
     })
     .select("*")
     .single();
   if (error) throw error;
-  return data as MediaAsset;
+  const asset = data as MediaAsset;
+  await logMediaAction(
+    "upload",
+    asset.id,
+    `${asset.name} → ${folderLabel(folder, false)} (${formatBytes(asset.size_bytes)}, ${Object.keys(variants).length} sizes)`,
+  );
+  return asset;
 }
 
-export async function deleteMedia(asset: Pick<MediaAsset, "id" | "path">) {
-  await supabase.storage.from(MEDIA_BUCKET).remove([asset.path]);
+/** Soft delete: keeps the file for 30 days so it can be restored. */
+export async function deleteMedia(
+  asset: Pick<MediaAsset, "id" | "path" | "name">,
+  usage: { kind: string; label: string }[] = [],
+) {
+  const { data: userRes } = await supabase.auth.getUser();
+  const { error } = await supabase
+    .from("media_assets")
+    .update({
+      deleted_at: new Date().toISOString(),
+      deleted_by: userRes.user?.id ?? null,
+      deleted_usage: usage,
+    })
+    .eq("id", asset.id);
+  if (error) throw error;
+  await logMediaAction(
+    "delete",
+    asset.id,
+    `${asset.name} moved to trash${usage.length ? ` · used in ${usage.length} place(s): ${usage.slice(0, 3).map((u) => u.label).join(", ")}` : " · unused"}`,
+  );
+}
+
+/** Puts a trashed image back into the gallery. */
+export async function restoreMedia(asset: Pick<MediaAsset, "id" | "name">) {
+  const { error } = await supabase
+    .from("media_assets")
+    .update({ deleted_at: null, deleted_by: null, deleted_usage: null })
+    .eq("id", asset.id);
+  if (error) throw error;
+  await logMediaAction("restore", asset.id, `${asset.name} restored from trash`);
+}
+
+/** Permanently removes one trashed image and its generated sizes. */
+export async function purgeMedia(asset: Pick<MediaAsset, "id" | "path" | "name" | "variants">) {
+  if (!asset.path.startsWith("site:")) {
+    const base = asset.path.replace(/\.[^./]+$/, "");
+    const paths = [asset.path, ...(Object.keys(VARIANT_WIDTHS) as VariantKey[]).map((k) => `${base}-${k}.webp`)];
+    await supabase.storage.from(MEDIA_BUCKET).remove(paths);
+  }
   const { error } = await supabase.from("media_assets").delete().eq("id", asset.id);
   if (error) throw error;
+  await logMediaAction("purge", asset.id, `${asset.name} permanently deleted`);
 }
+
+/** Days left before a trashed image is gone for good. */
+export const TRASH_RETENTION_DAYS = 30;
+export function daysLeftInTrash(deletedAt: string) {
+  const ms = new Date(deletedAt).getTime() + TRASH_RETENTION_DAYS * 86400000 - Date.now();
+  return Math.max(0, Math.ceil(ms / 86400000));
+}
+
+const MEDIA_COLUMNS =
+  "id,path,url,name,folder,tags,alt_text,mime_type,size_bytes,created_at,variants,deleted_at,deleted_by,deleted_usage";
 
 export async function listMedia() {
   const { data, error } = await supabase
     .from("media_assets")
-    .select("id,path,url,name,folder,tags,alt_text,mime_type,size_bytes,created_at")
+    .select(MEDIA_COLUMNS)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(500);
   if (error) throw error;
   return (data ?? []) as MediaAsset[];
 }
+
+/** Images deleted within the retention window, newest first. */
+export async function listTrashedMedia() {
+  const cutoff = new Date(Date.now() - TRASH_RETENTION_DAYS * 86400000).toISOString();
+  const { data, error } = await supabase
+    .from("media_assets")
+    .select(MEDIA_COLUMNS)
+    .not("deleted_at", "is", null)
+    .gte("deleted_at", cutoff)
+    .order("deleted_at", { ascending: false })
+    .limit(300);
+  if (error) throw error;
+  return (data ?? []) as MediaAsset[];
+}
+
 
 /**
  * Registers every image already used on the site (bundled files, product images,
