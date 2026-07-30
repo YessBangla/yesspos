@@ -15,7 +15,35 @@ type Proof = {
   receiver_name: string | null;
   note: string | null;
   created_at: string;
+  captured_at: string | null;
+  lat: number | null;
+  lng: number | null;
+  accuracy_m: number | null;
+  status: string;
+  reject_reason: string | null;
+  verified_at: string | null;
 };
+
+/** Best-effort browser geolocation; resolves null when unavailable/denied. */
+async function currentPosition(): Promise<{
+  lat: number;
+  lng: number;
+  accuracy_m: number;
+} | null> {
+  if (typeof navigator === "undefined" || !navigator.geolocation) return null;
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (p) =>
+        resolve({
+          lat: p.coords.latitude,
+          lng: p.coords.longitude,
+          accuracy_m: p.coords.accuracy,
+        }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 },
+    );
+  });
+}
 
 const BUCKET = "delivery-proofs";
 
