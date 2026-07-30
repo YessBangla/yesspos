@@ -725,10 +725,11 @@ function ShopPage() {
         )}
       </header>
 
-      <div className="mx-auto max-w-7xl gap-5 px-4 lg:grid lg:grid-cols-[220px_minmax(0,1fr)_310px]">
+      <div className="mx-auto max-w-7xl gap-6 px-4 lg:grid lg:grid-cols-[236px_minmax(0,1fr)_330px]">
         {/* ---- Category sidebar ---- */}
         <aside className="hidden lg:block">
-          <div className="sticky top-24 mt-5 max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl border border-border bg-card p-2">
+          <div className="shop-card sticky top-28 mt-6 max-h-[calc(100vh-9rem)] overflow-y-auto p-3">
+
             <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {bn ? "ক্যাটাগরি" : "Categories"}
             </p>
