@@ -20,6 +20,7 @@ export const FEATURES = [
   "audit-logs",
   "settings",
   "site-content",
+  "media",
   "api-hub",
   "accounts",
   "chart-of-accounts",
@@ -54,6 +55,7 @@ export const ROLE_FEATURES: Record<AppRole, readonly Feature[]> = {
     "sales",
     "products",
     "product-audit",
+    "media",
     "stock-adjustments",
     "labels",
     "purchases",
@@ -80,7 +82,7 @@ export const ROLE_FEATURES: Record<AppRole, readonly Feature[]> = {
     "reviews",
   ],
 
-  cashier: ["pos", "sales", "products", "contacts", "payments", "assistant", "mobile-payments", "delivery-orders", "commerce"],
+  cashier: ["pos", "sales", "products", "media", "contacts", "payments", "assistant", "mobile-payments", "delivery-orders", "commerce"],
   staff: ["pos", "products", "labels"],
 };
 

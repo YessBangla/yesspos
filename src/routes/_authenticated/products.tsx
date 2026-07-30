@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { MediaPicker } from "@/components/MediaPicker";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -459,7 +460,9 @@ function ProductsPage() {
                 onChange={(v) => setForm({ ...form, image_url: v })}
                 maxLength={500}
               />
-
+              <div className="mt-2">
+                <MediaPicker onSelect={(url) => setForm((f) => ({ ...f, image_url: url }))} />
+              </div>
             </div>
             {form.image_url && (
               <img
