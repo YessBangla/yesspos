@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Images, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { MediaPicker } from "@/components/MediaPicker";
+import { useMyRole } from "@/lib/use-my-role";
+import { canEditMedia } from "@/lib/permissions";
 import { assignImageToProducts } from "@/lib/media";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -299,7 +301,7 @@ function ProductsPage() {
         </div>
       </div>
 
-      {picked.length > 0 && (
+      {picked.length > 0 && mayEditImages && (
         <div className="surface-panel mt-4 flex flex-wrap items-center gap-3 p-3">
           <Images className="size-4 text-primary" />
           <span className="text-sm font-semibold">
