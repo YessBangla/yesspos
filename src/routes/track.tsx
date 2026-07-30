@@ -80,6 +80,11 @@ type Proof = {
   receiver_name: string | null;
   note: string | null;
   created_at: string;
+  captured_at: string | null;
+  lat: number | null;
+  lng: number | null;
+  accuracy_m: number | null;
+  status: string | null;
 };
 
 /** Signed preview of a private proof image. */
@@ -399,7 +404,7 @@ function TrackPage() {
                 </p>
                 <div className="flex flex-wrap gap-3">
                   {proofs.map((p) => (
-                    <div key={p.file_path} className="space-y-1">
+                    <div key={p.file_path} className="w-28 space-y-1">
                       <ProofThumb path={p.file_path} alt={p.kind} />
                       <p className="text-[10px] text-muted-foreground">
                         {p.kind === "signature"
@@ -409,8 +414,36 @@ function TrackPage() {
                           : bn
                             ? "ছবি"
                             : "Photo"}{" "}
-                        · {p.created_at.slice(0, 16).replace("T", " ")}
+                        · {(p.captured_at ?? p.created_at).slice(0, 16).replace("T", " ")}
                       </p>
+                      {p.status && (
+                        <span
+                          className={
+                            p.status === "approved"
+                              ? "inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary"
+                              : "inline-block rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
+                          }
+                        >
+                          {p.status === "approved"
+                            ? bn
+                              ? "যাচাইকৃত"
+                              : "Verified"
+                            : bn
+                              ? "যাচাই অপেক্ষমাণ"
+                              : "Pending review"}
+                        </span>
+                      )}
+                      {p.lat != null && p.lng != null && (
+                        <a
+                          href={`https://www.openstreetmap.org/?mlat=${p.lat}&mlon=${p.lng}#map=17/${p.lat}/${p.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-[10px] text-primary underline"
+                        >
+                          {bn ? "লোকেশন দেখুন" : "View location"}
+                          {p.accuracy_m ? ` (±${Math.round(p.accuracy_m)}m)` : ""}
+                        </a>
+                      )}
                       {p.receiver_name && <p className="text-[10px]">{p.receiver_name}</p>}
                     </div>
                   ))}
