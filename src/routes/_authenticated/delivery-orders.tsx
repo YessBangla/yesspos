@@ -525,6 +525,49 @@ function DeliveryOrdersPage() {
 
       <RiderSchedule orders={orders.data ?? []} riders={riders.data ?? []} statusText={statusText} />
 
+      <NotificationLog />
+
+      <div className="surface-panel mt-4 flex flex-wrap items-center gap-2 p-3">
+        <p className="text-sm font-semibold">
+          <CheckSquare className="mr-1 inline size-4 text-primary" />
+          {bn ? "একসাথে স্ট্যাটাস আপডেট" : "Bulk status update"}
+        </p>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setSelected(visible.map((o) => o.id))}
+          disabled={visible.length === 0}
+        >
+          {bn ? "সব নির্বাচন" : "Select all"} ({num(visible.length, lang)})
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setSelected([])} disabled={selected.length === 0}>
+          {bn ? "নির্বাচন মুছুন" : "Clear"}
+        </Button>
+        <select
+          value={bulkStatus}
+          onChange={(e) => setBulkStatus(e.target.value)}
+          className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+        >
+          {[...FLOW, "cancelled"].map((s) => (
+            <option key={s} value={s}>
+              {statusText(s, bn)}
+            </option>
+          ))}
+        </select>
+        <Button
+          size="sm"
+          disabled={selected.length === 0 || bulkStatusUpdate.isPending}
+          onClick={() => bulkStatusUpdate.mutate({ ids: selected, status: bulkStatus })}
+        >
+          {bn ? "নির্বাচিত আপডেট করুন" : "Update selected"} ({num(selected.length, lang)})
+        </Button>
+        <span className="text-xs text-muted-foreground">
+          {bn
+            ? "নির্বাচিত প্রতিটি অর্ডারে গ্রাহক নোটিফিকেশন তৈরি হবে।"
+            : "A customer notification is generated for each selected order."}
+        </span>
+      </div>
+
 
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
@@ -536,7 +579,18 @@ function DeliveryOrdersPage() {
           return (
             <div key={o.id} className="surface-panel space-y-2 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-display font-bold">#{num(o.order_no, lang)}</span>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-[hsl(var(--primary))]"
+                    checked={selected.includes(o.id)}
+                    onChange={(e) =>
+                      setSelected((cur) => (e.target.checked ? [...cur, o.id] : cur.filter((x) => x !== o.id)))
+                    }
+                    aria-label={bn ? "অর্ডার নির্বাচন" : "Select order"}
+                  />
+                  <span className="font-display font-bold">#{num(o.order_no, lang)}</span>
+                </label>
                 <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                   {statusText(o.status, bn)}
                 </span>
@@ -647,6 +701,10 @@ function DeliveryOrdersPage() {
                 >
                   <History className="mr-1 size-4" />
                   {bn ? "টাইমলাইন" : "Timeline"}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => void exportTimelineCsv(o)}>
+                  <Download className="mr-1 size-4" />
+                  {bn ? "টাইমলাইন CSV" : "Timeline CSV"}
                 </Button>
                 {!["delivered", "cancelled"].includes(o.status) && (
                   <Button
