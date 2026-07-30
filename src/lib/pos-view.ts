@@ -114,3 +114,35 @@ export function sortProducts<T extends { name_en: string; price: number | string
       return out.sort((a, b) => a.name_en.localeCompare(b.name_en));
   }
 }
+
+/** POS layout breakpoints we guarantee tiles stay expanded at. */
+export const POS_BREAKPOINTS = {
+  tablet: 1024,
+  laptop: 1440,
+  wide: 1920,
+} as const;
+
+/** Width of the checkout aside on lg+ screens (px) — the grid gets the rest. */
+export const CHECKOUT_ASIDE_WIDTH = 420;
+
+/** Horizontal padding + gutters around the grid (px). */
+const GRID_PADDING = 32;
+
+/** Catalog width available to the product grid at a given viewport width. */
+export function catalogWidth(viewport: number) {
+  const aside = viewport >= POS_BREAKPOINTS.tablet ? CHECKOUT_ASIDE_WIDTH : 0;
+  return Math.max(0, viewport - aside - GRID_PADDING);
+}
+
+/**
+ * Number of columns the auto-fill grid resolves to, and the resulting tile
+ * width. Tiles must never fall below their configured minimum, otherwise the
+ * desktop layout "collapses" into slivers.
+ */
+export function gridColumns(viewport: number, tile: TileSize, gap = 16) {
+  const width = catalogWidth(viewport);
+  const min = TILE_MIN_WIDTH[tile];
+  const cols = Math.max(1, Math.floor((width + gap) / (min + gap)));
+  const tileWidth = (width - gap * (cols - 1)) / cols;
+  return { cols, tileWidth };
+}
