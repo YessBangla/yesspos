@@ -437,6 +437,13 @@ function DashboardPage() {
           {lang === "bn" ? "নতুন" : "New"}
         </Button>
         <div className="ml-auto flex items-center gap-1">
+          <DashboardThemePanel
+            theme={dashTheme.theme}
+            mode={dashTheme.mode}
+            glass={dashTheme.glass}
+            onChange={dashTheme.save}
+            onReset={dashTheme.reset}
+          />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="outline">
