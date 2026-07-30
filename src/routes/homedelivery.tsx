@@ -535,7 +535,10 @@ function ShopPage() {
       slot: slotLabel,
       payment_method: form.payment,
       subtotal: cart.subtotal,
+      discount,
+      coupon_code: coupon?.code ?? null,
       delivery_fee: fee,
+
       total,
     };
     const items = cart.lines.map((l) => ({
