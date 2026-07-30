@@ -176,7 +176,11 @@ function PosPage() {
   const { t, lang } = useI18n();
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
-  const [cat, setCat] = useState<string>("all");
+  const { view: posView, update: updatePosView } = usePosView();
+  const cat = posView.cat;
+  const setCat = useCallback((next: string) => updatePosView({ cat: next }), [updatePosView]);
+  const sort = posView.sort;
+  const tile = posView.tile;
   const [cart, setCart] = useState<CartLine[]>([]);
   const [discount, setDiscount] = useState("0");
   const [discountMode, setDiscountMode] = useState<"flat" | "percent">("flat");
