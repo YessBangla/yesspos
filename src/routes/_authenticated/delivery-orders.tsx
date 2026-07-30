@@ -574,6 +574,10 @@ function DeliveryOrdersPage() {
                 )}
               </div>
 
+              <OrderNotifications orderId={o.id} phone={o.customer_phone} />
+
+
+
               <div className="flex flex-wrap gap-2">
                 {next && o.status !== "cancelled" && (
                   <Button size="sm" onClick={() => setStatus.mutate({ id: o.id, status: next })}>
