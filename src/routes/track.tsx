@@ -21,7 +21,21 @@ export const Route = createFileRoute("/track")({
   component: TrackPage,
 });
 
-type Tracked = { order_no: number; status: string; total: number; created_at: string };
+type Tracked = {
+  order_no: number;
+  status: string;
+  total: number;
+  created_at: string;
+  updated_at: string | null;
+  slot: string | null;
+  area: string | null;
+  payment_method: string | null;
+  rider_name: string | null;
+  rider_phone: string | null;
+  rider_vehicle: string | null;
+  eta_minutes: number | null;
+};
+
 
 function TrackPage() {
   const { lang } = useI18n();
