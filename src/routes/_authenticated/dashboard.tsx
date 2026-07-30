@@ -365,7 +365,10 @@ function DashboardPage() {
   ];
 
   return (
-    <div className="dashboard-skin space-y-4 p-4">
+    <div
+      className="dashboard-skin space-y-4 p-4"
+      {...dashboardThemeAttrs(dashTheme.theme, dashTheme.mode, dashTheme.glass)}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-bold">
           {t("welcome")}{" "}
