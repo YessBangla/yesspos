@@ -915,36 +915,44 @@ function ShopPage() {
 
         {/* ---- Desktop cart rail ---- */}
         <aside className="hidden lg:block">
-          <div className="sticky top-24 mt-5 rounded-2xl border border-border bg-card">
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <span className="font-display font-bold">{bn ? "আপনার কার্ট" : "Your cart"}</span>
-              <span className="text-xs text-muted-foreground">
+          <div className="shop-card sticky top-28 mt-6 overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <span className="font-display text-base font-extrabold">
+                {bn ? "আপনার কার্ট" : "Your basket"}
+              </span>
+              <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-secondary-foreground">
                 {num(cart.count, lang)} {bn ? "পণ্য" : "items"}
               </span>
             </div>
-            <div className="max-h-[45vh] divide-y divide-border overflow-y-auto">
+            <div className="max-h-[42vh] divide-y divide-border overflow-y-auto">
               {cart.lines.map((l) => (
                 <CartRow key={l.id} l={l} bn={bn} lang={lang} onSet={(q) => cart.setQty(l.id, q)} />
               ))}
               {cart.lines.length === 0 && (
-                <p className="p-6 text-center text-sm text-muted-foreground">
-                  {bn ? "কার্ট খালি — পণ্য যোগ করুন" : "Cart is empty — add some products"}
-                </p>
+                <div className="px-6 py-10 text-center">
+                  <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
+                    <ShoppingBasket className="size-5" />
+                  </span>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {bn ? "কার্ট খালি — পণ্য যোগ করুন" : "Cart is empty — add some products"}
+                  </p>
+                </div>
               )}
             </div>
-            <div className="space-y-1 border-t border-border p-4 text-sm">
+            <div className="space-y-1.5 border-t border-border bg-muted/40 p-5 text-sm">
               <Row label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
               <Row label={bn ? "ডেলিভারি" : "Delivery"} value={money(fee, lang)} />
               <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
               {cart.subtotal > 0 && cart.subtotal < 1000 && (
-                <p className="pt-1 text-xs text-primary">
+                <p className="rounded-xl bg-accent/25 px-3 py-2 text-xs font-medium text-accent-foreground">
                   {bn
                     ? `আর ${money(1000 - cart.subtotal, lang)} কিনলে ডেলিভারি ফ্রি`
                     : `Add ${money(1000 - cart.subtotal, lang)} more for free delivery`}
                 </p>
               )}
               <Button
-                className="mt-2 w-full"
+                size="lg"
+                className="mt-2 w-full rounded-full font-semibold"
                 disabled={cart.lines.length === 0}
                 onClick={() => setCheckout(true)}
               >
@@ -953,6 +961,7 @@ function ShopPage() {
             </div>
           </div>
         </aside>
+
       </div>
 
       <footer className="mt-12 border-t border-border bg-card pb-24 lg:pb-0">
