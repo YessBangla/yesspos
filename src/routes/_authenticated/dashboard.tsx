@@ -35,6 +35,8 @@ import { useMyRole } from "@/lib/use-my-role";
 import { useActiveBranch } from "@/lib/active-branch";
 import { canAccess, type Feature } from "@/lib/permissions";
 import { DASHBOARD_WIDGETS, useDashboards, type DashboardWidget } from "@/lib/dashboards";
+import { dashboardThemeAttrs, useDashboardTheme } from "@/lib/dashboard-theme";
+import { DashboardThemePanel } from "@/components/DashboardThemePanel";
 import { Button } from "@/components/ui/button";
 import { ChannelStatusPanel } from "@/components/ChannelStatusPanel";
 
