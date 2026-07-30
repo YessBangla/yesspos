@@ -23,6 +23,7 @@ import { downloadCsv, logAudit } from "@/lib/audit";
 import { DeliveryTrackingQr } from "@/components/DeliveryTrackingQr";
 import { OrderNotifications } from "@/components/OrderNotifications";
 import { RiderSchedule } from "@/components/RiderSchedule";
+import { FeedbackSla } from "@/components/FeedbackSla";
 import { NotificationLog } from "@/components/NotificationLog";
 import { ProofOfDelivery } from "@/components/ProofOfDelivery";
 import { OrderFeedback } from "@/components/OrderFeedback";
@@ -606,6 +607,10 @@ function DeliveryOrdersPage() {
         riders={riders.data ?? []}
         statusText={statusText}
       />
+
+      <div className="mt-4">
+        <FeedbackSla />
+      </div>
 
       <NotificationLog />
 
