@@ -60,6 +60,41 @@ function mapSrc(lat: number, lng: number) {
 }
 
 type Notice = { id: string; title: string; body: string; created_at: string };
+type Proof = {
+  kind: string;
+  file_path: string;
+  receiver_name: string | null;
+  note: string | null;
+  created_at: string;
+};
+
+/** Signed preview of a private proof image. */
+function ProofThumb({ path, alt }: { path: string; alt: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void supabase.storage
+      .from("delivery-proofs")
+      .createSignedUrl(path, 3600)
+      .then(({ data }) => {
+        if (alive) setUrl(data?.signedUrl ?? null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [path]);
+  if (!url) return <div className="h-24 w-24 animate-pulse rounded-lg bg-muted" />;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer">
+      <img
+        src={url}
+        alt={alt}
+        loading="lazy"
+        className="h-24 w-24 rounded-lg border border-border object-cover"
+      />
+    </a>
+  );
+}
 
 function TrackPage() {
   const { lang } = useI18n();
@@ -68,11 +103,18 @@ function TrackPage() {
   const [phone, setPhone] = useState("");
   const [result, setResult] = useState<Tracked | null | "none">(null);
   const [notices, setNotices] = useState<Notice[]>([]);
+  const [proofs, setProofs] = useState<Proof[]>([]);
   const [loading, setLoading] = useState(false);
+  const [feedbackKind, setFeedbackKind] = useState<"confirm" | "issue" | null>(null);
+  const [feedbackMsg, setFeedbackMsg] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sentKind, setSentKind] = useState<"confirm" | "issue" | null>(null);
 
   const search = useCallback(
     async (no = orderNo, ph = phone) => {
       setLoading(true);
+      setSentKind(null);
+      setFeedbackKind(null);
       const { data } = await supabase.rpc("track_delivery_order", {
         _order_no: Number(no),
         _phone: ph.trim(),
@@ -88,13 +130,51 @@ function TrackPage() {
           .order("created_at", { ascending: false })
           .limit(20);
         setNotices((notes as unknown as Notice[] | null) ?? []);
+        const { data: pr } = await supabase.rpc("track_delivery_proofs", {
+          _order_no: Number(no),
+          _phone: ph.trim(),
+        });
+        setProofs((pr as unknown as Proof[] | null) ?? []);
       } else {
         setNotices([]);
+        setProofs([]);
       }
       setLoading(false);
     },
     [orderNo, phone],
   );
+
+  async function sendFeedback(kind: "confirm" | "issue") {
+    if (kind === "issue" && !feedbackMsg.trim()) {
+      toast.error(bn ? "সমস্যার বিবরণ লিখুন" : "Describe the issue");
+      return;
+    }
+    setSending(true);
+    const { error } = await supabase.rpc("submit_delivery_feedback", {
+      _order_no: Number(orderNo),
+      _phone: phone.trim(),
+      _kind: kind,
+      _message: feedbackMsg.trim() || null,
+    });
+    setSending(false);
+    if (error) {
+      toast.error(bn ? "পাঠানো যায়নি, আবার চেষ্টা করুন" : "Could not send, please retry");
+      return;
+    }
+    setFeedbackMsg("");
+    setFeedbackKind(null);
+    setSentKind(kind);
+    toast.success(
+      kind === "confirm"
+        ? bn
+          ? "ধন্যবাদ! ডেলিভারি কনফার্ম হয়েছে"
+          : "Thanks! Delivery confirmed"
+        : bn
+          ? "আপনার সমস্যা রিপোর্ট করা হয়েছে"
+          : "Your issue has been reported",
+    );
+  }
+
 
   // Auto-track when opened from a QR code / shared link: /track?order=123&phone=01…
   const autoRan = useRef(false);
