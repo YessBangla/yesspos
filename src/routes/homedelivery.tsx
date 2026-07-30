@@ -414,7 +414,43 @@ function ShopPage() {
   const shown = visible.slice(0, limit);
 
   const fee = deliveryFeeFor(cart.subtotal);
-  const total = cart.subtotal + fee;
+  const discount = Math.min(coupon?.discount ?? 0, cart.subtotal);
+  const total = Math.max(cart.subtotal - discount + fee, 0);
+
+  async function checkCoupon(code: string) {
+    setCouponBusy(true);
+    const res = await applyCoupon(code, cart.subtotal, bn);
+    setCouponBusy(false);
+    setCouponMsg({ ok: res.ok, text: res.message });
+    setCoupon(res.ok ? { code: res.code, discount: res.discount } : null);
+    return res.ok;
+  }
+
+  function clearCoupon() {
+    setCoupon(null);
+    setCouponInput("");
+    setCouponMsg(null);
+  }
+
+  // Re-check the applied coupon whenever the cart value changes.
+  useEffect(() => {
+    if (!coupon) return;
+    let cancelled = false;
+    void applyCoupon(coupon.code, cart.subtotal, bn).then((res) => {
+      if (cancelled) return;
+      if (!res.ok) {
+        setCoupon(null);
+        setCouponMsg({ ok: false, text: res.message });
+      } else if (res.discount !== coupon.discount) {
+        setCoupon({ code: res.code, discount: res.discount });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart.subtotal, bn]);
+
 
   const slotLabel = useMemo(() => {
     if (!slotTime) return "";
