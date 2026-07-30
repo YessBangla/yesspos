@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bike, PackageSearch, Phone } from "lucide-react";
+import { BellRing, Bike, PackageSearch, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,12 +37,15 @@ type Tracked = {
 };
 
 
+type Notice = { id: string; title: string; body: string; created_at: string };
+
 function TrackPage() {
   const { lang } = useI18n();
   const bn = lang === "bn";
   const [orderNo, setOrderNo] = useState("");
   const [phone, setPhone] = useState("");
   const [result, setResult] = useState<Tracked | null | "none">(null);
+  const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(false);
 
   const search = useCallback(async (no = orderNo, ph = phone) => {
@@ -53,8 +56,21 @@ function TrackPage() {
     });
     const row = (data as unknown as Tracked[] | null)?.[0] ?? null;
     setResult(row ?? "none");
+    if (row) {
+      const { data: notes } = await supabase
+        .from("customer_notifications")
+        .select("id,title,body,created_at")
+        .eq("order_no", row.order_no)
+        .eq("customer_phone", ph.trim())
+        .order("created_at", { ascending: false })
+        .limit(20);
+      setNotices((notes as unknown as Notice[] | null) ?? []);
+    } else {
+      setNotices([]);
+    }
     setLoading(false);
   }, [orderNo, phone]);
+
 
   // Auto-track when opened from a QR code / shared link: /track?order=123&phone=01…
   const autoRan = useRef(false);
@@ -152,9 +168,29 @@ function TrackPage() {
                 </p>
               )}
             </div>
+
+            {notices.length > 0 && (
+              <div className="mt-3 rounded-lg border border-border p-3">
+                <p className="mb-1 flex items-center gap-1 font-semibold">
+                  <BellRing className="size-4 text-primary" /> {bn ? "আপডেট বার্তা" : "Updates"}
+                </p>
+                <ol className="space-y-2">
+                  {notices.map((n) => (
+                    <li key={n.id} className="rounded-md bg-muted/60 p-2 text-xs">
+                      <p className="font-semibold">{n.title}</p>
+                      <p className="text-muted-foreground">{n.body}</p>
+                      <p className="mt-0.5 text-[10px] text-muted-foreground">
+                        {n.created_at.slice(0, 16).replace("T", " ")}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
           </div>
 
         )}
+
       </div>
       <Link to="/homedelivery" className="mt-6 inline-block text-sm text-primary underline">
         {bn ? "← দোকানে ফিরে যান" : "← Back to shop"}

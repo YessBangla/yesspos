@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bike, Check, ClipboardList, History, Phone, Truck, X } from "lucide-react";
+import { Bike, Check, ClipboardList, Download, History, Phone, Truck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useActiveBranch } from "@/lib/active-branch";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { logAudit } from "@/lib/audit";
+import { downloadCsv, logAudit } from "@/lib/audit";
 import { DeliveryTrackingQr } from "@/components/DeliveryTrackingQr";
+import { OrderNotifications } from "@/components/OrderNotifications";
+import { RiderSchedule } from "@/components/RiderSchedule";
+
 
 export const Route = createFileRoute("/_authenticated/delivery-orders")({
   head: () => ({
@@ -226,8 +229,10 @@ function DeliveryOrdersPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["delivery-orders"] });
       qc.invalidateQueries({ queryKey: ["delivery-order-events"] });
-      toast.success(bn ? "আপডেট হয়েছে" : "Updated");
+      qc.invalidateQueries({ queryKey: ["order-notifications"] });
+      toast.success(bn ? "আপডেট হয়েছে · গ্রাহক নোটিফিকেশন তৈরি হয়েছে" : "Updated · customer notification created");
     },
+
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
 
@@ -300,6 +305,59 @@ function DeliveryOrdersPage() {
     setRiderFilter("");
   }
 
+  function exportCsv() {
+    if (visible.length === 0) {
+      toast.error(bn ? "রপ্তানি করার মতো অর্ডার নেই" : "No orders to export");
+      return;
+    }
+    const riderName = (id: string | null) => (riders.data ?? []).find((r) => r.id === id)?.name ?? "";
+    const riderPhone = (id: string | null) => (riders.data ?? []).find((r) => r.id === id)?.phone ?? "";
+    downloadCsv(
+      `delivery-orders-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        "Order No",
+        "Date",
+        "Customer",
+        "Phone",
+        "Area",
+        "Address",
+        "Slot",
+        "Status",
+        "Payment",
+        "Items",
+        "Subtotal",
+        "Delivery Fee",
+        "Total",
+        "Rider",
+        "Rider Phone",
+        "Converted To Sale",
+      ],
+      visible.map((o) => {
+        const lines = byOrder.get(o.id) ?? [];
+        return [
+          o.order_no,
+          o.created_at.slice(0, 16).replace("T", " "),
+          o.customer_name,
+          o.customer_phone,
+          o.area ?? "",
+          o.address,
+          o.slot ?? "",
+          statusText(o.status, false),
+          o.payment_method,
+          lines.reduce((s, l) => s + l.quantity, 0),
+          Number(o.subtotal).toFixed(2),
+          Number(o.delivery_fee).toFixed(2),
+          Number(o.total).toFixed(2),
+          riderName(o.rider_id),
+          riderPhone(o.rider_id),
+          o.sale_id ? "yes" : "no",
+        ];
+      }),
+    );
+    void logAudit("delivery_order", { entity: "delivery_orders", details: `csv export ${visible.length}` });
+    toast.success(bn ? "CSV ডাউনলোড হয়েছে" : "CSV downloaded");
+  }
+
   return (
     <div className="p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -307,16 +365,23 @@ function DeliveryOrdersPage() {
           <Truck className="mr-2 inline size-6 text-primary" />
           {bn ? "হোম ডেলিভারি অর্ডার" : "Home delivery orders"}
         </h1>
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          maxLength={40}
-          placeholder={bn ? "অর্ডার/নাম/ফোন/ঠিকানা" : "Order, name, phone or address"}
-          className="w-64"
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            maxLength={40}
+            placeholder={bn ? "অর্ডার/নাম/ফোন/ঠিকানা" : "Order, name, phone or address"}
+            className="w-64"
+          />
+          <Button variant="outline" onClick={exportCsv}>
+            <Download className="mr-1 size-4" />
+            {bn ? "CSV ডাউনলোড" : "Export CSV"}
+          </Button>
+        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
+
         {["open", ...FLOW, "cancelled", "all"].map((s) => (
           <button
             key={s}
@@ -408,6 +473,10 @@ function DeliveryOrdersPage() {
           </p>
         )}
       </div>
+
+      <RiderSchedule orders={orders.data ?? []} riders={riders.data ?? []} statusText={statusText} />
+
+
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         {orders.isLoading && <p className="text-muted-foreground">…</p>}
@@ -505,6 +574,10 @@ function DeliveryOrdersPage() {
                 )}
               </div>
 
+              <OrderNotifications orderId={o.id} phone={o.customer_phone} />
+
+
+
               <div className="flex flex-wrap gap-2">
                 {next && o.status !== "cancelled" && (
                   <Button size="sm" onClick={() => setStatus.mutate({ id: o.id, status: next })}>
@@ -541,37 +614,54 @@ function DeliveryOrdersPage() {
               {openTimeline === o.id && (
                 <ol className="space-y-1 rounded-lg border border-border p-2 text-xs">
                   {events.isLoading && <li className="text-muted-foreground">…</li>}
-                  {(events.data ?? []).map((ev) => (
-                    <li key={ev.id} className="flex flex-wrap items-center gap-1 border-b border-border/60 pb-1 last:border-0">
-                      <span className="font-semibold text-primary">
-                        {ev.event_type === "created"
-                          ? bn
-                            ? "অর্ডার তৈরি"
-                            : "Order placed"
-                          : ev.event_type === "rider"
-                            ? bn
-                              ? "রাইডার"
-                              : "Rider"
-                            : bn
-                              ? "স্ট্যাটাস"
-                              : "Status"}
-                      </span>
-                      <span>
-                        {ev.event_type === "rider"
-                          ? `${ev.from_value ?? (bn ? "নির্ধারিত নয়" : "Unassigned")} → ${ev.to_value ?? (bn ? "নির্ধারিত নয়" : "Unassigned")}`
-                          : ev.from_value
-                            ? `${statusText(ev.from_value, bn)} → ${statusText(ev.to_value, bn)}`
-                            : statusText(ev.to_value, bn)}
-                      </span>
-                      <span className="text-muted-foreground">
-                        · {ev.created_at.slice(0, 16).replace("T", " ")} ·{" "}
-                        {ev.actor_name ?? (bn ? "সিস্টেম" : "system")}
-                      </span>
-                    </li>
-                  ))}
+                  {(events.data ?? []).map((ev) => {
+                    const isRider = ev.event_type === "rider";
+                    const none = bn ? "নির্ধারিত নয়" : "Unassigned";
+                    const before = isRider ? (ev.from_value ?? none) : ev.from_value ? statusText(ev.from_value, bn) : null;
+                    const after = isRider ? (ev.to_value ?? none) : statusText(ev.to_value, bn);
+                    return (
+                      <li key={ev.id} className="border-b border-border/60 pb-1 last:border-0">
+                        <div className="flex flex-wrap items-center gap-1">
+                          <span className="font-semibold text-primary">
+                            {ev.event_type === "created"
+                              ? bn
+                                ? "অর্ডার তৈরি"
+                                : "Order placed"
+                              : isRider
+                                ? bn
+                                  ? "রাইডার"
+                                  : "Rider"
+                                : bn
+                                  ? "স্ট্যাটাস"
+                                  : "Status"}
+                          </span>
+                          <span className="text-muted-foreground">
+                            · {ev.created_at.slice(0, 16).replace("T", " ")} ·{" "}
+                            {ev.actor_name ?? (bn ? "সিস্টেম" : "system")}
+                          </span>
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center gap-1">
+                          {before !== null && (
+                            <>
+                              <span className="rounded-md bg-muted px-1.5 py-0.5">
+                                <span className="text-muted-foreground">{bn ? "আগে" : "Before"}: </span>
+                                {before}
+                              </span>
+                              <span className="text-muted-foreground">→</span>
+                            </>
+                          )}
+                          <span className="rounded-md bg-primary/10 px-1.5 py-0.5 font-semibold text-primary">
+                            <span className="font-normal text-muted-foreground">{bn ? "পরে" : "After"}: </span>
+                            {after}
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  })}
                   {!events.isLoading && (events.data ?? []).length === 0 && (
                     <li className="text-muted-foreground">{bn ? "কোনো ইতিহাস নেই" : "No history yet"}</li>
                   )}
+
                 </ol>
               )}
             </div>
