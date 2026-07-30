@@ -449,6 +449,71 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_notifications: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string
+          customer_name: string | null
+          customer_phone: string | null
+          event_type: string
+          from_value: string | null
+          id: string
+          is_read: boolean
+          is_sent: boolean
+          order_id: string | null
+          order_no: number | null
+          sent_at: string | null
+          title: string
+          to_value: string | null
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          channel?: string
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          event_type?: string
+          from_value?: string | null
+          id?: string
+          is_read?: boolean
+          is_sent?: boolean
+          order_id?: string | null
+          order_no?: number | null
+          sent_at?: string | null
+          title: string
+          to_value?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          event_type?: string
+          from_value?: string | null
+          id?: string
+          is_read?: boolean
+          is_sent?: boolean
+          order_id?: string | null
+          order_no?: number | null
+          sent_at?: string | null
+          title?: string
+          to_value?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_notifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_order_events: {
         Row: {
           actor_id: string | null
