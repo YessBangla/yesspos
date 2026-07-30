@@ -88,6 +88,8 @@ const schema = z.object({
 
 function ProductsPage() {
   const { t, lang } = useI18n();
+  const myRole = useMyRole();
+  const mayEditImages = canEditMedia(myRole.data?.role);
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(50);
@@ -534,6 +536,14 @@ function ProductsPage() {
                 maxLength={500}
               />
               <div className="mt-2 flex flex-wrap items-center gap-2">
+                {!mayEditImages && (
+                  <p className="text-xs text-muted-foreground">
+                    {lang === "bn"
+                      ? "ছবি পরিবর্তনের অনুমতি নেই — ম্যানেজার/অ্যাডমিনের সাথে যোগাযোগ করুন।"
+                      : "You are not allowed to change images — ask a manager or admin."}
+                  </p>
+                )}
+                {mayEditImages && (
                 <MediaPicker
                   variant="default"
                   onSelect={(url) => setForm((f) => ({ ...f, image_url: url }))}
@@ -550,6 +560,7 @@ function ProductsPage() {
                   }}
                   label={lang === "bn" ? "গ্যালারি থেকে কভার ছবি বাছুন" : "Choose cover from gallery"}
                 />
+                )}
                 {form.image_url && (
                   <Button
                     type="button"
