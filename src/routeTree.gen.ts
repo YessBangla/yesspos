@@ -49,6 +49,7 @@ import { Route as AuthenticatedDeliveryZonesRouteImport } from './routes/_authen
 import { Route as AuthenticatedDeliveryOrdersRouteImport } from './routes/_authenticated/delivery-orders'
 import { Route as AuthenticatedDayBookRouteImport } from './routes/_authenticated/day-book'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCouponsRouteImport } from './routes/_authenticated/coupons'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
 import { Route as AuthenticatedCommerceRouteImport } from './routes/_authenticated/commerce'
 import { Route as AuthenticatedChartOfAccountsRouteImport } from './routes/_authenticated/chart-of-accounts'
@@ -267,6 +268,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCouponsRoute = AuthenticatedCouponsRouteImport.update({
+  id: '/coupons',
+  path: '/coupons',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedContactsRoute = AuthenticatedContactsRouteImport.update({
   id: '/contacts',
   path: '/contacts',
@@ -334,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/commerce': typeof AuthenticatedCommerceRoute
   '/contacts': typeof AuthenticatedContactsRoute
+  '/coupons': typeof AuthenticatedCouponsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/day-book': typeof AuthenticatedDayBookRoute
   '/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
@@ -384,6 +391,7 @@ export interface FileRoutesByTo {
   '/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/commerce': typeof AuthenticatedCommerceRoute
   '/contacts': typeof AuthenticatedContactsRoute
+  '/coupons': typeof AuthenticatedCouponsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/day-book': typeof AuthenticatedDayBookRoute
   '/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
@@ -436,6 +444,7 @@ export interface FileRoutesById {
   '/_authenticated/chart-of-accounts': typeof AuthenticatedChartOfAccountsRoute
   '/_authenticated/commerce': typeof AuthenticatedCommerceRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
+  '/_authenticated/coupons': typeof AuthenticatedCouponsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/day-book': typeof AuthenticatedDayBookRoute
   '/_authenticated/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
@@ -488,6 +497,7 @@ export interface FileRouteTypes {
     | '/chart-of-accounts'
     | '/commerce'
     | '/contacts'
+    | '/coupons'
     | '/dashboard'
     | '/day-book'
     | '/delivery-orders'
@@ -538,6 +548,7 @@ export interface FileRouteTypes {
     | '/chart-of-accounts'
     | '/commerce'
     | '/contacts'
+    | '/coupons'
     | '/dashboard'
     | '/day-book'
     | '/delivery-orders'
@@ -589,6 +600,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chart-of-accounts'
     | '/_authenticated/commerce'
     | '/_authenticated/contacts'
+    | '/_authenticated/coupons'
     | '/_authenticated/dashboard'
     | '/_authenticated/day-book'
     | '/_authenticated/delivery-orders'
@@ -916,6 +928,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/coupons': {
+      id: '/_authenticated/coupons'
+      path: '/coupons'
+      fullPath: '/coupons'
+      preLoaderRoute: typeof AuthenticatedCouponsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contacts': {
       id: '/_authenticated/contacts'
       path: '/contacts'
@@ -992,6 +1011,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChartOfAccountsRoute: typeof AuthenticatedChartOfAccountsRoute
   AuthenticatedCommerceRoute: typeof AuthenticatedCommerceRoute
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
+  AuthenticatedCouponsRoute: typeof AuthenticatedCouponsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDayBookRoute: typeof AuthenticatedDayBookRoute
   AuthenticatedDeliveryOrdersRoute: typeof AuthenticatedDeliveryOrdersRoute
@@ -1033,6 +1053,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChartOfAccountsRoute: AuthenticatedChartOfAccountsRoute,
   AuthenticatedCommerceRoute: AuthenticatedCommerceRoute,
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
+  AuthenticatedCouponsRoute: AuthenticatedCouponsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDayBookRoute: AuthenticatedDayBookRoute,
   AuthenticatedDeliveryOrdersRoute: AuthenticatedDeliveryOrdersRoute,
