@@ -243,9 +243,57 @@ export function MediaLibrary({
   const selectedAssets = (assets.data ?? []).filter((a) => selected.includes(a.id));
 
 
+  const tabs: { key: "gallery" | "trash" | "log"; label: string; show: boolean }[] = [
+    { key: "gallery", label: bn ? "গ্যালারি" : "Gallery", show: true },
+    { key: "trash", label: bn ? "রিসাইকেল বিন" : "Trash", show: mayDelete && !onPick && !onPickMany },
+    { key: "log", label: bn ? "অ্যাক্টিভিটি লগ" : "Activity log", show: mayViewLog && !onPick && !onPickMany },
+  ];
+
   return (
     <div className="space-y-4">
+      {tabs.filter((t) => t.show).length > 1 && (
+        <div className="flex flex-wrap items-center gap-2">
+          {tabs
+            .filter((t) => t.show)
+            .map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setView(t.key)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-sm font-semibold transition",
+                  view === t.key
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/50",
+                )}
+              >
+                {t.key === "trash" ? <Undo2 className="size-4" /> : t.key === "log" ? <History className="size-4" /> : null}
+                {t.label}
+              </button>
+            ))}
+          {!mayEdit && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Lock className="size-3.5" />
+              {bn ? "আপনার শুধু দেখার অনুমতি আছে" : "You have view-only access"}
+            </span>
+          )}
+        </div>
+      )}
+
+      {view === "trash" ? (
+        <TrashView
+          bn={bn}
+          items={trash.data ?? []}
+          loading={trash.isLoading}
+          onRestore={(a) => restore.mutate(a)}
+          onPurge={(a) => purge.mutate(a)}
+        />
+      ) : view === "log" ? (
+        <ActivityLog bn={bn} rows={log.data ?? []} loading={log.isLoading} />
+      ) : (
+        <>
       <div className="flex flex-wrap items-end gap-2">
+        {mayEdit && (
         <div>
           <label className="mb-1 block text-xs text-muted-foreground">
             {bn ? "ফোল্ডার (আপলোডের জন্য)" : "Folder (for upload)"}
@@ -262,6 +310,7 @@ export function MediaLibrary({
             ))}
           </select>
         </div>
+        )}
         <input
           ref={fileRef}
           type="file"
@@ -270,18 +319,23 @@ export function MediaLibrary({
           hidden
           onChange={(e) => handleFiles(e.target.files)}
         />
-        <Button onClick={() => fileRef.current?.click()} disabled={busy}>
-          {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Upload className="mr-2 size-4" />}
-          {bn ? "ছবি আপলোড" : "Upload images"}
-        </Button>
-        <Button variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
-          {sync.isPending ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : (
-            <RefreshCw className="mr-2 size-4" />
-          )}
-          {bn ? "সাইটের ছবি আনুন" : "Import site images"}
-        </Button>
+        {mayEdit && (
+          <>
+            <Button onClick={() => fileRef.current?.click()} disabled={busy}>
+              {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Upload className="mr-2 size-4" />}
+              {bn ? "ছবি আপলোড" : "Upload images"}
+            </Button>
+            <Button variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
+              {sync.isPending ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 size-4" />
+              )}
+              {bn ? "সাইটের ছবি আনুন" : "Import site images"}
+            </Button>
+          </>
+        )}
+
 
         <div className="ml-auto flex flex-wrap items-end gap-2">
           <div className="relative">
