@@ -868,9 +868,14 @@ function ShopPage() {
           <div className="mx-auto max-w-lg space-y-4 py-6">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-xl font-bold">{bn ? "ডেলিভারি তথ্য" : "Delivery details"}</h2>
-              <Button variant="ghost" onClick={() => setCheckout(false)}>
-                ✕
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setCheckout(false)}>
+                  {bn ? "আরও পণ্য ক্রয় করুন" : "Buy more products"}
+                </Button>
+                <Button variant="ghost" onClick={() => setCheckout(false)}>
+                  ✕
+                </Button>
+              </div>
             </div>
 
             <div className="surface-panel divide-y divide-border">
@@ -1040,7 +1045,13 @@ function ShopPage() {
             <p className="text-sm text-muted-foreground">
               {bn ? "আপনার অর্ডার নম্বর" : "Your order number"}: <b>#{placed}</b>
             </p>
-            <Button className="w-full" onClick={() => setPlaced(null)}>
+            <Button
+              className="w-full"
+              onClick={() => {
+                setPlaced(null);
+                setCheckout(false);
+              }}
+            >
               {bn ? "আরও কেনাকাটা" : "Continue shopping"}
             </Button>
             <Link to="/track" className="block text-sm text-primary underline">
