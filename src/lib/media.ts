@@ -15,7 +15,13 @@ export type MediaAsset = {
   mime_type: string | null;
   size_bytes: number | null;
   created_at: string;
+  /** Generated responsive copies: { thumb, medium, large } */
+  variants?: Partial<Record<"thumb" | "medium" | "large", string>> | null;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
+  deleted_usage?: { kind: string; label: string }[] | null;
 };
+
 
 export const MEDIA_FOLDERS = [
   "general",
