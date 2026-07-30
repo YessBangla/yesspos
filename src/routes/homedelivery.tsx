@@ -1,3 +1,4 @@
+import { LangToggle } from "@/components/LangToggle";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -519,10 +520,12 @@ function ShopPage() {
               : "1-hour delivery in Dhaka · Free above ৳1000"}
           </span>
           <span className="flex items-center gap-3">
+            <LangToggle className="bg-card" />
             <Link to="/" className="flex items-center gap-1 font-semibold hover:underline">
               <Home className="size-3.5" />
               {bn ? "মূল ওয়েবসাইট" : "Main site"}
             </Link>
+
 
             <a href="tel:16710" className="flex items-center gap-1 hover:underline">
               <Phone className="size-3.5" /> 16710
@@ -984,7 +987,8 @@ function ShopPage() {
               <h2 className="font-display text-xl font-bold">
                 {bn ? "ডেলিভারি তথ্য" : "Delivery details"}
               </h2>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <LangToggle className="bg-card" />
                 <Button variant="outline" size="sm" onClick={() => setCheckout(false)}>
                   {bn ? "আরও পণ্য ক্রয় করুন" : "Buy more products"}
                 </Button>

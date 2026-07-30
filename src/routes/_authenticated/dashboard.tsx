@@ -46,7 +46,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bike, LayoutGrid, MapPin, Megaphone, Plus, Settings2, Star, Store, Trash2 } from "lucide-react";
+import { Bike, Home, LayoutGrid, MapPin, Megaphone, Plus, Settings2, ShoppingBasket, Star, Store, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -368,19 +368,33 @@ function DashboardPage() {
             {!canSwitch && ` · ${t("branchLocked")}`}
           </span>
         </h1>
-        <div className="inline-flex overflow-hidden rounded-xl border border-border bg-card">
-          {ranges.map((r) => (
-            <button
-              key={r.key}
-              onClick={() => setRange(r.key)}
-              className={cn(
-                "px-3 py-1.5 text-sm font-medium transition-colors",
-                range === r.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
-              )}
-            >
-              {r.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <a href="/" target="_blank" rel="noreferrer">
+              <Home className="size-4" />
+              {lang === "bn" ? "মূল ওয়েবসাইট" : "Main site"}
+            </a>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <a href="/homedelivery" target="_blank" rel="noreferrer">
+              <ShoppingBasket className="size-4" />
+              {lang === "bn" ? "হোম ডেলিভারি" : "Home delivery"}
+            </a>
+          </Button>
+          <div className="inline-flex overflow-hidden rounded-xl border border-border bg-card">
+            {ranges.map((r) => (
+              <button
+                key={r.key}
+                onClick={() => setRange(r.key)}
+                className={cn(
+                  "px-3 py-1.5 text-sm font-medium transition-colors",
+                  range === r.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+                )}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

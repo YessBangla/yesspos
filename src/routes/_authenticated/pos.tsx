@@ -272,7 +272,9 @@ function PosPage() {
     const q = query.trim().toLowerCase();
     const stockMap = branchStock.data;
     return (products.data ?? [])
-      .map((p) => (stockMap ? { ...p, stock: stockMap.get(p.id) ?? 0 } : p))
+      // Branch stock rows are optional: fall back to the product's own stock
+      // so every product stays sellable/visible in each branch.
+      .map((p) => (stockMap && stockMap.has(p.id) ? { ...p, stock: stockMap.get(p.id) ?? 0 } : p))
       .filter(
         (p) =>
           (cat === "all" || p.category_id === cat) &&
@@ -882,6 +884,24 @@ function PosPage() {
 
           <div className="grid flex-1 grid-cols-2 content-start gap-3 overflow-y-auto bg-muted/30 p-3 sm:grid-cols-3 sm:gap-4 sm:p-4 xl:grid-cols-4 2xl:grid-cols-5">
             {products.isLoading && <p className="text-sm text-muted-foreground">{t("loading")}</p>}
+            {!products.isLoading && visible.length === 0 && (
+              <div className="col-span-full flex flex-col items-center gap-3 py-12 text-center">
+                <Package className="size-10 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">
+                  {lang === "bn" ? "এই অপশনে কোনো পণ্য পাওয়া যায়নি" : "No products in this option"}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setCat("all");
+                    setQuery("");
+                  }}
+                >
+                  {lang === "bn" ? "সব পণ্য দেখুন" : "Show all products"}
+                </Button>
+              </div>
+            )}
             {visible.map((p) => {
               const out = p.stock <= 0;
               const low = !out && p.stock <= 5;
