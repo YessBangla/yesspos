@@ -526,6 +526,56 @@ export type Database = {
           },
         ]
       }
+      delivery_feedback: {
+        Row: {
+          created_at: string
+          customer_phone: string | null
+          id: string
+          kind: string
+          message: string | null
+          order_id: string | null
+          order_no: number | null
+          rating: number | null
+          resolved: boolean
+          resolved_note: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_phone?: string | null
+          id?: string
+          kind?: string
+          message?: string | null
+          order_id?: string | null
+          order_no?: number | null
+          rating?: number | null
+          resolved?: boolean
+          resolved_note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_phone?: string | null
+          id?: string
+          kind?: string
+          message?: string | null
+          order_id?: string | null
+          order_no?: number | null
+          rating?: number | null
+          resolved?: boolean
+          resolved_note?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_feedback_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_order_events: {
         Row: {
           actor_id: string | null
@@ -731,6 +781,56 @@ export type Database = {
             columns: ["zone_id"]
             isOneToOne: false
             referencedRelation: "delivery_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_proofs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          file_path: string
+          id: string
+          kind: string
+          lat: number | null
+          lng: number | null
+          note: string | null
+          order_id: string
+          receiver_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          file_path: string
+          id?: string
+          kind?: string
+          lat?: number | null
+          lng?: number | null
+          note?: string | null
+          order_id: string
+          receiver_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          file_path?: string
+          id?: string
+          kind?: string
+          lat?: number | null
+          lng?: number | null
+          note?: string | null
+          order_id?: string
+          receiver_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_proofs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -2324,6 +2424,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      submit_delivery_feedback: {
+        Args: {
+          _kind: string
+          _message?: string
+          _order_no: number
+          _phone: string
+          _rating?: number
+        }
+        Returns: string
+      }
       track_delivery_order: {
         Args: { _order_no: number; _phone: string }
         Returns: {
@@ -2342,6 +2452,16 @@ export type Database = {
           status: string
           total: number
           updated_at: string
+        }[]
+      }
+      track_delivery_proofs: {
+        Args: { _order_no: number; _phone: string }
+        Returns: {
+          created_at: string
+          file_path: string
+          kind: string
+          note: string
+          receiver_name: string
         }[]
       }
     }
