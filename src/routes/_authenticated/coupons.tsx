@@ -119,7 +119,7 @@ function CouponsPage() {
         note: form.note.trim() || null,
       });
       if (error) throw error;
-      await logAudit("coupon_create", "coupons", code);
+      await logAudit("coupon_create", { entity: "coupons", details: code });
     },
     onSuccess: () => {
       setForm({ ...EMPTY });
@@ -133,7 +133,7 @@ function CouponsPage() {
     mutationFn: async ({ id, values, code }: { id: string; values: Partial<Coupon>; code: string }) => {
       const { error } = await supabase.from("coupons").update(values).eq("id", id);
       if (error) throw error;
-      await logAudit("coupon_update", "coupons", code);
+      await logAudit("coupon_update", { entity: "coupons", entityId: id, details: code });
     },
     onSuccess: () => {
       invalidate();
@@ -146,7 +146,7 @@ function CouponsPage() {
     mutationFn: async (c: Coupon) => {
       const { error } = await supabase.from("coupons").delete().eq("id", c.id);
       if (error) throw error;
-      await logAudit("coupon_delete", "coupons", c.code);
+      await logAudit("coupon_delete", { entity: "coupons", entityId: c.id, details: c.code });
     },
     onSuccess: () => {
       invalidate();
@@ -158,18 +158,30 @@ function CouponsPage() {
   function exportCsv() {
     downloadCsv(
       "coupons.csv",
-      (rows ?? []).map((c) => ({
-        code: c.code,
-        type: c.type,
-        value: c.value,
-        min_amount: c.min_amount,
-        max_discount: c.max_discount ?? "",
-        starts_on: c.starts_on ?? "",
-        expires_on: c.expires_on ?? "",
-        usage_limit: c.usage_limit ?? "",
-        used_count: c.used_count,
-        status: statusOf(c),
-      })),
+      [
+        "code",
+        "type",
+        "value",
+        "min_amount",
+        "max_discount",
+        "starts_on",
+        "expires_on",
+        "usage_limit",
+        "used_count",
+        "status",
+      ],
+      (rows ?? []).map((c) => [
+        c.code,
+        c.type,
+        c.value,
+        c.min_amount,
+        c.max_discount ?? "",
+        c.starts_on ?? "",
+        c.expires_on ?? "",
+        c.usage_limit ?? "",
+        c.used_count,
+        statusOf(c),
+      ]),
     );
   }
 
