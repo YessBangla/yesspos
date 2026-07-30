@@ -108,3 +108,48 @@ export async function listMedia() {
   if (error) throw error;
   return (data ?? []) as MediaAsset[];
 }
+
+/**
+ * Registers every image already used on the site (bundled files, product images,
+ * brand logos and site-content banners) into the gallery, skipping duplicates.
+ */
+export async function syncSiteImages() {
+  const { SITE_PRODUCT_IMAGES, SITE_OTHER_IMAGES } = await import("./site-images");
+
+  const existing = await supabase.from("media_assets").select("url");
+  if (existing.error) throw existing.error;
+  const seen = new Set((existing.data ?? []).map((r) => r.url));
+
+  type Row = { path: string; url: string; name: string; folder: string; tags: string[] };
+  const rows: Row[] = [];
+  const push = (url: string | null, name: string, folder: string, tag: string) => {
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    rows.push({ path: `site:${url}`, url, name: name || url.split("/").pop() || "image", folder, tags: [tag] });
+  };
+
+  for (const i of SITE_PRODUCT_IMAGES) push(i.url, i.name, "products", "site");
+  for (const i of SITE_OTHER_IMAGES) push(i.url, i.name, i.folder, "site");
+
+  const [products, brands, content] = await Promise.all([
+    supabase.from("products").select("name_en,image_url").not("image_url", "is", null).limit(2000),
+    supabase.from("brands").select("name_en,logo_url").not("logo_url", "is", null).limit(500),
+    supabase.from("site_content").select("label,value_en").limit(500),
+  ]);
+  for (const p of products.data ?? []) push(p.image_url, p.name_en, "products", "product");
+  for (const b of brands.data ?? []) push(b.logo_url, b.name_en, "brands", "brand");
+  for (const c of content.data ?? []) {
+    if (/^(https?:\/\/|\/).+\.(jpg|jpeg|png|webp|gif|svg)$/i.test(c.value_en ?? "")) {
+      push(c.value_en, c.label, "banners", "site");
+    }
+  }
+
+  let added = 0;
+  for (let i = 0; i < rows.length; i += 100) {
+    const chunk = rows.slice(i, i + 100);
+    const { error } = await supabase.from("media_assets").upsert(chunk, { onConflict: "path", ignoreDuplicates: true });
+    if (error) throw error;
+    added += chunk.length;
+  }
+  return added;
+}

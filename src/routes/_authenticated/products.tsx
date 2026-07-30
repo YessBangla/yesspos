@@ -460,8 +460,27 @@ function ProductsPage() {
                 onChange={(v) => setForm({ ...form, image_url: v })}
                 maxLength={500}
               />
-              <div className="mt-2">
-                <MediaPicker onSelect={(url) => setForm((f) => ({ ...f, image_url: url }))} />
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <MediaPicker
+                  variant="default"
+                  onSelect={(url) => setForm((f) => ({ ...f, image_url: url }))}
+                  label={lang === "bn" ? "গ্যালারি থেকে ছবি বাছুন" : "Choose from gallery"}
+                />
+                {form.image_url && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setForm((f) => ({ ...f, image_url: "" }))}
+                  >
+                    {lang === "bn" ? "ছবি সরান" : "Remove image"}
+                  </Button>
+                )}
+                <span className="text-xs text-muted-foreground">
+                  {lang === "bn"
+                    ? "সব ছবি ইমেজ গ্যালারিতে সংরক্ষিত থাকে"
+                    : "All images live in the image gallery"}
+                </span>
               </div>
             </div>
             {form.image_url && (
