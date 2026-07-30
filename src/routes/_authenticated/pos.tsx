@@ -69,6 +69,14 @@ import { isOfflineSupported, queueSale } from "@/lib/offline-queue";
 import { normalizePhone } from "@/lib/share-invoice";
 import { checkPackCart } from "@/lib/pack-size";
 import { checkOrderConsistency, formatIssues } from "@/lib/order-check";
+import {
+  TILE_IMAGE_HEIGHT,
+  TILE_MIN_WIDTH,
+  sortProducts,
+  usePosView,
+  type SortOrder,
+  type TileSize,
+} from "@/lib/pos-view";
 
 
 
@@ -168,7 +176,11 @@ function PosPage() {
   const { t, lang } = useI18n();
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
-  const [cat, setCat] = useState<string>("all");
+  const { view: posView, update: updatePosView } = usePosView();
+  const cat = posView.cat;
+  const setCat = useCallback((next: string) => updatePosView({ cat: next }), [updatePosView]);
+  const sort = posView.sort;
+  const tile = posView.tile;
   const [cart, setCart] = useState<CartLine[]>([]);
   const [discount, setDiscount] = useState("0");
   const [discountMode, setDiscountMode] = useState<"flat" | "percent">("flat");
@@ -268,7 +280,7 @@ function PosPage() {
     if (pct != null) setTaxPct(String(pct));
   }, [settings.data?.default_tax_pct]);
 
-  const visible = useMemo(() => {
+  const matchingQuery = useMemo(() => {
     const q = query.trim().toLowerCase();
     const stockMap = branchStock.data;
     return (products.data ?? [])
@@ -277,15 +289,31 @@ function PosPage() {
       .map((p) => (stockMap && stockMap.has(p.id) ? { ...p, stock: stockMap.get(p.id) ?? 0 } : p))
       .filter(
         (p) =>
-          (cat === "all" || p.category_id === cat) &&
-          (!q ||
-            p.name_en.toLowerCase().includes(q) ||
-            p.name_bn.includes(query.trim()) ||
-            p.sku.toLowerCase().includes(q) ||
-            (p.barcode ?? "").toLowerCase().includes(q) ||
-            matchesSerial(query, branchCode, p.seq)),
+          !q ||
+          p.name_en.toLowerCase().includes(q) ||
+          p.name_bn.includes(query.trim()) ||
+          p.sku.toLowerCase().includes(q) ||
+          (p.barcode ?? "").toLowerCase().includes(q) ||
+          matchesSerial(query, branchCode, p.seq),
       );
-  }, [products.data, branchStock.data, query, cat, branchCode]);
+  }, [products.data, branchStock.data, query, branchCode]);
+
+  const visible = useMemo(
+    () =>
+      sortProducts(
+        matchingQuery.filter((p) => cat === "all" || p.category_id === cat),
+        sort,
+      ),
+    [matchingQuery, cat, sort],
+  );
+
+  /** Categories that would show results for the current search — powers the empty-state hints. */
+  const suggestedCats = useMemo(() => {
+    if (visible.length > 0) return [];
+    const ids = new Set(matchingQuery.map((p) => p.category_id ?? ""));
+    return (categories.data ?? []).filter((c) => ids.has(c.id)).slice(0, 4);
+  }, [visible.length, matchingQuery, categories.data]);
+
 
 
   const subtotal = cart.reduce((s, l) => s + Number(l.product.price) * l.qty, 0);
@@ -852,54 +880,138 @@ function PosPage() {
             </div>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto border-b border-border px-3 py-2 sm:px-4 sm:py-3">
-            <button
-              type="button"
-              onClick={() => setCat("all")}
-              className={cn(
-                "min-h-10 whitespace-nowrap rounded-full border px-5 py-2 text-sm font-medium transition",
-                cat === "all"
-                  ? "border-primary bg-primary text-primary-foreground shadow-[var(--shadow-lift)]"
-                  : "border-border bg-card text-muted-foreground hover:border-primary/50",
-              )}
-            >
-              {t("all")}
-            </button>
-            {(categories.data ?? []).map((c) => (
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border px-3 py-2 sm:px-4 sm:py-3">
+            <div className="flex min-w-0 gap-2 overflow-x-auto">
               <button
-                key={c.id}
                 type="button"
-                onClick={() => setCat(c.id)}
+                onClick={() => setCat("all")}
                 className={cn(
                   "min-h-10 whitespace-nowrap rounded-full border px-5 py-2 text-sm font-medium transition",
-                  cat === c.id
+                  cat === "all"
                     ? "border-primary bg-primary text-primary-foreground shadow-[var(--shadow-lift)]"
                     : "border-border bg-card text-muted-foreground hover:border-primary/50",
                 )}
               >
-                {lang === "bn" ? c.name_bn : c.name_en}
+                {t("all")}
               </button>
-            ))}
+              {(categories.data ?? []).map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setCat(c.id)}
+                  className={cn(
+                    "min-h-10 whitespace-nowrap rounded-full border px-5 py-2 text-sm font-medium transition",
+                    cat === c.id
+                      ? "border-primary bg-primary text-primary-foreground shadow-[var(--shadow-lift)]"
+                      : "border-border bg-card text-muted-foreground hover:border-primary/50",
+                  )}
+                >
+                  {lang === "bn" ? c.name_bn : c.name_en}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <Select value={sort} onValueChange={(v) => updatePosView({ sort: v as SortOrder })}>
+                <SelectTrigger className="h-10 w-[9.5rem] rounded-xl bg-muted/50 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">{lang === "bn" ? "নাম (ক-হ)" : "Name (A–Z)"}</SelectItem>
+                  <SelectItem value="price-asc">{lang === "bn" ? "দাম: কম আগে" : "Price: low first"}</SelectItem>
+                  <SelectItem value="price-desc">{lang === "bn" ? "দাম: বেশি আগে" : "Price: high first"}</SelectItem>
+                  <SelectItem value="stock-desc">{lang === "bn" ? "স্টক: বেশি আগে" : "Stock: high first"}</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="hidden items-center rounded-xl border border-border bg-card p-0.5 md:flex">
+                {(["small", "medium", "large"] as TileSize[]).map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    aria-pressed={tile === size}
+                    aria-label={`Tile size ${size}`}
+                    onClick={() => updatePosView({ tile: size })}
+                    className={cn(
+                      "min-h-9 rounded-lg px-2.5 text-xs font-semibold transition",
+                      tile === size
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {size === "small"
+                      ? lang === "bn"
+                        ? "ছোট"
+                        : "S"
+                      : size === "medium"
+                        ? lang === "bn"
+                          ? "মাঝারি"
+                          : "M"
+                        : lang === "bn"
+                          ? "বড়"
+                          : "L"}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className="grid flex-1 auto-rows-max grid-cols-2 content-start gap-3 overflow-y-auto bg-muted/30 p-3 sm:grid-cols-3 sm:gap-4 sm:p-4 xl:grid-cols-4 2xl:grid-cols-5">
+          <div
+            data-testid="pos-product-grid"
+            style={{
+              gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, ${TILE_MIN_WIDTH[tile]}px), 1fr))`,
+            }}
+            className="grid flex-1 auto-rows-max content-start gap-3 overflow-y-auto bg-muted/30 p-3 sm:gap-4 sm:p-4"
+          >
             {products.isLoading && <p className="text-sm text-muted-foreground">{t("loading")}</p>}
             {!products.isLoading && visible.length === 0 && (
-              <div className="col-span-full flex flex-col items-center gap-3 py-12 text-center">
+              <div className="col-span-full mx-auto flex max-w-md flex-col items-center gap-3 py-12 text-center">
                 <Package className="size-10 text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground">
-                  {lang === "bn" ? "এই অপশনে কোনো পণ্য পাওয়া যায়নি" : "No products in this option"}
+                <p className="text-sm font-semibold">
+                  {lang === "bn" ? "এই ভিউতে কোনো পণ্য পাওয়া যায়নি" : "No products match this view"}
                 </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setCat("all");
-                    setQuery("");
-                  }}
-                >
-                  {lang === "bn" ? "সব পণ্য দেখুন" : "Show all products"}
-                </Button>
+                <p className="text-xs text-muted-foreground">
+                  {lang === "bn"
+                    ? "কারণ হতে পারে: সার্চ লেখা, নির্বাচিত ক্যাটাগরি, অথবা এই ব্রাঞ্চে পণ্য যোগ করা হয়নি।"
+                    : "Likely causes: the search text, the selected category, or no products added for this branch yet."}
+                </p>
+                {query.trim() && suggestedCats.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {lang === "bn" ? "এই ক্যাটাগরিতে আছে:" : "Found in:"}
+                    </span>
+                    {suggestedCats.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setCat(c.id)}
+                        className="rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+                      >
+                        {lang === "bn" ? c.name_bn : c.name_en}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="flex flex-wrap justify-center gap-2">
+                  {cat !== "all" && (
+                    <Button variant="outline" size="sm" onClick={() => setCat("all")}>
+                      {lang === "bn" ? "সব ক্যাটাগরি" : "All categories"}
+                    </Button>
+                  )}
+                  {query.trim() && (
+                    <Button variant="outline" size="sm" onClick={() => setQuery("")}>
+                      {lang === "bn" ? "সার্চ মুছুন" : "Clear search"}
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setCat("all");
+                      setQuery("");
+                    }}
+                  >
+                    {lang === "bn" ? "সব পণ্য দেখুন" : "Show all products"}
+                  </Button>
+                </div>
               </div>
             )}
             {visible.map((p) => {
@@ -912,9 +1024,13 @@ function PosPage() {
                   type="button"
                   disabled={out}
                   onClick={() => add(p)}
-                  className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-[var(--shadow-lift)] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                  className="group relative flex min-w-0 flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-[var(--shadow-lift)] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
                 >
-                  <span className="relative grid h-32 w-full shrink-0 place-items-center overflow-hidden rounded-xl bg-muted transition-colors group-hover:bg-primary/5 sm:h-36">
+                  <span
+                    style={{ height: TILE_IMAGE_HEIGHT[tile] }}
+                    className="relative grid w-full shrink-0 place-items-center overflow-hidden rounded-xl bg-muted transition-colors group-hover:bg-primary/5"
+                  >
+
                     {p.image_url ? (
                       <img
                         src={p.image_url}
