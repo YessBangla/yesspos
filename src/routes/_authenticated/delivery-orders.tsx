@@ -24,6 +24,8 @@ import { DeliveryTrackingQr } from "@/components/DeliveryTrackingQr";
 import { OrderNotifications } from "@/components/OrderNotifications";
 import { RiderSchedule } from "@/components/RiderSchedule";
 import { NotificationLog } from "@/components/NotificationLog";
+import { ProofOfDelivery } from "@/components/ProofOfDelivery";
+import { OrderFeedback } from "@/components/OrderFeedback";
 
 export const Route = createFileRoute("/_authenticated/delivery-orders")({
   head: () => ({
@@ -785,6 +787,10 @@ function DeliveryOrdersPage() {
               </div>
 
               <OrderNotifications orderId={o.id} phone={o.customer_phone} />
+
+              <ProofOfDelivery orderId={o.id} orderNo={o.order_no} />
+
+              <OrderFeedback orderId={o.id} />
 
               <div className="flex flex-wrap gap-2">
                 {next && o.status !== "cancelled" && (
