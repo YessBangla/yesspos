@@ -200,8 +200,12 @@ function ShopPage() {
     payment: "cod",
   });
   const [placed, setPlaced] = useState<number | null>(null);
-  const [slotDay, setSlotDay] = useState(() => nextDays(1)[0].toISOString().slice(0, 10));
+  const [slotDay, setSlotDay] = useState(() => dayKey(nextDays(1)[0]));
   const [slotTime, setSlotTime] = useState<string>("");
+  const slotAvail = useSlotAvailability(slotDay, true);
+  const slots = useMemo(() => slotStates(slotDay, slotAvail.data), [slotDay, slotAvail.data]);
+  const chosenSlot = slots.find((x) => x.slot.id === slotTime);
+  const altSlots = useMemo(() => slots.filter((x) => x.bookable).slice(0, 3), [slots]);
   const [errors, setErrors] = useState<string[]>([]);
   const [fieldErrs, setFieldErrs] = useState<Record<string, string>>({});
   const [placedInfo, setPlacedInfo] = useState<{ phone: string; slot: string; total: number } | null>(
@@ -467,6 +471,10 @@ function ShopPage() {
         fields.note = bn ? "নোট সর্বোচ্চ ২০০ অক্ষর" : "Note can be at most 200 characters";
     }
     if (!slotTime) fields.slot = bn ? "ডেলিভারির সময় বেছে নিন" : "Choose a delivery slot";
+    else if (chosenSlot && !chosenSlot.bookable && chosenSlot.available <= 0)
+      fields.slot = bn
+        ? "এই স্লটটি পূর্ণ — অন্য একটি বেছে নিন"
+        : "That slot is fully booked — pick another one";
     else if (!slotAvailable(new Date(slotDay), slotTime))
       fields.slot = bn
         ? "এই স্লটটি আর নেওয়া যাবে না, অন্যটি বেছে নিন"
@@ -518,6 +526,8 @@ function ShopPage() {
       area: parsed.data.area,
       note: parsed.data.note || null,
       slot: slotLabel,
+      slot_date: slotDay,
+      slot_id: slotTime,
       payment_method: form.payment,
       subtotal: cart.subtotal,
       discount,
@@ -1532,7 +1542,7 @@ function ShopPage() {
                   <Label id="day-label">{bn ? "ডেলিভারির দিন" : "Delivery day"}</Label>
                   <div className="flex flex-wrap gap-2" role="group" aria-labelledby="day-label">
                     {nextDays(5).map((d) => {
-                      const key = d.toISOString().slice(0, 10);
+                      const key = dayKey(d);
                       return (
                         <button
                           key={key}
@@ -1560,28 +1570,73 @@ function ShopPage() {
                   </div>
                   <Label id="time-label">{bn ? "ডেলিভারির সময়" : "Delivery time"}</Label>
                   <div className="grid grid-cols-2 gap-2" role="group" aria-labelledby="time-label">
-                    {TIME_SLOTS.map((t) => {
-                      const ok = slotAvailable(new Date(slotDay), t.id);
+                    {slots.map((st) => {
+                      const t = st.slot;
                       return (
                         <button
                           key={t.id}
                           type="button"
-                          disabled={!ok}
+                          disabled={!st.bookable}
                           aria-pressed={slotTime === t.id}
                           onClick={() => setSlotTime(t.id)}
                           className={cn(
-                            "min-h-11 rounded-xl border px-3 py-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            !ok && "cursor-not-allowed opacity-40",
+                            "min-h-11 rounded-xl border px-3 py-2 text-left text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            !st.bookable && "cursor-not-allowed opacity-40",
                             slotTime === t.id
                               ? "border-primary bg-primary/10 font-semibold text-primary"
                               : "border-border",
                           )}
                         >
-                          {bn ? t.bn : t.en}
+                          <span className="block">{bn ? t.bn : t.en}</span>
+                          <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
+                            {st.passed
+                              ? bn
+                                ? "সময় পার হয়েছে"
+                                : "Time passed"
+                              : st.closed
+                                ? bn
+                                  ? "বন্ধ"
+                                  : "Closed"
+                                : st.available <= 0
+                                  ? bn
+                                    ? "পূর্ণ"
+                                    : "Fully booked"
+                                  : bn
+                                    ? `${num(st.available, lang)} টি জায়গা বাকি`
+                                    : `${st.available} slots left`}
+                          </span>
                         </button>
                       );
                     })}
                   </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {slotAvail.isFetching
+                      ? bn
+                        ? "লাইভ অ্যাভেইলেবিলিটি যাচাই হচ্ছে…"
+                        : "Checking live availability…"
+                      : bn
+                        ? "অ্যাভেইলেবিলিটি প্রতি ৩০ সেকেন্ডে আপডেট হয়।"
+                        : "Availability refreshes every 30 seconds."}
+                  </p>
+                  {chosenSlot && !chosenSlot.bookable && altSlots.length > 0 && (
+                    <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+                      <p className="font-semibold">
+                        {bn ? "এই স্লটটি এখন নেওয়া যাচ্ছে না — বিকল্প:" : "That slot is unavailable — alternatives:"}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {altSlots.map((a) => (
+                          <button
+                            key={a.slot.id}
+                            type="button"
+                            onClick={() => setSlotTime(a.slot.id)}
+                            className="rounded-lg border border-border bg-background px-2 py-1"
+                          >
+                            {bn ? a.slot.bn : a.slot.en}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {fieldErrs.slot && (
                     <p role="alert" className="text-xs text-destructive">
                       {fieldErrs.slot}
