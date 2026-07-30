@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { deliveryFeeFor, useShopCart, type ShopLine } from "@/lib/shop-cart";
+import { applyCoupon } from "@/lib/coupon";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { checkPackCart } from "@/lib/pack-size";
