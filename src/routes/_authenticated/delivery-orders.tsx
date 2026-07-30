@@ -305,6 +305,59 @@ function DeliveryOrdersPage() {
     setRiderFilter("");
   }
 
+  function exportCsv() {
+    if (visible.length === 0) {
+      toast.error(bn ? "রপ্তানি করার মতো অর্ডার নেই" : "No orders to export");
+      return;
+    }
+    const riderName = (id: string | null) => (riders.data ?? []).find((r) => r.id === id)?.name ?? "";
+    const riderPhone = (id: string | null) => (riders.data ?? []).find((r) => r.id === id)?.phone ?? "";
+    downloadCsv(
+      `delivery-orders-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        "Order No",
+        "Date",
+        "Customer",
+        "Phone",
+        "Area",
+        "Address",
+        "Slot",
+        "Status",
+        "Payment",
+        "Items",
+        "Subtotal",
+        "Delivery Fee",
+        "Total",
+        "Rider",
+        "Rider Phone",
+        "Converted To Sale",
+      ],
+      visible.map((o) => {
+        const lines = byOrder.get(o.id) ?? [];
+        return [
+          o.order_no,
+          o.created_at.slice(0, 16).replace("T", " "),
+          o.customer_name,
+          o.customer_phone,
+          o.area ?? "",
+          o.address,
+          o.slot ?? "",
+          statusText(o.status, false),
+          o.payment_method,
+          lines.reduce((s, l) => s + l.quantity, 0),
+          Number(o.subtotal).toFixed(2),
+          Number(o.delivery_fee).toFixed(2),
+          Number(o.total).toFixed(2),
+          riderName(o.rider_id),
+          riderPhone(o.rider_id),
+          o.sale_id ? "yes" : "no",
+        ];
+      }),
+    );
+    void logAudit("delivery_order", { entity: "delivery_orders", details: `csv export ${visible.length}` });
+    toast.success(bn ? "CSV ডাউনলোড হয়েছে" : "CSV downloaded");
+  }
+
   return (
     <div className="p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -312,16 +365,23 @@ function DeliveryOrdersPage() {
           <Truck className="mr-2 inline size-6 text-primary" />
           {bn ? "হোম ডেলিভারি অর্ডার" : "Home delivery orders"}
         </h1>
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          maxLength={40}
-          placeholder={bn ? "অর্ডার/নাম/ফোন/ঠিকানা" : "Order, name, phone or address"}
-          className="w-64"
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            maxLength={40}
+            placeholder={bn ? "অর্ডার/নাম/ফোন/ঠিকানা" : "Order, name, phone or address"}
+            className="w-64"
+          />
+          <Button variant="outline" onClick={exportCsv}>
+            <Download className="mr-1 size-4" />
+            {bn ? "CSV ডাউনলোড" : "Export CSV"}
+          </Button>
+        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
+
         {["open", ...FLOW, "cancelled", "all"].map((s) => (
           <button
             key={s}
