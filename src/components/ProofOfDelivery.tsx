@@ -186,7 +186,9 @@ export function ProofOfDelivery({ orderId, orderNo }: { orderId: string; orderNo
     queryFn: async () => {
       const { data, error } = await supabase
         .from("delivery_proofs")
-        .select("id,kind,file_path,receiver_name,note,created_at")
+        .select(
+          "id,kind,file_path,receiver_name,note,created_at,captured_at,lat,lng,accuracy_m,status,reject_reason,verified_at",
+        )
         .eq("order_id", orderId)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -198,6 +200,7 @@ export function ProofOfDelivery({ orderId, orderNo }: { orderId: string; orderNo
     mutationFn: async ({ blob, kind }: { blob: Blob; kind: "photo" | "signature" }) => {
       const ext = kind === "signature" ? "png" : ((blob as File).name?.split(".").pop() ?? "jpg");
       const path = `${orderId}/${kind}-${Date.now()}.${ext}`;
+      const gps = await currentPosition();
       const { error: upErr } = await supabase.storage
         .from(BUCKET)
         .upload(path, blob, { contentType: blob.type || "image/png", upsert: false });
@@ -210,21 +213,62 @@ export function ProofOfDelivery({ orderId, orderNo }: { orderId: string; orderNo
         receiver_name: receiver.trim() || null,
         note: note.trim() || null,
         created_by: auth.user?.id ?? null,
+        captured_at: new Date().toISOString(),
+        lat: gps?.lat ?? null,
+        lng: gps?.lng ?? null,
+        accuracy_m: gps?.accuracy_m ?? null,
       });
       if (error) throw error;
       await logAudit("delivery_proof_upload", {
         entity: "delivery_proofs",
         entityId: orderId,
-        details: `#${orderNo} ${kind}`,
+        details: `#${orderNo} ${kind}${gps ? ` @${gps.lat.toFixed(5)},${gps.lng.toFixed(5)}` : ""}`,
       });
+      return { gps };
     },
-    onSuccess: () => {
+    onSuccess: ({ gps }) => {
       setNote("");
       void qc.invalidateQueries({ queryKey: ["delivery-proofs", orderId] });
-      toast.success(bn ? "প্রমাণ সংরক্ষিত হয়েছে" : "Proof saved");
+      void qc.invalidateQueries({ queryKey: ["delivery-orders"] });
+      void qc.invalidateQueries({ queryKey: ["delivery-order-events", orderId] });
+      toast.success(
+        bn
+          ? `প্রমাণ সংরক্ষিত — অর্ডার ডেলিভার্ড${gps ? "" : " (লোকেশন পাওয়া যায়নি)"}`
+          : `Proof saved — order marked delivered${gps ? "" : " (no GPS)"}`,
+      );
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Upload failed"),
   });
+
+  const verify = useMutation({
+    mutationFn: async ({
+      p,
+      status,
+      reason,
+    }: {
+      p: Proof;
+      status: "approved" | "rejected";
+      reason?: string;
+    }) => {
+      const { error } = await supabase
+        .from("delivery_proofs")
+        .update({ status, reject_reason: status === "rejected" ? (reason ?? null) : null })
+        .eq("id", p.id);
+      if (error) throw error;
+      await logAudit("delivery_proof_verify", {
+        entity: "delivery_proofs",
+        entityId: p.id,
+        details: `#${orderNo} ${status}${reason ? `: ${reason}` : ""}`,
+      });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["delivery-proofs", orderId] });
+      void qc.invalidateQueries({ queryKey: ["delivery-order-events", orderId] });
+      toast.success(bn ? "যাচাই আপডেট হয়েছে" : "Verification updated");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
+  });
+
 
   const remove = useMutation({
     mutationFn: async (p: Proof) => {
