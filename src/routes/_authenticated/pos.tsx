@@ -882,7 +882,7 @@ function PosPage() {
             ))}
           </div>
 
-          <div className="grid flex-1 grid-cols-2 content-start gap-3 overflow-y-auto bg-muted/30 p-3 sm:grid-cols-3 sm:gap-4 sm:p-4 xl:grid-cols-4 2xl:grid-cols-5">
+          <div className="grid flex-1 auto-rows-max grid-cols-2 content-start gap-3 overflow-y-auto bg-muted/30 p-3 sm:grid-cols-3 sm:gap-4 sm:p-4 xl:grid-cols-4 2xl:grid-cols-5">
             {products.isLoading && <p className="text-sm text-muted-foreground">{t("loading")}</p>}
             {!products.isLoading && visible.length === 0 && (
               <div className="col-span-full flex flex-col items-center gap-3 py-12 text-center">
