@@ -1339,45 +1339,76 @@ function ProductCard({
 }) {
   const { lang } = useI18n();
   return (
-    <div className="surface-panel flex flex-col overflow-hidden">
-      {p.image_url ? (
-        <img
-          src={p.image_url}
-          alt={bn ? p.name_bn : p.name_en}
-          loading="lazy"
-          decoding="async"
-          width={220}
-          height={160}
-          className="h-32 w-full bg-muted object-cover"
-        />
-      ) : (
-        <div className="h-32 w-full bg-muted" />
-      )}
-      <div className="flex flex-1 flex-col gap-1 p-3">
-        <span className="line-clamp-2 text-sm font-medium">{bn ? p.name_bn : p.name_en}</span>
-        <span className="text-xs text-muted-foreground">{p.pack_size}</span>
-        <span className="mt-auto font-display font-bold text-primary">
-          {money(Number(p.price), lang)}
-        </span>
-        {qty === 0 ? (
-          <Button size="sm" className="mt-1 w-full" onClick={onAdd}>
-            <Plus className="mr-1 size-3.5" /> {bn ? "যোগ" : "Add"}
-          </Button>
+    <div className="shop-card shop-tile group flex flex-col p-2.5">
+      <div className="relative overflow-hidden rounded-2xl bg-muted">
+        {p.image_url ? (
+          <img
+            src={p.image_url}
+            alt={bn ? p.name_bn : p.name_en}
+            loading="lazy"
+            decoding="async"
+            width={320}
+            height={320}
+            className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
+          />
         ) : (
-          <div className="mt-1 flex items-center justify-between rounded-lg border border-border">
-            <Button size="icon" variant="ghost" className="size-8" onClick={() => onSet(qty - 1)}>
-              <Minus className="size-3.5" />
-            </Button>
-            <span className="text-sm font-semibold">{num(qty, lang)}</span>
-            <Button size="icon" variant="ghost" className="size-8" onClick={() => onSet(qty + 1)}>
-              <Plus className="size-3.5" />
-            </Button>
-          </div>
+          <div className="aspect-square w-full" />
         )}
+        {p.pack_size && (
+          <span className="absolute left-2 top-2 rounded-full bg-card/90 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground backdrop-blur">
+            {p.pack_size}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col gap-1 px-1.5 pb-1 pt-3">
+        <span className="line-clamp-2 text-sm font-semibold leading-snug">
+          {bn ? p.name_bn : p.name_en}
+        </span>
+        {p.brand && (
+          <span className="truncate text-[11px] uppercase tracking-wide text-muted-foreground">
+            {p.brand}
+          </span>
+        )}
+        <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+          <span className="font-display text-lg font-extrabold leading-none text-primary">
+            {money(Number(p.price), lang)}
+          </span>
+          {qty === 0 ? (
+            <Button
+              size="icon"
+              className="size-9 shrink-0 rounded-full"
+              aria-label={bn ? "কার্টে যোগ করুন" : "Add to cart"}
+              onClick={onAdd}
+            >
+              <Plus className="size-4" />
+            </Button>
+          ) : (
+            <div className="flex shrink-0 items-center gap-0.5 rounded-full bg-primary p-0.5 text-primary-foreground">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-8 rounded-full hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                onClick={() => onSet(qty - 1)}
+              >
+                <Minus className="size-3.5" />
+              </Button>
+              <span className="min-w-5 text-center text-sm font-bold">{num(qty, lang)}</span>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-8 rounded-full hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                onClick={() => onSet(qty + 1)}
+              >
+                <Plus className="size-3.5" />
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
 
 function CartRow({
   l,
