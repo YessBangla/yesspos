@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useI18n } from "@/lib/i18n";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/track")({
   head: () => ({
@@ -154,7 +156,7 @@ function TrackPage() {
       _order_no: Number(orderNo),
       _phone: phone.trim(),
       _kind: kind,
-      _message: feedbackMsg.trim() || null,
+      _message: feedbackMsg.trim() || undefined,
     });
     setSending(false);
     if (error) {
