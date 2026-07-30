@@ -189,7 +189,6 @@ function TrackPage() {
     );
   }
 
-
   // Auto-track when opened from a QR code / shared link: /track?order=123&phone=01…
   const autoRan = useRef(false);
   useEffect(() => {
@@ -420,9 +419,7 @@ function TrackPage() {
             )}
 
             <div className="mt-3 rounded-lg border border-border p-3">
-              <p className="mb-2 font-semibold">
-                {bn ? "আপনার ফিডব্যাক" : "Your feedback"}
-              </p>
+              <p className="mb-2 font-semibold">{bn ? "আপনার ফিডব্যাক" : "Your feedback"}</p>
               {sentKind ? (
                 <p className="flex items-center gap-1 text-sm text-primary">
                   <ThumbsUp className="size-4" />
@@ -484,7 +481,6 @@ function TrackPage() {
                 </>
               )}
             </div>
-
           </div>
         )}
       </div>

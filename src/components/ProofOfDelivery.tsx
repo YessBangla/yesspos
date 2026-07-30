@@ -49,13 +49,7 @@ function ProofImage({ path, alt }: { path: string; alt: string }) {
 }
 
 /** Signature pad on a canvas; returns a PNG blob. */
-function SignaturePad({
-  onSave,
-  saving,
-}: {
-  onSave: (blob: Blob) => void;
-  saving: boolean;
-}) {
+function SignaturePad({ onSave, saving }: { onSave: (blob: Blob) => void; saving: boolean }) {
   const { lang } = useI18n();
   const bn = lang === "bn";
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -65,7 +59,10 @@ function SignaturePad({
   function pos(e: React.PointerEvent<HTMLCanvasElement>) {
     const c = canvasRef.current!;
     const r = c.getBoundingClientRect();
-    return { x: ((e.clientX - r.left) / r.width) * c.width, y: ((e.clientY - r.top) / r.height) * c.height };
+    return {
+      x: ((e.clientX - r.left) / r.width) * c.width,
+      y: ((e.clientY - r.top) / r.height) * c.height,
+    };
   }
 
   return (
@@ -279,7 +276,11 @@ export function ProofOfDelivery({ orderId, orderNo }: { orderId: string; orderNo
                   upload.mutate({ blob: f, kind: "photo" });
                 }}
               />
-              <Button size="sm" onClick={() => fileRef.current?.click()} disabled={upload.isPending}>
+              <Button
+                size="sm"
+                onClick={() => fileRef.current?.click()}
+                disabled={upload.isPending}
+              >
                 {upload.isPending ? (
                   <Loader2 className="mr-1 size-3.5 animate-spin" />
                 ) : (
@@ -300,8 +301,8 @@ export function ProofOfDelivery({ orderId, orderNo }: { orderId: string; orderNo
               <div key={p.id} className="space-y-1">
                 <ProofImage path={p.file_path} alt={p.kind} />
                 <p className="text-[10px] text-muted-foreground">
-                  {p.kind === "signature" ? (bn ? "স্বাক্ষর" : "Signature") : bn ? "ছবি" : "Photo"} ·{" "}
-                  {p.created_at.slice(0, 16).replace("T", " ")}
+                  {p.kind === "signature" ? (bn ? "স্বাক্ষর" : "Signature") : bn ? "ছবি" : "Photo"}{" "}
+                  · {p.created_at.slice(0, 16).replace("T", " ")}
                 </p>
                 {p.receiver_name && <p className="text-[10px]">{p.receiver_name}</p>}
                 <button
