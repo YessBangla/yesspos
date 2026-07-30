@@ -12,26 +12,41 @@ import {
   FolderOpen,
   Link2,
   AlertTriangle,
+  Undo2,
+  History,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { useMyRole } from "@/lib/use-my-role";
+import { canDeleteMedia, canEditMedia, canViewMediaLog } from "@/lib/permissions";
 import {
   MEDIA_FOLDERS,
+  TRASH_RETENTION_DAYS,
+  daysLeftInTrash,
   deleteMedia,
   fetchMediaUsage,
   folderLabel,
   formatBytes,
   listMedia,
+  listMediaLog,
+  listTrashedMedia,
+  logMediaAction,
+  pickVariant,
+  purgeMedia,
+  restoreMedia,
   uploadMedia,
   usageKindLabel,
+  variantSrcSet,
   syncSiteImages,
   validateImageFile,
   type MediaAsset,
   type MediaUsage,
 } from "@/lib/media";
+
 
 type UsageFilter = "all" | "used" | "unused";
 
