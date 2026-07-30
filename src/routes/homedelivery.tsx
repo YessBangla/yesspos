@@ -509,7 +509,7 @@ function ShopPage() {
     });
 
   return (
-    <main className="min-h-screen bg-muted/30 pb-28 lg:pb-10">
+    <main className="storefront min-h-screen bg-background pb-28 lg:pb-10">
       {/* ---- Top utility bar ---- */}
       <div className="bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-1.5 text-xs">
@@ -544,19 +544,24 @@ function ShopPage() {
       </div>
 
       {/* ---- Header ---- */}
-      <header className="sticky top-0 z-30 border-b border-border bg-card/95 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
-          <Link to="/" className="flex shrink-0 items-center gap-2">
-            <span className="gradient-brand grid size-9 place-items-center rounded-xl text-primary-foreground">
+      <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3.5">
+          <Link to="/" className="flex shrink-0 items-center gap-2.5">
+            <span className="gradient-brand grid size-11 place-items-center rounded-2xl text-primary-foreground shadow-sm">
               <ShoppingBasket className="size-5" />
             </span>
-            <span className="hidden font-display text-lg font-bold text-primary sm:block">
-              {sc("brand.name", "Sokoler Bazar")}
+            <span className="hidden leading-tight sm:block">
+              <span className="block font-display text-lg font-extrabold text-primary">
+                {sc("brand.name", "Sokoler Bazar")}
+              </span>
+              <span className="block text-[11px] font-medium text-muted-foreground">
+                {bn ? "অনলাইন সুপারশপ" : "Online supershop"}
+              </span>
             </span>
           </Link>
 
           <div className="relative min-w-[160px] flex-1">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
               onChange={(e) => {
@@ -565,8 +570,9 @@ function ShopPage() {
               }}
               maxLength={60}
               placeholder={bn ? "চাল, তেল, ডিম… খুঁজুন" : "Search rice, oil, eggs…"}
-              className="h-11 rounded-full pl-9"
+              className="h-12 rounded-full border-transparent bg-muted pl-10 text-base shadow-none focus-visible:bg-card"
             />
+
             {suggestions.length > 0 && (
               <div className="absolute inset-x-0 top-12 z-40 overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
                 {suggestions.map((sug) => (
@@ -606,11 +612,15 @@ function ShopPage() {
             <CustomerAccountMenu />
           </div>
 
-          <Button className="h-11 shrink-0 rounded-full" onClick={() => setCheckout(true)}>
-            <ShoppingBag className="mr-1 size-4" />
+          <Button
+            className="h-12 shrink-0 rounded-full px-5 font-semibold"
+            onClick={() => setCheckout(true)}
+          >
+            <ShoppingBag className="mr-1.5 size-4" />
             <span className="hidden sm:inline">{num(cart.count, lang)} · </span>
             {money(cart.subtotal, lang)}
           </Button>
+
         </div>
 
         {/* ---- Portal menu ---- */}
@@ -715,10 +725,11 @@ function ShopPage() {
         )}
       </header>
 
-      <div className="mx-auto max-w-7xl gap-5 px-4 lg:grid lg:grid-cols-[220px_minmax(0,1fr)_310px]">
+      <div className="mx-auto max-w-7xl gap-6 px-4 lg:grid lg:grid-cols-[236px_minmax(0,1fr)_330px]">
         {/* ---- Category sidebar ---- */}
         <aside className="hidden lg:block">
-          <div className="sticky top-24 mt-5 max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl border border-border bg-card p-2">
+          <div className="shop-card sticky top-28 mt-6 max-h-[calc(100vh-9rem)] overflow-y-auto p-3">
+
             <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {bn ? "ক্যাটাগরি" : "Categories"}
             </p>
@@ -745,39 +756,98 @@ function ShopPage() {
 
         {/* ---- Main column ---- */}
         <div>
-          <section className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="gradient-brand col-span-full rounded-2xl p-5 text-primary-foreground sm:col-span-2">
-              <p className="text-xs opacity-80">{bn ? "অনলাইন সুপারশপ" : "Online supershop"}</p>
-              <h1 className="font-display text-xl font-bold leading-tight sm:text-2xl">
-                {sc(
-                  "shop.hero_title",
-                  bn
-                    ? "বাজার এখন দরজায়, ১ ঘণ্টায় ডেলিভারি"
-                    : "Your daily bazar, delivered in 1 hour",
-                )}
-              </h1>
-              <p className="mt-1 text-sm opacity-90">
-                {sc(
-                  "shop.hero_subtitle",
-                  bn
-                    ? "৳১০০০+ অর্ডারে ফ্রি ডেলিভারি · ক্যাশ অন ডেলিভারি"
-                    : "Free delivery above ৳1000 · Cash on delivery",
-                )}
-              </p>
+          <section className="mt-6 grid gap-4 lg:grid-cols-6">
+            <div className="gradient-brand relative col-span-full flex flex-col justify-between overflow-hidden rounded-[2rem] p-6 text-primary-foreground sm:p-8 lg:col-span-4">
+              <span className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-primary-foreground/10" />
+              <span className="pointer-events-none absolute -bottom-24 right-10 size-48 rounded-full bg-primary-foreground/5" />
+              <div className="relative">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]">
+                  <Truck className="size-3.5" />
+                  {bn ? "অনলাইন সুপারশপ" : "Online supershop"}
+                </span>
+                <h1 className="mt-4 max-w-lg font-display text-3xl font-extrabold leading-[1.1] sm:text-[2.6rem]">
+                  {sc(
+                    "shop.hero_title",
+                    bn
+                      ? "বাজার এখন দরজায়, ১ ঘণ্টায় ডেলিভারি"
+                      : "Your daily bazar, delivered in 1 hour",
+                  )}
+                </h1>
+                <p className="mt-3 max-w-md text-sm opacity-90 sm:text-base">
+                  {sc(
+                    "shop.hero_subtitle",
+                    bn
+                      ? "৳১০০০+ অর্ডারে ফ্রি ডেলিভারি · ক্যাশ অন ডেলিভারি"
+                      : "Free delivery above ৳1000 · Cash on delivery",
+                  )}
+                </p>
+              </div>
+              <div className="relative mt-6 flex flex-wrap gap-2">
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="rounded-full font-semibold"
+                  onClick={() => {
+                    setCat("");
+                    setQuery("");
+                    setLimit(PAGE);
+                  }}
+                >
+                  {bn ? "কেনাকাটা শুরু করুন" : "Start shopping"}
+                </Button>
+                <Link
+                  to="/track"
+                  className="inline-flex items-center rounded-full border border-primary-foreground/40 px-5 text-sm font-semibold transition-colors hover:bg-primary-foreground/10"
+                >
+                  {bn ? "অর্ডার ট্র্যাক" : "Track order"}
+                </Link>
+              </div>
             </div>
-            <div className="grid gap-3">
+
+            <div className="col-span-full grid gap-4 sm:grid-cols-2 lg:col-span-2 lg:grid-cols-1">
+              <div className="flex flex-col justify-between rounded-[2rem] bg-accent p-6 text-accent-foreground">
+                <BadgePercent className="size-6" />
+                <p className="mt-4 font-display text-2xl font-extrabold leading-none">
+                  {bn ? "১০ টাকায় ১ পয়েন্ট" : "1 point per ৳10"}
+                </p>
+                <p className="mt-1.5 text-sm opacity-80">
+                  {bn
+                    ? "১০০০ পয়েন্ট হলেই ছাড় শুরু — মেম্বার হোন ফ্রি।"
+                    : "Discounts unlock at 1000 points — membership is free."}
+                </p>
+              </div>
+              <div className="shop-card flex flex-col justify-between p-6">
+                <Clock className="size-6 text-primary" />
+                <p className="mt-4 font-display text-2xl font-extrabold leading-none">
+                  {bn ? "সকাল ৮টা – রাত ৮টা" : "8 AM – 8 PM"}
+                </p>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  {bn
+                    ? "নিজের সুবিধামতো ডেলিভারি স্লট বেছে নিন।"
+                    : "Choose the delivery window that suits you."}
+                </p>
+              </div>
+            </div>
+
+            <div className="col-span-full grid gap-3 sm:grid-cols-3">
               <Perk
-                icon={Clock}
-                title={bn ? "সময় বেছে নিন" : "Pick your slot"}
-                sub={bn ? "সকাল ৮টা - রাত ৮টা" : "8 AM – 8 PM"}
+                icon={Truck}
+                title={bn ? "ফ্রি ডেলিভারি" : "Free delivery"}
+                sub={bn ? "৳১০০০+ অর্ডারে" : "On orders above ৳1000"}
               />
               <Perk
-                icon={BadgePercent}
-                title={bn ? "মেম্বার পয়েন্ট" : "Member points"}
-                sub={bn ? "১০ টাকায় ১ পয়েন্ট" : "1 point per ৳10"}
+                icon={ShoppingBasket}
+                title={bn ? "তাজা ও যাচাইকৃত" : "Fresh & checked"}
+                sub={bn ? "প্রতিটি পণ্য হাতে বাছাই" : "Every item hand-picked"}
+              />
+              <Perk
+                icon={Phone}
+                title={bn ? "২৪/৭ সাপোর্ট" : "24/7 support"}
+                sub={bn ? "কল করুন ১৬৭১০" : "Call 16710"}
               />
             </div>
           </section>
+
 
           <div className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
             <CatChip active={!cat} onClick={() => setCat("")} label={bn ? "সব" : "All"} />
@@ -794,22 +864,28 @@ function ShopPage() {
             ))}
           </div>
 
-          <div className="mt-4 flex items-baseline justify-between">
-            <h2 className="font-display text-lg font-bold">
-              {cat
-                ? ((bn
-                    ? categories.data?.find((c) => c.id === cat)?.name_bn
-                    : categories.data?.find((c) => c.id === cat)?.name_en) ?? "")
-                : bn
-                  ? "সব পণ্য"
-                  : "All products"}
-            </h2>
-            <span className="text-xs text-muted-foreground">
+          <div className="mt-8 flex flex-wrap items-end justify-between gap-2 border-b border-border pb-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                {bn ? "আজকের বাজার" : "Today's aisle"}
+              </p>
+              <h2 className="font-display text-2xl font-extrabold">
+                {cat
+                  ? ((bn
+                      ? categories.data?.find((c) => c.id === cat)?.name_bn
+                      : categories.data?.find((c) => c.id === cat)?.name_en) ?? "")
+                  : bn
+                    ? "সব পণ্য"
+                    : "All products"}
+              </h2>
+            </div>
+            <span className="text-sm text-muted-foreground">
               {num(visible.length, lang)} {bn ? "পণ্য" : "items"}
             </span>
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
+
             {shown.map((p) => (
               <ProductCard
                 key={p.id}
@@ -839,36 +915,44 @@ function ShopPage() {
 
         {/* ---- Desktop cart rail ---- */}
         <aside className="hidden lg:block">
-          <div className="sticky top-24 mt-5 rounded-2xl border border-border bg-card">
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <span className="font-display font-bold">{bn ? "আপনার কার্ট" : "Your cart"}</span>
-              <span className="text-xs text-muted-foreground">
+          <div className="shop-card sticky top-28 mt-6 overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <span className="font-display text-base font-extrabold">
+                {bn ? "আপনার কার্ট" : "Your basket"}
+              </span>
+              <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-secondary-foreground">
                 {num(cart.count, lang)} {bn ? "পণ্য" : "items"}
               </span>
             </div>
-            <div className="max-h-[45vh] divide-y divide-border overflow-y-auto">
+            <div className="max-h-[42vh] divide-y divide-border overflow-y-auto">
               {cart.lines.map((l) => (
                 <CartRow key={l.id} l={l} bn={bn} lang={lang} onSet={(q) => cart.setQty(l.id, q)} />
               ))}
               {cart.lines.length === 0 && (
-                <p className="p-6 text-center text-sm text-muted-foreground">
-                  {bn ? "কার্ট খালি — পণ্য যোগ করুন" : "Cart is empty — add some products"}
-                </p>
+                <div className="px-6 py-10 text-center">
+                  <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
+                    <ShoppingBasket className="size-5" />
+                  </span>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {bn ? "কার্ট খালি — পণ্য যোগ করুন" : "Cart is empty — add some products"}
+                  </p>
+                </div>
               )}
             </div>
-            <div className="space-y-1 border-t border-border p-4 text-sm">
+            <div className="space-y-1.5 border-t border-border bg-muted/40 p-5 text-sm">
               <Row label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
               <Row label={bn ? "ডেলিভারি" : "Delivery"} value={money(fee, lang)} />
               <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
               {cart.subtotal > 0 && cart.subtotal < 1000 && (
-                <p className="pt-1 text-xs text-primary">
+                <p className="rounded-xl bg-accent/25 px-3 py-2 text-xs font-medium text-accent-foreground">
                   {bn
                     ? `আর ${money(1000 - cart.subtotal, lang)} কিনলে ডেলিভারি ফ্রি`
                     : `Add ${money(1000 - cart.subtotal, lang)} more for free delivery`}
                 </p>
               )}
               <Button
-                className="mt-2 w-full"
+                size="lg"
+                className="mt-2 w-full rounded-full font-semibold"
                 disabled={cart.lines.length === 0}
                 onClick={() => setCheckout(true)}
               >
@@ -877,6 +961,7 @@ function ShopPage() {
             </div>
           </div>
         </aside>
+
       </div>
 
       <footer className="mt-12 border-t border-border bg-card pb-24 lg:pb-0">
@@ -1254,45 +1339,76 @@ function ProductCard({
 }) {
   const { lang } = useI18n();
   return (
-    <div className="surface-panel flex flex-col overflow-hidden">
-      {p.image_url ? (
-        <img
-          src={p.image_url}
-          alt={bn ? p.name_bn : p.name_en}
-          loading="lazy"
-          decoding="async"
-          width={220}
-          height={160}
-          className="h-32 w-full bg-muted object-cover"
-        />
-      ) : (
-        <div className="h-32 w-full bg-muted" />
-      )}
-      <div className="flex flex-1 flex-col gap-1 p-3">
-        <span className="line-clamp-2 text-sm font-medium">{bn ? p.name_bn : p.name_en}</span>
-        <span className="text-xs text-muted-foreground">{p.pack_size}</span>
-        <span className="mt-auto font-display font-bold text-primary">
-          {money(Number(p.price), lang)}
-        </span>
-        {qty === 0 ? (
-          <Button size="sm" className="mt-1 w-full" onClick={onAdd}>
-            <Plus className="mr-1 size-3.5" /> {bn ? "যোগ" : "Add"}
-          </Button>
+    <div className="shop-card shop-tile group flex flex-col p-2.5">
+      <div className="relative overflow-hidden rounded-2xl bg-muted">
+        {p.image_url ? (
+          <img
+            src={p.image_url}
+            alt={bn ? p.name_bn : p.name_en}
+            loading="lazy"
+            decoding="async"
+            width={320}
+            height={320}
+            className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
+          />
         ) : (
-          <div className="mt-1 flex items-center justify-between rounded-lg border border-border">
-            <Button size="icon" variant="ghost" className="size-8" onClick={() => onSet(qty - 1)}>
-              <Minus className="size-3.5" />
-            </Button>
-            <span className="text-sm font-semibold">{num(qty, lang)}</span>
-            <Button size="icon" variant="ghost" className="size-8" onClick={() => onSet(qty + 1)}>
-              <Plus className="size-3.5" />
-            </Button>
-          </div>
+          <div className="aspect-square w-full" />
         )}
+        {p.pack_size && (
+          <span className="absolute left-2 top-2 rounded-full bg-card/90 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground backdrop-blur">
+            {p.pack_size}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col gap-1 px-1.5 pb-1 pt-3">
+        <span className="line-clamp-2 text-sm font-semibold leading-snug">
+          {bn ? p.name_bn : p.name_en}
+        </span>
+        {p.brand && (
+          <span className="truncate text-[11px] uppercase tracking-wide text-muted-foreground">
+            {p.brand}
+          </span>
+        )}
+        <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+          <span className="font-display text-lg font-extrabold leading-none text-primary">
+            {money(Number(p.price), lang)}
+          </span>
+          {qty === 0 ? (
+            <Button
+              size="icon"
+              className="size-9 shrink-0 rounded-full"
+              aria-label={bn ? "কার্টে যোগ করুন" : "Add to cart"}
+              onClick={onAdd}
+            >
+              <Plus className="size-4" />
+            </Button>
+          ) : (
+            <div className="flex shrink-0 items-center gap-0.5 rounded-full bg-primary p-0.5 text-primary-foreground">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-8 rounded-full hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                onClick={() => onSet(qty - 1)}
+              >
+                <Minus className="size-3.5" />
+              </Button>
+              <span className="min-w-5 text-center text-sm font-bold">{num(qty, lang)}</span>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-8 rounded-full hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                onClick={() => onSet(qty + 1)}
+              >
+                <Plus className="size-3.5" />
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
 
 function CartRow({
   l,
@@ -1306,30 +1422,43 @@ function CartRow({
   onSet: (q: number) => void;
 }) {
   return (
-    <div className="flex items-center gap-3 p-3">
-      <span className="min-w-0 flex-1 truncate text-sm">{bn ? l.name_bn : l.name_en}</span>
-      <div className="flex items-center gap-1">
+    <div className="flex items-center gap-3 px-4 py-3">
+      {l.image_url ? (
+        <img
+          src={l.image_url}
+          alt=""
+          loading="lazy"
+          className="size-11 shrink-0 rounded-xl bg-muted object-cover"
+        />
+      ) : (
+        <span className="size-11 shrink-0 rounded-xl bg-muted" />
+      )}
+      <div className="min-w-0 flex-1">
+        <span className="line-clamp-1 text-sm font-medium">{bn ? l.name_bn : l.name_en}</span>
+        <span className="text-xs text-muted-foreground">{money(l.price * l.qty, lang)}</span>
+      </div>
+      <div className="flex shrink-0 items-center gap-0.5 rounded-full border border-border">
         <Button
           size="icon"
           variant="ghost"
-          className="size-9 sm:size-7"
+          className="size-8 rounded-full"
           onClick={() => onSet(l.qty - 1)}
         >
           <Minus className="size-3" />
         </Button>
-        <span className="w-6 text-center text-sm">{num(l.qty, lang)}</span>
+        <span className="w-5 text-center text-sm font-semibold">{num(l.qty, lang)}</span>
         <Button
           size="icon"
           variant="ghost"
-          className="size-9 sm:size-7"
+          className="size-8 rounded-full"
           onClick={() => onSet(l.qty + 1)}
         >
           <Plus className="size-3" />
         </Button>
       </div>
-      <span className="w-20 text-right text-sm font-semibold">{money(l.price * l.qty, lang)}</span>
     </div>
   );
+
 }
 
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
@@ -1366,26 +1495,36 @@ function SideCat({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm",
+        "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
         active
-          ? "bg-primary/10 font-semibold text-primary"
-          : "text-muted-foreground hover:bg-muted",
+          ? "bg-primary font-semibold text-primary-foreground"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
     >
       <span className="truncate">{label}</span>
-      <span className="text-[11px]">{count}</span>
+      <span
+        className={cn(
+          "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+          active ? "bg-primary-foreground/20" : "bg-muted",
+        )}
+      >
+        {count}
+      </span>
     </button>
   );
 }
 
 function Perk({ icon: Icon, title, sub }: { icon: LucideIcon; title: string; sub: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
-      <Icon className="size-5 shrink-0 text-primary" />
+    <div className="shop-card flex items-center gap-3 p-4">
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary text-primary">
+        <Icon className="size-5" />
+      </span>
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold">{title}</p>
         <p className="truncate text-xs text-muted-foreground">{sub}</p>
       </div>
     </div>
   );
+
 }
