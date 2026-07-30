@@ -430,5 +430,6 @@ export async function assignImageToProducts(url: string, productIds: string[]) {
   if (!productIds.length) return 0;
   const { error } = await supabase.from("products").update({ image_url: url }).in("id", productIds);
   if (error) throw error;
+  await logMediaAction("assign", null, `Image assigned to ${productIds.length} product(s): ${url}`);
   return productIds.length;
 }

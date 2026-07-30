@@ -126,6 +126,10 @@ export function MediaLibrary({
 
   async function handleFiles(files: FileList | null) {
     if (!files?.length) return;
+    if (!mayEdit) {
+      toast.error(bn ? "ছবি আপলোডের অনুমতি নেই" : "You are not allowed to upload images");
+      return;
+    }
     setBusy(true);
     let ok = 0;
     let saved = 0;
