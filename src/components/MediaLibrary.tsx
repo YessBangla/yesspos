@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Copy, Loader2, Trash2, Upload, Check, Search } from "lucide-react";
+import { Copy, Loader2, Trash2, Upload, Check, Search, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,7 @@ import {
   formatBytes,
   listMedia,
   uploadMedia,
+  syncSiteImages,
   type MediaAsset,
 } from "@/lib/media";
 
@@ -66,6 +67,33 @@ export function MediaLibrary({
     if (ok) toast.success(bn ? `${ok}টি ছবি আপলোড হয়েছে` : `${ok} image(s) uploaded`);
     qc.invalidateQueries({ queryKey: ["media-assets"] });
   }
+
+  const sync = useMutation({
+    mutationFn: syncSiteImages,
+    onSuccess: (n) => {
+      toast.success(
+        n
+          ? bn
+            ? `${n}টি সাইটের ছবি গ্যালারিতে যোগ হয়েছে`
+            : `${n} site image(s) added to the gallery`
+          : bn
+            ? "সব ছবি আগে থেকেই গ্যালারিতে আছে"
+            : "All site images are already in the gallery",
+      );
+      qc.invalidateQueries({ queryKey: ["media-assets"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Sync failed"),
+  });
+
+  // First visit: pull every image already used on the site into the gallery.
+  const autoRan = useRef(false);
+  useEffect(() => {
+    if (autoRan.current || assets.isLoading) return;
+    if ((assets.data ?? []).length > 0) return;
+    autoRan.current = true;
+    sync.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assets.isLoading, assets.data]);
 
   const remove = useMutation({
     mutationFn: (a: MediaAsset) => deleteMedia(a),
@@ -122,6 +150,14 @@ export function MediaLibrary({
           {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Upload className="mr-2 size-4" />}
           {bn ? "ছবি আপলোড" : "Upload images"}
         </Button>
+        <Button variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
+          {sync.isPending ? (
+            <Loader2 className="mr-2 size-4 animate-spin" />
+          ) : (
+            <RefreshCw className="mr-2 size-4" />
+          )}
+          {bn ? "সাইটের ছবি আনুন" : "Import site images"}
+        </Button>
 
         <div className="ml-auto flex flex-wrap items-end gap-2">
           <div className="relative">
@@ -161,7 +197,7 @@ export function MediaLibrary({
         ) : items.length === 0 ? (
           <p className="p-6 text-center text-sm text-muted-foreground">
             {bn
-              ? "কোনো ছবি নেই। উপরে 'ছবি আপলোড' চাপুন বা এখানে ছবি টেনে ছাড়ুন।"
+              ? "কোনো ছবি নেই। 'সাইটের ছবি আনুন' চাপুন, বা ছবি আপলোড করুন / এখানে টেনে ছাড়ুন।"
               : "No images yet. Click “Upload images” or drag & drop files here."}
           </p>
         ) : (
