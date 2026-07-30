@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BellRing, Bike, MapPin, PackageSearch, Phone, Route } from "lucide-react";
+import { BellRing, Bike, MapPin, PackageSearch, Phone, Route as RouteIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -164,7 +164,7 @@ function TrackPage() {
 
             <div className="mt-3 rounded-lg border border-border p-3">
               <p className="mb-2 flex items-center gap-1 font-semibold">
-                <Route className="size-4 text-primary" /> {bn ? "ডেলিভারি অগ্রগতি" : "Delivery progress"}
+                <RouteIcon className="size-4 text-primary" /> {bn ? "ডেলিভারি অগ্রগতি" : "Delivery progress"}
               </p>
               {result.status === "cancelled" ? (
                 <p className="text-sm text-destructive">{bn ? "অর্ডারটি বাতিল হয়েছে।" : "This order was cancelled."}</p>
