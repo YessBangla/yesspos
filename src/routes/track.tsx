@@ -1,6 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BellRing, Bike, MapPin, PackageSearch, Phone, Route as RouteIcon } from "lucide-react";
+import {
+  AlertTriangle,
+  BellRing,
+  Bike,
+  Camera,
+  MapPin,
+  PackageSearch,
+  Phone,
+  Route as RouteIcon,
+  Send,
+  ThumbsUp,
+} from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
