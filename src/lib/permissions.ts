@@ -18,6 +18,7 @@ export const FEATURES = [
   "dashboard",
   "users",
   "audit-logs",
+  "data-backup",
   "settings",
   "site-content",
   "media",

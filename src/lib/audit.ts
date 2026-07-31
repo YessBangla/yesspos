@@ -46,7 +46,9 @@ export type AuditAction =
   | "order_cancel"
   | "order_reschedule"
   | "slot_capacity_update"
-  | "notification_resend";
+  | "notification_resend"
+  | "data_backup"
+  | "data_restore";
 
 
 

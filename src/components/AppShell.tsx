@@ -45,6 +45,7 @@ import {
   Truck,
   Users,
   Wallet,
+  DatabaseBackup,
 } from "lucide-react";
 import {
   useCallback,
@@ -274,6 +275,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       items: [
         { to: "/settings", feature: "settings", label: t("settings"), icon: SettingsIcon },
         { to: "/site-content", feature: "site-content", label: t("websiteContent"), icon: FileText },
+        { to: "/data-backup", feature: "data-backup", label: t("dataBackup"), icon: DatabaseBackup },
       ],
     },
     {
