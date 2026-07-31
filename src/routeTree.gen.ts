@@ -49,6 +49,7 @@ import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDeliveryZonesRouteImport } from './routes/_authenticated/delivery-zones'
 import { Route as AuthenticatedDeliveryOrdersRouteImport } from './routes/_authenticated/delivery-orders'
 import { Route as AuthenticatedDayBookRouteImport } from './routes/_authenticated/day-book'
+import { Route as AuthenticatedDataBackupRouteImport } from './routes/_authenticated/data-backup'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCouponsRouteImport } from './routes/_authenticated/coupons'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
@@ -270,6 +271,11 @@ const AuthenticatedDayBookRoute = AuthenticatedDayBookRouteImport.update({
   path: '/day-book',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDataBackupRoute = AuthenticatedDataBackupRouteImport.update({
+  id: '/data-backup',
+  path: '/data-backup',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -349,6 +355,7 @@ export interface FileRoutesByFullPath {
   '/contacts': typeof AuthenticatedContactsRoute
   '/coupons': typeof AuthenticatedCouponsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/data-backup': typeof AuthenticatedDataBackupRoute
   '/day-book': typeof AuthenticatedDayBookRoute
   '/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
   '/delivery-zones': typeof AuthenticatedDeliveryZonesRoute
@@ -401,6 +408,7 @@ export interface FileRoutesByTo {
   '/contacts': typeof AuthenticatedContactsRoute
   '/coupons': typeof AuthenticatedCouponsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/data-backup': typeof AuthenticatedDataBackupRoute
   '/day-book': typeof AuthenticatedDayBookRoute
   '/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
   '/delivery-zones': typeof AuthenticatedDeliveryZonesRoute
@@ -455,6 +463,7 @@ export interface FileRoutesById {
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
   '/_authenticated/coupons': typeof AuthenticatedCouponsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/data-backup': typeof AuthenticatedDataBackupRoute
   '/_authenticated/day-book': typeof AuthenticatedDayBookRoute
   '/_authenticated/delivery-orders': typeof AuthenticatedDeliveryOrdersRoute
   '/_authenticated/delivery-zones': typeof AuthenticatedDeliveryZonesRoute
@@ -509,6 +518,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/coupons'
     | '/dashboard'
+    | '/data-backup'
     | '/day-book'
     | '/delivery-orders'
     | '/delivery-zones'
@@ -561,6 +571,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/coupons'
     | '/dashboard'
+    | '/data-backup'
     | '/day-book'
     | '/delivery-orders'
     | '/delivery-zones'
@@ -614,6 +625,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contacts'
     | '/_authenticated/coupons'
     | '/_authenticated/dashboard'
+    | '/_authenticated/data-backup'
     | '/_authenticated/day-book'
     | '/_authenticated/delivery-orders'
     | '/_authenticated/delivery-zones'
@@ -941,6 +953,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDayBookRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/data-backup': {
+      id: '/_authenticated/data-backup'
+      path: '/data-backup'
+      fullPath: '/data-backup'
+      preLoaderRoute: typeof AuthenticatedDataBackupRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -1033,6 +1052,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
   AuthenticatedCouponsRoute: typeof AuthenticatedCouponsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDataBackupRoute: typeof AuthenticatedDataBackupRoute
   AuthenticatedDayBookRoute: typeof AuthenticatedDayBookRoute
   AuthenticatedDeliveryOrdersRoute: typeof AuthenticatedDeliveryOrdersRoute
   AuthenticatedDeliveryZonesRoute: typeof AuthenticatedDeliveryZonesRoute
@@ -1076,6 +1096,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
   AuthenticatedCouponsRoute: AuthenticatedCouponsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDataBackupRoute: AuthenticatedDataBackupRoute,
   AuthenticatedDayBookRoute: AuthenticatedDayBookRoute,
   AuthenticatedDeliveryOrdersRoute: AuthenticatedDeliveryOrdersRoute,
   AuthenticatedDeliveryZonesRoute: AuthenticatedDeliveryZonesRoute,
@@ -1126,13 +1147,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
