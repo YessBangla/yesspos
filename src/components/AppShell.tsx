@@ -487,7 +487,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-border/70 bg-card/80 px-3 py-2.5 backdrop-blur-xl supports-[backdrop-filter]:bg-card/70">
+        <header className="app-topbar sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-sidebar-border/70 bg-sidebar/85 px-3 py-2.5 text-sidebar-foreground backdrop-blur-xl supports-[backdrop-filter]:bg-sidebar/70">
           <Button variant="outline" size="icon" className="md:hidden" onClick={() => setMobileOpen(true)}>
             <Menu className="size-4" />
           </Button>
