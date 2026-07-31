@@ -370,7 +370,7 @@ function DashboardPage() {
   return (
     <div
       className="dashboard-skin space-y-4 p-4"
-      {...dashboardThemeAttrs(dashTheme.theme, dashTheme.mode, dashTheme.glass)}
+      {...dashboardThemeAttrs(dashTheme.theme, dashTheme.mode, dashTheme.glass, dashTheme.contrast)}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-bold">
@@ -441,6 +441,7 @@ function DashboardPage() {
             theme={dashTheme.theme}
             mode={dashTheme.mode}
             glass={dashTheme.glass}
+            contrast={dashTheme.contrast}
             onChange={dashTheme.save}
             onReset={dashTheme.reset}
           />
