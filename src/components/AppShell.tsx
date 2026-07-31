@@ -320,10 +320,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                 to={only.to}
                 title={g.label}
                 className={cn(
-                  "group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all",
+                  "group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200",
                   groupActive
-                    ? "bg-sidebar-accent text-sidebar-primary shadow-[inset_0_1px_0_oklch(1_0_0/0.08)] ring-1 ring-sidebar-primary/25"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                    ? "bg-sidebar-primary/15 text-sidebar-primary shadow-[inset_0_1px_0_oklch(1_0_0/0.14)] ring-1 ring-sidebar-primary/30"
+                    : "text-sidebar-foreground/85 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.1)]",
                   collapsed && "justify-center px-0",
                 )}
               >
@@ -333,7 +333,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <g.icon
                   className={cn(
                     "size-4 shrink-0 transition-colors",
-                    groupActive ? "text-sidebar-primary" : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground",
+                    groupActive
+                      ? "text-sidebar-primary"
+                      : "text-sidebar-foreground/75 group-hover:text-sidebar-primary",
                   )}
                 />
                 {!collapsed && <span className="flex-1 truncate text-left">{g.label}</span>}
