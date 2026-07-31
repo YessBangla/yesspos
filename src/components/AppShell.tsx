@@ -422,12 +422,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         })}
       </nav>
 
-      <div className="space-y-1 p-2">
+      <div className="space-y-1 border-t border-sidebar-border/70 p-2">
         <Button
           variant={simple ? "secondary" : "ghost"}
           size="sm"
           title={t("simpleModeHint")}
-          className={cn("w-full text-sidebar-foreground/80", collapsed ? "justify-center" : "justify-start")}
+          className={cn(
+            "w-full text-sidebar-foreground/85 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+            collapsed ? "justify-center" : "justify-start",
+          )}
           onClick={toggleSimple}
         >
           <Sparkles className={cn("size-4", !collapsed && "mr-2")} />
@@ -436,7 +439,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Button
           variant="ghost"
           size="sm"
-          className={cn("w-full text-sidebar-foreground/70", collapsed ? "justify-center" : "justify-start")}
+          className={cn(
+            "w-full text-sidebar-foreground/85 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+            collapsed ? "justify-center" : "justify-start",
+          )}
           onClick={() => setCollapsed((c) => !c)}
         >
           {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="mr-2 size-4" />}
@@ -445,7 +451,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Button
           variant="ghost"
           size="sm"
-          className={cn("w-full text-sidebar-foreground/80", collapsed ? "justify-center" : "justify-start")}
+          className={cn(
+            "w-full text-sidebar-foreground/85 hover:bg-destructive/10 hover:text-destructive",
+            collapsed ? "justify-center" : "justify-start",
+          )}
           onClick={signOut}
         >
           {collapsed ? <LogOut className="size-4" /> : <LogOut className="mr-2 size-4" />}
