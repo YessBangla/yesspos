@@ -1,4 +1,4 @@
-import { Check, Moon, Palette, RotateCcw, Sparkles, Sun, SunMoon } from "lucide-react";
+import { Check, Contrast, Moon, Palette, RotateCcw, Sparkles, Sun, SunMoon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import {
   DASHBOARD_THEMES,
   dashboardThemeAttrs,
+  type DashboardContrast,
   type DashboardMode,
   type DashboardThemeId,
 } from "@/lib/dashboard-theme";
@@ -21,7 +22,13 @@ type Props = {
   theme: DashboardThemeId;
   mode: DashboardMode;
   glass: boolean;
-  onChange: (patch: { theme?: DashboardThemeId; mode?: DashboardMode; glass?: boolean }) => void;
+  contrast: DashboardContrast;
+  onChange: (patch: {
+    theme?: DashboardThemeId;
+    mode?: DashboardMode;
+    glass?: boolean;
+    contrast?: DashboardContrast;
+  }) => void;
   onReset: () => void;
 };
 
@@ -51,7 +58,7 @@ function ThemePreview({ theme, mode, glass }: { theme: DashboardThemeId; mode: "
 }
 
 /** Dashboard-only theme settings: palette, light/dark mode and glass effect. */
-export function DashboardThemePanel({ theme, mode, glass, onChange, onReset }: Props) {
+export function DashboardThemePanel({ theme, mode, glass, contrast, onChange, onReset }: Props) {
   const { lang } = useI18n();
   const bn = lang === "bn";
 
@@ -131,6 +138,29 @@ export function DashboardThemePanel({ theme, mode, glass, onChange, onReset }: P
                 >
                   <m.icon className="mr-1.5 size-4" />
                   {m.label}
+                </Button>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-border p-3">
+            <p className="text-sm font-semibold">{bn ? "অ্যাক্সেসিবিলিটি কনট্রাস্ট" : "Accessibility contrast"}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {bn
+                ? "হাই কনট্রাস্ট চালু করলে মেনুবার, টেক্সট ও আইকন ডার্ক মোডেও স্পষ্ট দেখাবে।"
+                : "High contrast makes menu bar text and icons clearly readable, especially in dark mode."}
+            </p>
+            <div className="mt-2 inline-flex rounded-xl border border-border p-0.5">
+              {(["normal", "high"] as const).map((c) => (
+                <Button
+                  key={c}
+                  type="button"
+                  size="sm"
+                  variant={contrast === c ? "secondary" : "ghost"}
+                  onClick={() => onChange({ contrast: c })}
+                >
+                  <Contrast className="mr-1.5 size-4" />
+                  {c === "normal" ? (bn ? "সাধারণ" : "Normal") : bn ? "হাই কনট্রাস্ট" : "High contrast"}
                 </Button>
               ))}
             </div>

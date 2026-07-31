@@ -194,6 +194,161 @@
   border-color: color-mix(in oklab, var(--sidebar-primary) 22%, var(--sidebar-border));
 }
 
+/*
+ * Menu bar chrome — same hover / active indicator / transition behaviour on
+ * every dashboard route (the shell wraps all authenticated pages).
+ */
+.nav-item {
+  transition:
+    background-color 0.22s cubic-bezier(0.2, 0.7, 0.3, 1),
+    color 0.22s ease,
+    box-shadow 0.25s ease,
+    transform 0.22s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.nav-item:hover {
+  transform: translateX(2px);
+}
+
+.nav-item:active {
+  transform: translateX(1px) scale(0.99);
+}
+
+.nav-icon {
+  transition:
+    color 0.22s ease,
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.nav-item:hover .nav-icon {
+  transform: scale(1.08);
+}
+
+/* Animated left indicator bar for the active/selected menu item */
+.nav-indicator {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 1.5rem;
+  width: 3px;
+  border-radius: 0 9999px 9999px 0;
+  background-color: var(--sidebar-primary);
+  transform: translateY(-50%) scaleY(0);
+  opacity: 0;
+  transition:
+    transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1),
+    opacity 0.22s ease,
+    width 0.22s ease;
+}
+
+.nav-item:hover .nav-indicator {
+  opacity: 0.45;
+  transform: translateY(-50%) scaleY(0.55);
+}
+
+.nav-indicator[data-active="on"] {
+  opacity: 1;
+  width: 4px;
+  transform: translateY(-50%) scaleY(1);
+  box-shadow: 0 0 12px color-mix(in oklab, var(--sidebar-primary) 55%, transparent);
+}
+
+/* Sub-menu connector dot */
+.nav-dot {
+  position: absolute;
+  left: -13px;
+  height: 0.375rem;
+  width: 0.375rem;
+  border-radius: 9999px;
+  background-color: transparent;
+  transform: scale(0.6);
+  transition:
+    background-color 0.22s ease,
+    transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1),
+    box-shadow 0.25s ease;
+}
+
+.nav-item:hover .nav-dot {
+  background-color: color-mix(in oklab, var(--sidebar-primary) 60%, transparent);
+  transform: scale(0.9);
+}
+
+.nav-dot[data-active="on"] {
+  background-color: var(--sidebar-primary);
+  transform: scale(1.15);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--sidebar-primary) 50%, transparent);
+}
+
+.nav-rail {
+  scrollbar-width: thin;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-item,
+  .nav-icon,
+  .nav-indicator,
+  .nav-dot {
+    transition: none;
+  }
+
+  .nav-item:hover {
+    transform: none;
+  }
+}
+
+/*
+ * Accessibility: high-contrast menu bar (saved in the dashboard theme panel).
+ * Applies to the whole app shell, in both light and dark mode.
+ */
+.app-chrome[data-dash-contrast="high"] .nav-item {
+  color: var(--sidebar-foreground);
+  font-weight: 600;
+}
+
+.app-chrome[data-dash-contrast="high"] .nav-icon {
+  color: color-mix(in oklab, var(--sidebar-primary) 45%, var(--sidebar-foreground));
+}
+
+.app-chrome[data-dash-contrast="high"] .nav-item:hover {
+  background-color: var(--sidebar-accent);
+  color: var(--sidebar-accent-foreground);
+}
+
+.app-chrome[data-dash-contrast="high"] .nav-indicator[data-active="on"] {
+  width: 5px;
+}
+
+.app-chrome[data-dash-contrast="high"] .app-topbar button,
+.app-chrome[data-dash-contrast="high"] .app-topbar [role="button"],
+.app-chrome[data-dash-contrast="high"] .app-topbar a {
+  color: var(--sidebar-foreground);
+  font-weight: 600;
+}
+
+.dark .app-chrome[data-dash-contrast="high"] .nav-item {
+  color: oklch(0.99 0.005 240);
+}
+
+.dark .app-chrome[data-dash-contrast="high"] .nav-icon,
+.dark .app-chrome[data-dash-contrast="high"] .app-topbar button svg,
+.dark .app-chrome[data-dash-contrast="high"] .app-topbar [role="button"] svg {
+  color: oklch(0.97 0.02 240);
+}
+
+.dark .app-chrome[data-dash-contrast="high"] .nav-item[class*="bg-sidebar-primary"],
+.dark .app-chrome[data-dash-contrast="high"] .nav-item:hover {
+  background-color: color-mix(in oklab, var(--sidebar-primary) 30%, transparent);
+  color: oklch(1 0 0);
+}
+
+.dark .app-chrome[data-dash-contrast="high"] .nav-indicator {
+  background-color: oklch(0.9 0.09 250);
+}
+
+.dark .app-chrome[data-dash-contrast="high"] .app-topbar {
+  border-bottom-color: color-mix(in oklab, var(--sidebar-primary) 35%, transparent);
+}
+
 /* Dark mode: lift menu bar + top bar text/icon contrast */
 .dark .app-topbar button svg,
 .dark .app-topbar [role="button"] svg {

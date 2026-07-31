@@ -46,7 +46,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { useEffect, useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
@@ -61,6 +61,8 @@ import { useMyRole } from "@/lib/use-my-role";
 import { canAccess, type Feature } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
 import { SIMPLE_ROUTES, useSimpleMode } from "@/lib/simple-mode";
+import { dashboardThemeAttrs, useDashboardTheme } from "@/lib/dashboard-theme";
+import { readNavMemory, writeNavMemory } from "@/lib/nav-memory";
 
 type NavItem = {
   to: string;
@@ -76,6 +78,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const searchStr = useRouterState({ select: (s) => s.location.searchStr });
+  const dashTheme = useDashboardTheme();
+  const navRef = useRef<HTMLElement | null>(null);
+  const [lastItem, setLastItem] = useState<string | null>(null);
   const me = useMyRole();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -281,11 +287,52 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const allItems = groups.flatMap((g) => g.items);
 
+  // Restore the remembered menu state (expanded groups, collapse, selection,
+  // scroll) after a page refresh/reload.
+  useEffect(() => {
+    const mem = readNavMemory();
+    setOpen((s) => ({ ...mem.open, ...s }));
+    setCollapsed(mem.collapsed);
+    setLastItem(mem.item);
+    const el = navRef.current;
+    if (el && mem.scroll) requestAnimationFrame(() => el.scrollTo({ top: mem.scroll }));
+  }, []);
+
   useEffect(() => {
     const active = groups.find((g) => g.items.some((i) => pathname.startsWith(i.to)));
     if (active) setOpen((s) => ({ ...s, [active.id]: true }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
+
+  // Persist the current selection + menu layout on every navigation.
+  useEffect(() => {
+    const current = groups.flatMap((g) => g.items).find((i) => pathname.startsWith(i.to));
+    if (current) {
+      const key = `${current.to}|${current.label}`;
+      setLastItem(key);
+      writeNavMemory({ item: key, href: `${pathname}${searchStr ?? ""}` });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, searchStr]);
+
+  useEffect(() => {
+    writeNavMemory({ open, collapsed });
+  }, [open, collapsed]);
+
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => writeNavMemory({ scroll: el.scrollTop }));
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -308,7 +355,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {!collapsed && <span className="truncate font-display text-lg font-bold">{t("appName")}</span>}
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-2 pb-3">
+      <nav ref={navRef} className="nav-rail flex-1 space-y-1 overflow-y-auto px-2 pb-3">
         {visibleGroups.map((g) => {
           const groupActive = g.items.some((i) => pathname.startsWith(i.to));
           const isOpen = collapsed ? false : (open[g.id] ?? groupActive);
@@ -320,19 +367,17 @@ export function AppShell({ children }: { children: ReactNode }) {
                 to={only.to}
                 title={g.label}
                 className={cn(
-                  "group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200",
+                  "nav-item group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold",
                   groupActive
                     ? "bg-sidebar-primary/15 text-sidebar-primary shadow-[inset_0_1px_0_oklch(1_0_0/0.14)] ring-1 ring-sidebar-primary/30"
                     : "text-sidebar-foreground/85 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.1)]",
                   collapsed && "justify-center px-0",
                 )}
               >
-                {groupActive && !collapsed && (
-                  <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-sidebar-primary" />
-                )}
+                {!collapsed && <span className="nav-indicator" data-active={groupActive ? "on" : "off"} />}
                 <g.icon
                   className={cn(
-                    "size-4 shrink-0 transition-colors",
+                    "nav-icon size-4 shrink-0",
                     groupActive
                       ? "text-sidebar-primary"
                       : "text-sidebar-foreground/75 group-hover:text-sidebar-primary",
@@ -350,7 +395,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   collapsed ? setCollapsed(false) : setOpen((s) => ({ ...s, [g.id]: !(s[g.id] ?? groupActive) }))
                 }
                 className={cn(
-                  "group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200",
+                  "nav-item group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold",
                   groupActive
                     ? "bg-sidebar-primary/12 text-sidebar-primary ring-1 ring-sidebar-primary/25"
                     : "text-sidebar-foreground/85 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.1)]",
@@ -358,12 +403,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                 )}
                 title={g.label}
               >
-                {groupActive && !collapsed && (
-                  <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-sidebar-primary" />
-                )}
+                {!collapsed && <span className="nav-indicator" data-active={groupActive ? "on" : "off"} />}
                 <g.icon
                   className={cn(
-                    "size-4 shrink-0 transition-colors",
+                    "nav-icon size-4 shrink-0",
                     groupActive
                       ? "text-sidebar-primary"
                       : "text-sidebar-foreground/75 group-hover:text-sidebar-primary",
@@ -391,21 +434,19 @@ export function AppShell({ children }: { children: ReactNode }) {
                         to={item.to}
                         search={item.search as never}
                         className={cn(
-                          "group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+                          "nav-item group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium",
                           active
                             ? "bg-sidebar-primary/15 font-semibold text-sidebar-primary ring-1 ring-sidebar-primary/30"
-                            : "text-sidebar-foreground/80 hover:translate-x-0.5 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+                          !active &&
+                            lastItem === `${item.to}|${item.label}` &&
+                            "text-sidebar-foreground ring-1 ring-sidebar-primary/20",
                         )}
                       >
-                        <span
-                          className={cn(
-                            "absolute -left-[13px] h-1.5 w-1.5 rounded-full transition-colors",
-                            active ? "bg-sidebar-primary" : "bg-transparent group-hover:bg-sidebar-primary/60",
-                          )}
-                        />
+                        <span className="nav-dot" data-active={active ? "on" : "off"} />
                         <item.icon
                           className={cn(
-                            "size-4 shrink-0 transition-colors",
+                            "nav-icon size-4 shrink-0",
                             active
                               ? "text-sidebar-primary"
                               : "text-sidebar-foreground/70 group-hover:text-sidebar-primary",
@@ -465,7 +506,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div
+      className="app-chrome flex min-h-screen bg-background"
+      {...dashboardThemeAttrs(dashTheme.theme, dashTheme.mode, dashTheme.glass, dashTheme.contrast)}
+    >
       <aside
         className={cn(
           "sticky top-0 hidden h-screen shrink-0 bg-sidebar text-sidebar-foreground transition-all md:block",

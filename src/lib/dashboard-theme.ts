@@ -32,14 +32,19 @@ export const DASHBOARD_THEMES = [
 export type DashboardThemeId = (typeof DASHBOARD_THEMES)[number]["id"];
 export type DashboardMode = "light" | "dark" | "system";
 
+export type DashboardContrast = "normal" | "high";
+
 export type DashboardThemeState = {
   theme: DashboardThemeId;
   mode: DashboardMode;
   glass: boolean;
+  /** Accessibility: "high" boosts menu/text/icon contrast (esp. in dark mode). */
+  contrast: DashboardContrast;
 };
 
 const KEY = "sherapos.dashboard.theme";
-const DEFAULTS: DashboardThemeState = { theme: "sky", mode: "system", glass: true };
+const DEFAULTS: DashboardThemeState = { theme: "sky", mode: "system", glass: true, contrast: "normal" };
+const EVENT = "sokoler:dashboard-theme";
 
 function read(): DashboardThemeState {
   if (typeof window === "undefined") return DEFAULTS;
@@ -70,6 +75,14 @@ export function useDashboardTheme() {
   useEffect(() => {
     setState(read());
     setReady(true);
+    // Keep every mounted consumer (shell chrome + dashboard page) in sync.
+    const sync = () => setState(read());
+    window.addEventListener(EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
 
   const save = useCallback((patch: Partial<DashboardThemeState>) => {
@@ -77,6 +90,7 @@ export function useDashboardTheme() {
       const next = { ...prev, ...patch };
       try {
         window.localStorage.setItem(KEY, JSON.stringify(next));
+        window.dispatchEvent(new Event(EVENT));
       } catch {
         /* storage unavailable */
       }
@@ -87,6 +101,7 @@ export function useDashboardTheme() {
   const reset = useCallback(() => {
     try {
       window.localStorage.removeItem(KEY);
+      window.dispatchEvent(new Event(EVENT));
     } catch {
       /* ignore */
     }
@@ -97,10 +112,16 @@ export function useDashboardTheme() {
 }
 
 /** Attributes to spread on the `.dashboard-skin` wrapper. */
-export function dashboardThemeAttrs(theme: DashboardThemeId, mode: DashboardMode, glass: boolean) {
+export function dashboardThemeAttrs(
+  theme: DashboardThemeId,
+  mode: DashboardMode,
+  glass: boolean,
+  contrast: DashboardContrast = "normal",
+) {
   return {
     "data-dash-theme": theme,
     "data-dash-mode": resolveMode(mode),
     "data-dash-glass": glass ? "on" : "off",
+    "data-dash-contrast": contrast,
   } as const;
 }
