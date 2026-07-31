@@ -168,6 +168,40 @@
 }
 
 /*
+ * Top bar — shares the menu bar palette so profile / notification / toggle
+ * buttons read as one continuous sky-blue chrome.
+ */
+.app-topbar button,
+.app-topbar [role="button"],
+.app-topbar a {
+  color: var(--sidebar-foreground);
+}
+
+.app-topbar button:hover,
+.app-topbar [role="button"]:hover,
+.app-topbar a:hover {
+  background-color: color-mix(in oklab, var(--sidebar-accent) 75%, transparent);
+  color: var(--sidebar-accent-foreground);
+}
+
+.app-topbar button svg,
+.app-topbar [role="button"] svg {
+  color: color-mix(in oklab, var(--sidebar-primary) 78%, var(--sidebar-foreground));
+}
+
+.app-topbar [data-slot="button"][data-variant="outline"],
+.app-topbar button[class*="border"] {
+  border-color: color-mix(in oklab, var(--sidebar-primary) 22%, var(--sidebar-border));
+}
+
+/* Dark mode: lift menu bar + top bar text/icon contrast */
+.dark .app-topbar button svg,
+.dark .app-topbar [role="button"] svg {
+  color: color-mix(in oklab, var(--sidebar-primary) 60%, oklch(0.98 0.01 240));
+}
+
+
+/*
  * Dashboard skin — hue-driven glass palette, scoped to /dashboard so POS and
  * other modules keep the teal system. The active palette is chosen with
  * [data-dash-theme] and the light/dark variant with [data-dash-mode].
