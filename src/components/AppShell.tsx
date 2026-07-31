@@ -46,7 +46,16 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
@@ -301,7 +310,7 @@ export function AppShell({ children }: { children: ReactNode }) {
    * the focused item and Escape closes the mobile drawer or the open group.
    */
   const onNavKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLElement>) => {
+    (e: ReactKeyboardEvent<HTMLElement>) => {
       const rail = navRef.current;
       if (!rail) return;
       const nodes = Array.from(rail.querySelectorAll<HTMLElement>("[data-nav-focusable]")).filter(
