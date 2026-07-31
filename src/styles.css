@@ -210,8 +210,30 @@
   transform: translateX(2px);
 }
 
+[dir="rtl"] .nav-item:hover {
+  transform: translateX(-2px);
+}
+
+/* Keyboard focus ring — visible on every menu item and top bar control */
+.nav-item:focus-visible,
+.app-topbar button:focus-visible,
+.app-topbar a:focus-visible {
+  outline: 2px solid var(--sidebar-primary);
+  outline-offset: 2px;
+  border-radius: 0.75rem;
+}
+
+.nav-item:focus-visible {
+  background-color: color-mix(in oklab, var(--sidebar-accent) 80%, transparent);
+  color: var(--sidebar-accent-foreground);
+}
+
 .nav-item:active {
   transform: translateX(1px) scale(0.99);
+}
+
+[dir="rtl"] .nav-item:active {
+  transform: translateX(-1px) scale(0.99);
 }
 
 .nav-icon {
@@ -227,11 +249,12 @@
 /* Animated left indicator bar for the active/selected menu item */
 .nav-indicator {
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   top: 50%;
   height: 1.5rem;
   width: 3px;
-  border-radius: 0 9999px 9999px 0;
+  border-start-end-radius: 9999px;
+  border-end-end-radius: 9999px;
   background-color: var(--sidebar-primary);
   transform: translateY(-50%) scaleY(0);
   opacity: 0;
@@ -256,7 +279,7 @@
 /* Sub-menu connector dot */
 .nav-dot {
   position: absolute;
-  left: -13px;
+  inset-inline-start: -13px;
   height: 0.375rem;
   width: 0.375rem;
   border-radius: 9999px;

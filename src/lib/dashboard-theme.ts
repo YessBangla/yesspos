@@ -125,3 +125,73 @@ export function dashboardThemeAttrs(
     "data-dash-contrast": contrast,
   } as const;
 }
+
+/* ---------------------------------------------------------------------------
+ * Export / import — lets a user save their palette + accessibility contrast
+ * settings to a .json file and restore them on another browser or later date.
+ * ------------------------------------------------------------------------- */
+
+export const THEME_FILE_VERSION = 1;
+
+export type DashboardThemeFile = {
+  app: "sokoler-bazar";
+  kind: "dashboard-theme";
+  version: number;
+  exportedAt: string;
+  settings: DashboardThemeState;
+};
+
+export function buildThemeFile(state: DashboardThemeState): DashboardThemeFile {
+  return {
+    app: "sokoler-bazar",
+    kind: "dashboard-theme",
+    version: THEME_FILE_VERSION,
+    exportedAt: new Date().toISOString(),
+    settings: {
+      theme: state.theme,
+      mode: state.mode,
+      glass: state.glass,
+      contrast: state.contrast,
+    },
+  };
+}
+
+/** Triggers a browser download of the current theme settings. */
+export function downloadThemeFile(state: DashboardThemeState) {
+  const blob = new Blob([JSON.stringify(buildThemeFile(state), null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `sokoler-dashboard-theme-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+const THEME_IDS = DASHBOARD_THEMES.map((t) => t.id) as string[];
+
+/** Validates an uploaded theme file and returns the settings it contains. */
+export function parseThemeFile(text: string): { ok: true; settings: DashboardThemeState } | { ok: false; error: string } {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    return { ok: false, error: "invalid-json" };
+  }
+  const file = raw as Partial<DashboardThemeFile>;
+  const s = file?.settings as Partial<DashboardThemeState> | undefined;
+  if (!s || typeof s !== "object") return { ok: false, error: "invalid-file" };
+  if (s.theme && !THEME_IDS.includes(s.theme)) return { ok: false, error: "unknown-palette" };
+  if (s.mode && !["light", "dark", "system"].includes(s.mode)) return { ok: false, error: "unknown-mode" };
+  if (s.contrast && !["normal", "high"].includes(s.contrast)) return { ok: false, error: "unknown-contrast" };
+  return {
+    ok: true,
+    settings: {
+      theme: (s.theme as DashboardThemeId) ?? DEFAULTS.theme,
+      mode: (s.mode as DashboardMode) ?? DEFAULTS.mode,
+      glass: typeof s.glass === "boolean" ? s.glass : DEFAULTS.glass,
+      contrast: (s.contrast as DashboardContrast) ?? DEFAULTS.contrast,
+    },
+  };
+}

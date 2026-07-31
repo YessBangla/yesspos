@@ -46,7 +46,16 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
@@ -63,6 +72,7 @@ import { logAudit } from "@/lib/audit";
 import { SIMPLE_ROUTES, useSimpleMode } from "@/lib/simple-mode";
 import { dashboardThemeAttrs, useDashboardTheme } from "@/lib/dashboard-theme";
 import { readNavMemory, writeNavMemory } from "@/lib/nav-memory";
+import { activeNavKey, isPathMatch, navItemKey } from "@/lib/nav-active";
 
 type NavItem = {
   to: string;
@@ -287,6 +297,86 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const allItems = groups.flatMap((g) => g.items);
 
+  // Route-driven highlight: nested/deep links keep the right item selected.
+  const activeKey = useMemo(
+    () => activeNavKey(allItems, pathname, searchStr ?? ""),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pathname, searchStr, lang, simple, me.data?.role],
+  );
+
+  /**
+   * Keyboard navigation for the menu rail: Up/Down move focus, Home/End jump,
+   * Right/Left (mirrored in RTL) expand/collapse a group, Enter/Space activate
+   * the focused item and Escape closes the mobile drawer or the open group.
+   */
+  const onNavKeyDown = useCallback(
+    (e: ReactKeyboardEvent<HTMLElement>) => {
+      const rail = navRef.current;
+      if (!rail) return;
+      const nodes = Array.from(rail.querySelectorAll<HTMLElement>("[data-nav-focusable]")).filter(
+        (n) => n.offsetParent !== null,
+      );
+      if (nodes.length === 0) return;
+      const rtl = typeof document !== "undefined" && document.documentElement.dir === "rtl";
+      const current = document.activeElement as HTMLElement | null;
+      const index = current ? nodes.indexOf(current) : -1;
+      const focusAt = (i: number) => {
+        const next = nodes[(i + nodes.length) % nodes.length];
+        next?.focus();
+      };
+
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          focusAt(index + 1);
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          focusAt(index - 1);
+          break;
+        case "Home":
+          e.preventDefault();
+          focusAt(0);
+          break;
+        case "End":
+          e.preventDefault();
+          focusAt(nodes.length - 1);
+          break;
+        case "ArrowRight":
+        case "ArrowLeft": {
+          const expand = rtl ? e.key === "ArrowLeft" : e.key === "ArrowRight";
+          const groupId = current?.getAttribute("data-nav-group");
+          if (!groupId) break;
+          e.preventDefault();
+          setOpen((st) => ({ ...st, [groupId]: expand }));
+          break;
+        }
+        case "Enter":
+        case " ": {
+          if (current?.tagName === "A") {
+            e.preventDefault();
+            current.click();
+          }
+          break;
+        }
+        case "Escape": {
+          e.preventDefault();
+          if (mobileOpen) {
+            setMobileOpen(false);
+            break;
+          }
+          const groupId = current?.getAttribute("data-nav-group") ?? current?.getAttribute("data-nav-parent");
+          if (groupId) setOpen((st) => ({ ...st, [groupId]: false }));
+          current?.blur();
+          break;
+        }
+        default:
+          break;
+      }
+    },
+    [mobileOpen],
+  );
+
   // Restore the remembered menu state (expanded groups, collapse, selection,
   // scroll) after a page refresh/reload.
   useEffect(() => {
@@ -299,21 +389,18 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const active = groups.find((g) => g.items.some((i) => pathname.startsWith(i.to)));
+    const active = groups.find((g) => g.items.some((i) => isPathMatch(pathname, i.to)));
     if (active) setOpen((s) => ({ ...s, [active.id]: true }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   // Persist the current selection + menu layout on every navigation.
   useEffect(() => {
-    const current = groups.flatMap((g) => g.items).find((i) => pathname.startsWith(i.to));
-    if (current) {
-      const key = `${current.to}|${current.label}`;
-      setLastItem(key);
-      writeNavMemory({ item: key, href: `${pathname}${searchStr ?? ""}` });
+    if (activeKey) {
+      setLastItem(activeKey);
+      writeNavMemory({ item: activeKey, href: `${pathname}${searchStr ?? ""}` });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, searchStr]);
+  }, [activeKey, pathname, searchStr]);
 
   useEffect(() => {
     writeNavMemory({ open, collapsed });
@@ -355,9 +442,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         {!collapsed && <span className="truncate font-display text-lg font-bold">{t("appName")}</span>}
       </div>
 
-      <nav ref={navRef} className="nav-rail flex-1 space-y-1 overflow-y-auto px-2 pb-3">
+      <nav
+        ref={navRef}
+        aria-label={t("dashboard")}
+        onKeyDown={onNavKeyDown}
+        className="nav-rail flex-1 space-y-1 overflow-y-auto px-2 pb-3"
+      >
         {visibleGroups.map((g) => {
-          const groupActive = g.items.some((i) => pathname.startsWith(i.to));
+          const groupActive = g.items.some((i) => navItemKey(i) === activeKey);
           const isOpen = collapsed ? false : (open[g.id] ?? groupActive);
           if (g.items.length === 1 && !g.items[0].search) {
             const only = g.items[0];
@@ -366,6 +458,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 key={g.id}
                 to={only.to}
                 title={g.label}
+                data-nav-focusable=""
+                aria-current={groupActive ? "page" : undefined}
                 className={cn(
                   "nav-item group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold",
                   groupActive
@@ -383,7 +477,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                       : "text-sidebar-foreground/75 group-hover:text-sidebar-primary",
                   )}
                 />
-                {!collapsed && <span className="flex-1 truncate text-left">{g.label}</span>}
+                {!collapsed && <span className="flex-1 truncate text-start">{g.label}</span>}
               </Link>
             );
           }
@@ -391,6 +485,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div key={g.id}>
               <button
                 type="button"
+                data-nav-focusable=""
+                data-nav-group={g.id}
+                aria-expanded={isOpen}
                 onClick={() =>
                   collapsed ? setCollapsed(false) : setOpen((s) => ({ ...s, [g.id]: !(s[g.id] ?? groupActive) }))
                 }
@@ -414,32 +511,31 @@ export function AppShell({ children }: { children: ReactNode }) {
                 />
                 {!collapsed && (
                   <>
-                    <span className="flex-1 text-left">{g.label}</span>
+                    <span className="flex-1 text-start">{g.label}</span>
                     <ChevronDown className={cn("size-4 transition-transform", isOpen && "rotate-180")} />
                   </>
                 )}
               </button>
 
               {isOpen && (
-                <div className="mt-1 ml-5 space-y-0.5 border-l border-sidebar-border/70 pl-2.5">
+                <div className="mt-1 ms-5 space-y-0.5 border-s border-sidebar-border/70 ps-2.5">
                   {g.items.map((item) => {
-                    const active =
-                      pathname.startsWith(item.to) &&
-                      (!item.search || typeof window === "undefined"
-                        ? !item.search
-                        : window.location.search.includes(`filter=${item.search.filter}`));
+                    const active = navItemKey(item) === activeKey;
                     return (
                       <Link
                         key={`${item.to}-${item.label}`}
                         to={item.to}
                         search={item.search as never}
+                        data-nav-focusable=""
+                        data-nav-parent={g.id}
+                        aria-current={active ? "page" : undefined}
                         className={cn(
                           "nav-item group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium",
                           active
                             ? "bg-sidebar-primary/15 font-semibold text-sidebar-primary ring-1 ring-sidebar-primary/30"
                             : "text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
                           !active &&
-                            lastItem === `${item.to}|${item.label}` &&
+                            lastItem === navItemKey(item) &&
                             "text-sidebar-foreground ring-1 ring-sidebar-primary/20",
                         )}
                       >

@@ -1,4 +1,6 @@
-import { Check, Contrast, Moon, Palette, RotateCcw, Sparkles, Sun, SunMoon } from "lucide-react";
+import { Check, Contrast, Download, Moon, Palette, RotateCcw, Sparkles, Sun, SunMoon, Upload } from "lucide-react";
+import { useRef } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,6 +15,8 @@ import { cn } from "@/lib/utils";
 import {
   DASHBOARD_THEMES,
   dashboardThemeAttrs,
+  downloadThemeFile,
+  parseThemeFile,
   type DashboardContrast,
   type DashboardMode,
   type DashboardThemeId,
@@ -61,6 +65,17 @@ function ThemePreview({ theme, mode, glass }: { theme: DashboardThemeId; mode: "
 export function DashboardThemePanel({ theme, mode, glass, contrast, onChange, onReset }: Props) {
   const { lang } = useI18n();
   const bn = lang === "bn";
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  async function importFile(file: File) {
+    const res = parseThemeFile(await file.text());
+    if (!res.ok) {
+      toast.error(bn ? "থিম ফাইলটি সঠিক নয়" : "That theme file is not valid");
+      return;
+    }
+    onChange(res.settings);
+    toast.success(bn ? "থিম সেটিংস ইমপোর্ট হয়েছে" : "Theme settings imported");
+  }
 
   const modes: { key: DashboardMode; label: string; icon: typeof Sun }[] = [
     { key: "light", label: bn ? "লাইট" : "Light", icon: Sun },
@@ -163,6 +178,41 @@ export function DashboardThemePanel({ theme, mode, glass, contrast, onChange, on
                   {c === "normal" ? (bn ? "সাধারণ" : "Normal") : bn ? "হাই কনট্রাস্ট" : "High contrast"}
                 </Button>
               ))}
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-border p-3">
+            <p className="text-sm font-semibold">{bn ? "থিম এক্সপোর্ট / ইমপোর্ট" : "Export / import theme"}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {bn
+                ? "বর্তমান প্যালেট, মোড, গ্লাস ও কনট্রাস্ট সেটিংস একটি ফাইলে সেভ করুন এবং পরে ফিরিয়ে আনুন।"
+                : "Save the current palette, mode, glass and contrast settings to a file and restore them later."}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => downloadThemeFile({ theme, mode, glass, contrast })}
+              >
+                <Download className="mr-1.5 size-4" />
+                {bn ? "এক্সপোর্ট" : "Export"}
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+                <Upload className="mr-1.5 size-4" />
+                {bn ? "ইমপোর্ট" : "Import"}
+              </Button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void importFile(f);
+                  e.target.value = "";
+                }}
+              />
             </div>
           </section>
 
