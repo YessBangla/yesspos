@@ -391,20 +391,25 @@ export function AppShell({ children }: { children: ReactNode }) {
                         to={item.to}
                         search={item.search as never}
                         className={cn(
-                          "group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                          "group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                           active
-                            ? "bg-sidebar-accent text-sidebar-primary ring-1 ring-sidebar-primary/25"
-                            : "text-sidebar-foreground/75 hover:translate-x-0.5 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                            ? "bg-sidebar-primary/15 font-semibold text-sidebar-primary ring-1 ring-sidebar-primary/30"
+                            : "text-sidebar-foreground/80 hover:translate-x-0.5 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
                         )}
                       >
                         <span
                           className={cn(
                             "absolute -left-[13px] h-1.5 w-1.5 rounded-full transition-colors",
-                            active ? "bg-sidebar-primary" : "bg-transparent group-hover:bg-sidebar-foreground/40",
+                            active ? "bg-sidebar-primary" : "bg-transparent group-hover:bg-sidebar-primary/60",
                           )}
                         />
                         <item.icon
-                          className={cn("size-4 shrink-0", active ? "text-sidebar-primary" : "text-sidebar-foreground/60")}
+                          className={cn(
+                            "size-4 shrink-0 transition-colors",
+                            active
+                              ? "text-sidebar-primary"
+                              : "text-sidebar-foreground/70 group-hover:text-sidebar-primary",
+                          )}
                         />
                         <span className="truncate">{item.label}</span>
                       </Link>
