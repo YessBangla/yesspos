@@ -131,11 +131,11 @@
   --chart-4: oklch(0.68 0.12 250);
   --chart-5: oklch(0.72 0.16 25);
   --sidebar: oklch(0.24 0.045 258);
-  --sidebar-foreground: oklch(0.92 0.02 240);
-  --sidebar-primary: oklch(0.72 0.14 250);
+  --sidebar-foreground: oklch(0.96 0.015 240);
+  --sidebar-primary: oklch(0.8 0.13 250);
   --sidebar-primary-foreground: oklch(0.2 0.05 258);
   --sidebar-accent: oklch(0.32 0.055 255);
-  --sidebar-accent-foreground: oklch(0.97 0.015 240);
+  --sidebar-accent-foreground: oklch(0.99 0.01 240);
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: oklch(0.72 0.14 250);
 }
@@ -166,6 +166,40 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-panel);
 }
+
+/*
+ * Top bar — shares the menu bar palette so profile / notification / toggle
+ * buttons read as one continuous sky-blue chrome.
+ */
+.app-topbar button,
+.app-topbar [role="button"],
+.app-topbar a {
+  color: var(--sidebar-foreground);
+}
+
+.app-topbar button:hover,
+.app-topbar [role="button"]:hover,
+.app-topbar a:hover {
+  background-color: color-mix(in oklab, var(--sidebar-accent) 75%, transparent);
+  color: var(--sidebar-accent-foreground);
+}
+
+.app-topbar button svg,
+.app-topbar [role="button"] svg {
+  color: color-mix(in oklab, var(--sidebar-primary) 78%, var(--sidebar-foreground));
+}
+
+.app-topbar [data-slot="button"][data-variant="outline"],
+.app-topbar button[class*="border"] {
+  border-color: color-mix(in oklab, var(--sidebar-primary) 22%, var(--sidebar-border));
+}
+
+/* Dark mode: lift menu bar + top bar text/icon contrast */
+.dark .app-topbar button svg,
+.dark .app-topbar [role="button"] svg {
+  color: color-mix(in oklab, var(--sidebar-primary) 60%, oklch(0.98 0.01 240));
+}
+
 
 /*
  * Dashboard skin — hue-driven glass palette, scoped to /dashboard so POS and

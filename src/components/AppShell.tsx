@@ -320,10 +320,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                 to={only.to}
                 title={g.label}
                 className={cn(
-                  "group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all",
+                  "group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200",
                   groupActive
-                    ? "bg-sidebar-accent text-sidebar-primary shadow-[inset_0_1px_0_oklch(1_0_0/0.08)] ring-1 ring-sidebar-primary/25"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                    ? "bg-sidebar-primary/15 text-sidebar-primary shadow-[inset_0_1px_0_oklch(1_0_0/0.14)] ring-1 ring-sidebar-primary/30"
+                    : "text-sidebar-foreground/85 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.1)]",
                   collapsed && "justify-center px-0",
                 )}
               >
@@ -333,7 +333,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <g.icon
                   className={cn(
                     "size-4 shrink-0 transition-colors",
-                    groupActive ? "text-sidebar-primary" : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground",
+                    groupActive
+                      ? "text-sidebar-primary"
+                      : "text-sidebar-foreground/75 group-hover:text-sidebar-primary",
                   )}
                 />
                 {!collapsed && <span className="flex-1 truncate text-left">{g.label}</span>}
@@ -348,10 +350,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                   collapsed ? setCollapsed(false) : setOpen((s) => ({ ...s, [g.id]: !(s[g.id] ?? groupActive) }))
                 }
                 className={cn(
-                  "group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all",
+                  "group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200",
                   groupActive
-                    ? "bg-sidebar-accent/70 text-sidebar-primary ring-1 ring-sidebar-primary/20"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                    ? "bg-sidebar-primary/12 text-sidebar-primary ring-1 ring-sidebar-primary/25"
+                    : "text-sidebar-foreground/85 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground hover:shadow-[inset_0_1px_0_oklch(1_0_0/0.1)]",
                   collapsed && "justify-center px-0",
                 )}
                 title={g.label}
@@ -362,7 +364,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <g.icon
                   className={cn(
                     "size-4 shrink-0 transition-colors",
-                    groupActive ? "text-sidebar-primary" : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground",
+                    groupActive
+                      ? "text-sidebar-primary"
+                      : "text-sidebar-foreground/75 group-hover:text-sidebar-primary",
                   )}
                 />
                 {!collapsed && (
@@ -387,20 +391,25 @@ export function AppShell({ children }: { children: ReactNode }) {
                         to={item.to}
                         search={item.search as never}
                         className={cn(
-                          "group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                          "group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                           active
-                            ? "bg-sidebar-accent text-sidebar-primary ring-1 ring-sidebar-primary/25"
-                            : "text-sidebar-foreground/75 hover:translate-x-0.5 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                            ? "bg-sidebar-primary/15 font-semibold text-sidebar-primary ring-1 ring-sidebar-primary/30"
+                            : "text-sidebar-foreground/80 hover:translate-x-0.5 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
                         )}
                       >
                         <span
                           className={cn(
                             "absolute -left-[13px] h-1.5 w-1.5 rounded-full transition-colors",
-                            active ? "bg-sidebar-primary" : "bg-transparent group-hover:bg-sidebar-foreground/40",
+                            active ? "bg-sidebar-primary" : "bg-transparent group-hover:bg-sidebar-primary/60",
                           )}
                         />
                         <item.icon
-                          className={cn("size-4 shrink-0", active ? "text-sidebar-primary" : "text-sidebar-foreground/60")}
+                          className={cn(
+                            "size-4 shrink-0 transition-colors",
+                            active
+                              ? "text-sidebar-primary"
+                              : "text-sidebar-foreground/70 group-hover:text-sidebar-primary",
+                          )}
                         />
                         <span className="truncate">{item.label}</span>
                       </Link>
@@ -413,12 +422,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         })}
       </nav>
 
-      <div className="space-y-1 p-2">
+      <div className="space-y-1 border-t border-sidebar-border/70 p-2">
         <Button
           variant={simple ? "secondary" : "ghost"}
           size="sm"
           title={t("simpleModeHint")}
-          className={cn("w-full text-sidebar-foreground/80", collapsed ? "justify-center" : "justify-start")}
+          className={cn(
+            "w-full text-sidebar-foreground/85 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+            collapsed ? "justify-center" : "justify-start",
+          )}
           onClick={toggleSimple}
         >
           <Sparkles className={cn("size-4", !collapsed && "mr-2")} />
@@ -427,7 +439,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Button
           variant="ghost"
           size="sm"
-          className={cn("w-full text-sidebar-foreground/70", collapsed ? "justify-center" : "justify-start")}
+          className={cn(
+            "w-full text-sidebar-foreground/85 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
+            collapsed ? "justify-center" : "justify-start",
+          )}
           onClick={() => setCollapsed((c) => !c)}
         >
           {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="mr-2 size-4" />}
@@ -436,7 +451,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Button
           variant="ghost"
           size="sm"
-          className={cn("w-full text-sidebar-foreground/80", collapsed ? "justify-center" : "justify-start")}
+          className={cn(
+            "w-full text-sidebar-foreground/85 hover:bg-destructive/10 hover:text-destructive",
+            collapsed ? "justify-center" : "justify-start",
+          )}
           onClick={signOut}
         >
           {collapsed ? <LogOut className="size-4" /> : <LogOut className="mr-2 size-4" />}
@@ -469,7 +487,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-border/70 bg-card/80 px-3 py-2.5 backdrop-blur-xl supports-[backdrop-filter]:bg-card/70">
+        <header className="app-topbar sticky top-0 z-30 flex flex-wrap items-center gap-2 border-b border-sidebar-border/70 bg-sidebar/85 px-3 py-2.5 text-sidebar-foreground backdrop-blur-xl supports-[backdrop-filter]:bg-sidebar/70">
           <Button variant="outline" size="icon" className="md:hidden" onClick={() => setMobileOpen(true)}>
             <Menu className="size-4" />
           </Button>
