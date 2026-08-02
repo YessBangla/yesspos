@@ -438,9 +438,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const sidebar = (
     <div className="flex h-full flex-col">
       <div className={cn("flex items-center gap-2 px-4 py-4", collapsed && "justify-center px-2")}>
-        <span className="gradient-brand flex size-9 shrink-0 items-center justify-center rounded-lg text-primary-foreground">
-          <ReceiptText className="size-5" />
-        </span>
+        <BrandLogo size={36} priority />
         {!collapsed && <span className="truncate font-display text-lg font-bold">{t("appName")}</span>}
       </div>
 

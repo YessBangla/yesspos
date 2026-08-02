@@ -384,9 +384,7 @@ function Index() {
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-5 py-4">
           <div className="flex items-center gap-2">
-            <span className="gradient-brand flex size-9 items-center justify-center rounded-lg text-primary-foreground">
-              <ReceiptText className="size-5" />
-            </span>
+            <BrandLogo size={36} priority />
             <span className="font-display text-lg font-bold">{sc("brand.name", t("appName"))}</span>
           </div>
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground lg:flex">

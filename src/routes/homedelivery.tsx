@@ -712,9 +712,8 @@ function ShopPage() {
       <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3.5">
           <Link to="/" className="flex shrink-0 items-center gap-2.5">
-            <span className="gradient-brand grid size-11 place-items-center rounded-2xl text-primary-foreground shadow-sm">
-              <ShoppingBasket className="size-5" />
-            </span>
+            <BrandLogo size={44} priority />
+
             <span className="hidden leading-tight sm:block">
               <span className="block font-display text-lg font-extrabold text-primary">
                 {sc("brand.name", "Daily Bazar")}
