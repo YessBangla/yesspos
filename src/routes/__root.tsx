@@ -15,6 +15,12 @@ import { I18nProvider } from "@/lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { registerServiceWorker } from "@/lib/pwa";
+import { CareChat } from "@/components/CareChat";
+
+/** Staff dashboard routes where the public Care chat is hidden. */
+const DASHBOARD_PATHS = [
+  "accounts","api-hub","assistant","audit-logs","branches","catalog","chart-of-accounts","commerce","contacts","coupons","dashboard","data-backup","day-book","delivery-orders","delivery-zones","expenses","financials","inventory","journal","labels","media","mobile-payments","notifications","party-statement","payments","pos","product-audit","products","promotions","purchase-orders","purchases","reports","reviews","riders","sales","settings","site-content","stock-adjustments","stock-count","stock-transfers","users",
+].map((r) => `/${r}`);
 
 
 function NotFoundComponent() {
@@ -149,7 +155,7 @@ function RootComponent() {
   const router = useRouter();
   const pathname = router.state.location.pathname;
   // Staff dashboard has its own AI assistant page; Care chat is for the public site.
-  const showCare = !pathname.startsWith("/auth") && !DASHBOARD_PATHS.some((p) => pathname.startsWith(p));
+  const showCare = !pathname.startsWith("/auth") && !DASHBOARD_PATHS.some((p: string) => pathname.startsWith(p));
 
   return (
     <QueryClientProvider client={queryClient}>
