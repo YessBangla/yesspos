@@ -146,6 +146,10 @@ function AuthSync() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+  const pathname = router.state.location.pathname;
+  // Staff dashboard has its own AI assistant page; Care chat is for the public site.
+  const showCare = !pathname.startsWith("/auth") && !DASHBOARD_PATHS.some((p) => pathname.startsWith(p));
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -153,6 +157,7 @@ function RootComponent() {
         <AuthSync />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        {showCare && <CareChat />}
         <Toaster position="top-center" />
       </I18nProvider>
     </QueryClientProvider>
