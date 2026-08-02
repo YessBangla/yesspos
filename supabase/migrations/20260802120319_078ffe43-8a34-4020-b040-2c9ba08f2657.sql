@@ -1,0 +1,2 @@
+update public.site_content set value_bn = replace(replace(value_bn,'সকলের বাজার','প্রতিদিনের বাজার'),'sokolerbazar.com','dailybazar.com'), value_en = replace(replace(value_en,'Sokoler Bazar','Daily Bazar'),'sokolerbazar.com','dailybazar.com') where value_bn ilike '%সকলের%' or value_en ilike '%okoler%';
+update public.business_settings set shop_name = replace(replace(shop_name,'Sokoler Bazar','Daily Bazar'),'সকলের বাজার','প্রতিদিনের বাজার') where shop_name ilike '%okoler%' or shop_name like '%সকলের%';
