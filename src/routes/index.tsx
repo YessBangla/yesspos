@@ -753,9 +753,7 @@ function Index() {
         <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="gradient-brand flex size-8 items-center justify-center rounded-lg text-primary-foreground">
-                <ReceiptText className="size-4" />
-              </span>
+              <BrandLogo size={32} />
               <span className="font-display font-bold">{sc("brand.name", t("appName"))}</span>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
