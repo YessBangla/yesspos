@@ -37,15 +37,15 @@ const SITE = "https://yesspos.lovable.app";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Sokoler Bazar — Retail Billing, Inventory & Accounting Platform" },
+      { title: "Daily Bazar — Retail Billing, Inventory & Accounting Platform" },
       {
         name: "description",
         content:
-          "Sokoler Bazar is an enterprise-grade browser POS and ERP for retail: fast billing, multi-branch inventory, dues, double-entry accounting and reports in Bengali and English.",
+          "Daily Bazar is an enterprise-grade browser POS and ERP for retail: fast billing, multi-branch inventory, dues, double-entry accounting and reports in Bengali and English.",
       },
       {
         property: "og:title",
-        content: "Sokoler Bazar — Retail Billing, Inventory & Accounting Platform",
+        content: "Daily Bazar — Retail Billing, Inventory & Accounting Platform",
       },
       {
         property: "og:description",
@@ -63,7 +63,7 @@ export const Route = createFileRoute("/")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "Sokoler Bazar",
+          name: "Daily Bazar",
           applicationCategory: "BusinessApplication",
           operatingSystem: "Web",
           description:
@@ -807,8 +807,14 @@ function Index() {
         <div className="border-t border-border">
           <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-5 py-5 text-sm text-muted-foreground sm:flex-row">
             <p>{sc("footer.copyright", `© ${new Date().getFullYear()} ${t("appName")}`)}</p>
-            <p>{L("বাংলাদেশের রিটেইল ব্যবসার জন্য তৈরি", "Built for retail businesses")}</p>
+            <p className="text-center">
+              {L(
+                "Daily Bazar — Shondhaan এর একটি অংশ, Yess Bangla Private Limited এর সিস্টার কনসার্ন",
+                "Daily Bazar is a part of Shondhaan, a sister concern of Yess Bangla Private Limited",
+              )}
+            </p>
           </div>
+
         </div>
       </footer>
     </div>

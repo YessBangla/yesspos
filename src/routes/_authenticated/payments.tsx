@@ -16,9 +16,9 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/_authenticated/payments")({
   head: () => ({
     meta: [
-      { title: "Payments & due — Sokoler Bazar" },
+      { title: "Payments & due — Daily Bazar" },
       { name: "description", content: "Collect customer dues, pay suppliers and track every balance in one ledger." },
-      { property: "og:title", content: "Payments & due — Sokoler Bazar" },
+      { property: "og:title", content: "Payments & due — Daily Bazar" },
       { property: "og:description", content: "Customer dues, supplier payments and balances." },
     ],
   }),

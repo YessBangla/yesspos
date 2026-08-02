@@ -90,9 +90,11 @@ export function LegalPage({
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-2 px-5 py-6 text-sm text-muted-foreground sm:flex-row">
           <p>
-            © {new Date().getFullYear()} {t("appName")}
+            © {new Date().getFullYear()} {t("appName")} — a part of Shondhaan, a sister concern of Yess Bangla Private
+            Limited
           </p>
           <div className="flex gap-4">
+
             <Link to="/privacy" className="hover:text-foreground">
               {t("privacyPolicy")}
             </Link>

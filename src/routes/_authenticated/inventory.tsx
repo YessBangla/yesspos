@@ -21,13 +21,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/inventory")({
   head: () => ({
     meta: [
-      { title: "Inventory & stock status — Sokoler Bazar" },
+      { title: "Inventory & stock status — Daily Bazar" },
       {
         name: "description",
         content:
           "Branch-wise inventory valuation, low-stock and out-of-stock alerts, with one-click CSV export.",
       },
-      { property: "og:title", content: "Inventory & stock status — Sokoler Bazar" },
+      { property: "og:title", content: "Inventory & stock status — Daily Bazar" },
       {
         property: "og:description",
         content: "Stock status, low-stock alerts and inventory valuation for every branch.",

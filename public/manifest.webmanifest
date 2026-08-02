@@ -1,7 +1,7 @@
 {
-  "name": "Sokoler Bazar — সকলের বাজার",
-  "short_name": "Sokoler Bazar",
-  "description": "Sokoler Bazar retail POS, inventory and home delivery portal.",
+  "name": "Daily Bazar — প্রতিদিনের বাজার",
+  "short_name": "Daily Bazar",
+  "description": "Daily Bazar retail POS, inventory and home delivery portal.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

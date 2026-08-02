@@ -111,15 +111,15 @@ export const Route = createFileRoute("/homedelivery")({
     const query = s.q?.trim() ?? "";
 
     const title = catName
-      ? `${catName} online in Dhaka — home delivery | Sokoler Bazar`
+      ? `${catName} online in Dhaka — home delivery | Daily Bazar`
       : query
-        ? `"${query}" grocery search — Sokoler Bazar`
-        : "Online grocery & home delivery — Sokoler Bazar";
+        ? `"${query}" grocery search — Daily Bazar`
+        : "Online grocery & home delivery — Daily Bazar";
 
     const description = catName
-      ? `Buy ${catName.toLowerCase()} online at Sokoler Bazar. Fresh stock, transparent prices, 1-hour home delivery in Dhaka and free delivery above ৳1000.`
+      ? `Buy ${catName.toLowerCase()} online at Daily Bazar. Fresh stock, transparent prices, 1-hour home delivery in Dhaka and free delivery above ৳1000.`
       : query
-        ? `Grocery search results for "${query}" at Sokoler Bazar — order online with fast home delivery in Dhaka.`
+        ? `Grocery search results for "${query}" at Daily Bazar — order online with fast home delivery in Dhaka.`
         : "Order fresh groceries online and get home delivery, or pay in store. Rice, oil, dairy, snacks and daily essentials.";
 
     const params = new URLSearchParams();
@@ -717,7 +717,7 @@ function ShopPage() {
             </span>
             <span className="hidden leading-tight sm:block">
               <span className="block font-display text-lg font-extrabold text-primary">
-                {sc("brand.name", "Sokoler Bazar")}
+                {sc("brand.name", "Daily Bazar")}
               </span>
               <span className="block text-[11px] font-medium text-muted-foreground">
                 {bn ? "অনলাইন সুপারশপ" : "Online supershop"}
@@ -1262,7 +1262,7 @@ function ShopPage() {
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 text-sm sm:grid-cols-3">
           <div>
             <p className="font-display text-base font-bold text-primary">
-              {sc("brand.name", "Sokoler Bazar")}
+              {sc("brand.name", "Daily Bazar")}
             </p>
             <p className="mt-1 text-muted-foreground">
               {bn

@@ -16,9 +16,9 @@ import { useBranches } from "@/lib/use-branch";
 export const Route = createFileRoute("/_authenticated/stock-transfers")({
   head: () => ({
     meta: [
-      { title: "Stock transfers — Sokoler Bazar" },
+      { title: "Stock transfers — Daily Bazar" },
       { name: "description", content: "Move inventory between shop branches and keep per-branch stock accurate." },
-      { property: "og:title", content: "Stock transfers — Sokoler Bazar" },
+      { property: "og:title", content: "Stock transfers — Daily Bazar" },
       { property: "og:description", content: "Branch to branch inventory movement." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
