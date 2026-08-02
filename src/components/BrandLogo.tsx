@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import logoMark from "@/assets/daily-bazar-mark.png";
+import logoMark from "@/assets/bazar-bari-mark.png";
 
 type Props = {
   /** pixel size of the square mark */
