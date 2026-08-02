@@ -13,9 +13,9 @@ import { printHtml } from "@/lib/print";
 export const Route = createFileRoute("/_authenticated/day-book")({
   head: () => ({
     meta: [
-      { title: "Day book — Daily Bazar" },
+      { title: "Day book — Bazar Bari" },
       { name: "description", content: "See every sale, purchase, payment, expense and account movement of a single day." },
-      { property: "og:title", content: "Day book — Daily Bazar" },
+      { property: "og:title", content: "Day book — Bazar Bari" },
       { property: "og:description", content: "All money in and out for a single day." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

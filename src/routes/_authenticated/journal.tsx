@@ -15,9 +15,9 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/_authenticated/journal")({
   head: () => ({
     meta: [
-      { title: "Journal vouchers — Daily Bazar" },
+      { title: "Journal vouchers — Bazar Bari" },
       { name: "description", content: "Record manual double-entry debit and credit vouchers for your shop accounts." },
-      { property: "og:title", content: "Journal vouchers — Daily Bazar" },
+      { property: "og:title", content: "Journal vouchers — Bazar Bari" },
       { property: "og:description", content: "Manual double-entry debit and credit vouchers." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

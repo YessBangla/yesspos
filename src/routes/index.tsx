@@ -37,15 +37,15 @@ const SITE = "https://yesspos.lovable.app";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Daily Bazar — Retail Billing, Inventory & Accounting Platform" },
+      { title: "Bazar Bari — Retail Billing, Inventory & Accounting Platform" },
       {
         name: "description",
         content:
-          "Daily Bazar is an enterprise-grade browser POS and ERP for retail: fast billing, multi-branch inventory, dues, double-entry accounting and reports in Bengali and English.",
+          "Bazar Bari is an enterprise-grade browser POS and ERP for retail: fast billing, multi-branch inventory, dues, double-entry accounting and reports in Bengali and English.",
       },
       {
         property: "og:title",
-        content: "Daily Bazar — Retail Billing, Inventory & Accounting Platform",
+        content: "Bazar Bari — Retail Billing, Inventory & Accounting Platform",
       },
       {
         property: "og:description",
@@ -63,7 +63,7 @@ export const Route = createFileRoute("/")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "Daily Bazar",
+          name: "Bazar Bari",
           applicationCategory: "BusinessApplication",
           operatingSystem: "Web",
           description:
@@ -805,8 +805,8 @@ function Index() {
             <p>{sc("footer.copyright", `© ${new Date().getFullYear()} ${t("appName")}`)}</p>
             <p className="text-center">
               {L(
-                "Daily Bazar — Shondhaan এর একটি অংশ, Yess Bangla Private Limited এর সিস্টার কনসার্ন",
-                "Daily Bazar is a part of Shondhaan, a sister concern of Yess Bangla Private Limited",
+                "Bazar Bari — Shondhaan এর একটি অংশ, Yess Bangla Private Limited এর সিস্টার কনসার্ন",
+                "Bazar Bari is a part of Shondhaan, a sister concern of Yess Bangla Private Limited",
               )}
             </p>
           </div>

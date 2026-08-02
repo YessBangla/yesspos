@@ -12,9 +12,9 @@ import { useI18n } from "@/lib/i18n";
 export const Route = createFileRoute("/_authenticated/catalog")({
   head: () => ({
     meta: [
-      { title: "Catalog setup — Daily Bazar" },
+      { title: "Catalog setup — Bazar Bari" },
       { name: "description", content: "Manage product categories, brands and units in Bangla and English." },
-      { property: "og:title", content: "Catalog setup — Daily Bazar" },
+      { property: "og:title", content: "Catalog setup — Bazar Bari" },
       { property: "og:description", content: "Categories, brands and units for your shop." },
     ],
   }),

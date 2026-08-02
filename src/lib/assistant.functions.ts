@@ -80,7 +80,7 @@ export const askAssistant = createServerFn({ method: "POST" })
     ].join("\n");
 
     const system = [
-      "You are the business assistant inside Daily Bazar, a point-of-sale and ERP app for shops in Bangladesh.",
+      "You are the business assistant inside Bazar Bari, a point-of-sale and ERP app for shops in Bangladesh.",
       data.lang === "en"
         ? "Answer in clear English."
         : "উত্তর সবসময় সহজ বাংলায় দিন (সংখ্যা ইংরেজি অঙ্কে চলবে)।",

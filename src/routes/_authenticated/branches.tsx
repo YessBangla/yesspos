@@ -16,9 +16,9 @@ import { useBranches, type Branch } from "@/lib/use-branch";
 export const Route = createFileRoute("/_authenticated/branches")({
   head: () => ({
     meta: [
-      { title: "Branches — Daily Bazar" },
+      { title: "Branches — Bazar Bari" },
       { name: "description", content: "Create and manage multiple shop branches, each with its own stock and transactions." },
-      { property: "og:title", content: "Branches — Daily Bazar" },
+      { property: "og:title", content: "Branches — Bazar Bari" },
       { property: "og:description", content: "Multi-branch management for your shop." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

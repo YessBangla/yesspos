@@ -33,12 +33,12 @@ import { useServerFn } from "@tanstack/react-start";
 export const Route = createFileRoute("/_authenticated/delivery-orders")({
   head: () => ({
     meta: [
-      { title: "Home delivery orders — Daily Bazar" },
+      { title: "Home delivery orders — Bazar Bari" },
       {
         name: "description",
         content: "Manage online grocery orders, delivery status and convert them into sales.",
       },
-      { property: "og:title", content: "Home delivery orders — Daily Bazar" },
+      { property: "og:title", content: "Home delivery orders — Bazar Bari" },
       { property: "og:description", content: "Track and fulfil online home delivery orders." },
     ],
   }),

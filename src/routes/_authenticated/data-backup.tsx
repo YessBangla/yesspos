@@ -14,9 +14,9 @@ import { BACKUP_TABLES, buildBackup, downloadJson, parseBackup, restoreBackup, t
 export const Route = createFileRoute("/_authenticated/data-backup")({
   head: () => ({
     meta: [
-      { title: "Daily data backup & restore — Daily Bazar" },
+      { title: "Daily data backup & restore — Bazar Bari" },
       { name: "description", content: "Download every day's shop data as a backup file and upload it again to restore." },
-      { property: "og:title", content: "Daily data backup & restore — Daily Bazar" },
+      { property: "og:title", content: "Daily data backup & restore — Bazar Bari" },
       { property: "og:description", content: "Export and import your full shop data, day by day." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

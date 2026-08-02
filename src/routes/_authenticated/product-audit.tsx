@@ -15,12 +15,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/product-audit")({
   head: () => ({
     meta: [
-      { title: "Product image audit — Daily Bazar" },
+      { title: "Product image audit — Bazar Bari" },
       {
         name: "description",
         content: "Find products with missing, shared or invalid images and pack sizes, then repair them in bulk.",
       },
-      { property: "og:title", content: "Product image audit — Daily Bazar" },
+      { property: "og:title", content: "Product image audit — Bazar Bari" },
       { property: "og:description", content: "Audit and bulk-repair missing product images and pack sizes." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

@@ -6,13 +6,13 @@ import { NotificationLog } from "@/components/NotificationLog";
 export const Route = createFileRoute("/_authenticated/notifications")({
   head: () => ({
     meta: [
-      { title: "SMS notification log — Daily Bazar" },
+      { title: "SMS notification log — Bazar Bari" },
       {
         name: "description",
         content:
           "Track every customer SMS: delivered, pending or failed, with one-click resend for failures.",
       },
-      { property: "og:title", content: "SMS notification log — Daily Bazar" },
+      { property: "og:title", content: "SMS notification log — Bazar Bari" },
       {
         property: "og:description",
         content: "Monitor customer SMS delivery status and resend failed messages.",

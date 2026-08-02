@@ -53,9 +53,9 @@ import { Bike, Home, LayoutGrid, MapPin, Megaphone, Plus, Search, Settings2, Sho
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Daily Bazar" },
+      { title: "Dashboard — Bazar Bari" },
       { name: "description", content: "Daily sales totals, dues, profit, cash flow and low-stock alerts." },
-      { property: "og:title", content: "Dashboard — Daily Bazar" },
+      { property: "og:title", content: "Dashboard — Bazar Bari" },
       { property: "og:description", content: "Sales, dues, profit, cash flow and stock at a glance." },
     ],
   }),

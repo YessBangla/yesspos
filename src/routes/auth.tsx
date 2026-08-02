@@ -15,10 +15,10 @@ import { LangToggle } from "@/components/LangToggle";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — Daily Bazar" },
-      { name: "description", content: "Sign in to your Daily Bazar shop account to start billing." },
-      { property: "og:title", content: "Sign in — Daily Bazar" },
-      { property: "og:description", content: "Sign in to your Daily Bazar shop account." },
+      { title: "Sign in — Bazar Bari" },
+      { name: "description", content: "Sign in to your Bazar Bari shop account to start billing." },
+      { property: "og:title", content: "Sign in — Bazar Bari" },
+      { property: "og:description", content: "Sign in to your Bazar Bari shop account." },
     ],
   }),
   component: AuthPage,
