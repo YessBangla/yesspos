@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import logoMark from "@/assets/daily-bazar-mark.png";
+import logoMark from "@/assets/bazar-bari-mark.png";
 
 type Props = {
   /** pixel size of the square mark */
@@ -23,12 +23,12 @@ export function BrandLogo({
   textClassName,
   priority = false,
 }: Props) {
-  const name = bn ? "প্রতিদিনের বাজার" : "Daily Bazar";
+  const name = bn ? "বাজার বাড়ি" : "Bazar Bari";
   return (
     <span className={cn("flex items-center gap-2.5", className)}>
       <img
         src={logoMark}
-        alt={bn ? "প্রতিদিনের বাজার লোগো" : "Daily Bazar logo"}
+        alt={bn ? "বাজার বাড়ি লোগো" : "Bazar Bari logo"}
         width={size}
         height={size}
         style={{ width: size, height: size }}

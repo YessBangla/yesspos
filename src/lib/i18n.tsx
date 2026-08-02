@@ -61,7 +61,7 @@ const dict = {
     en: "Columns: name_bn, name_en, sku, price, cost, stock",
   },
   loyaltyPoints: { bn: "লয়্যালটি পয়েন্ট", en: "Loyalty points" },
-  appName: { bn: "প্রতিদিনের বাজার", en: "Daily Bazar" },
+  appName: { bn: "বাজার বাড়ি", en: "Bazar Bari" },
   home: { bn: "হোম", en: "Home" },
   privacyPolicy: { bn: "প্রাইভেসি পলিসি", en: "Privacy Policy" },
   termsOfService: { bn: "সেবার শর্তাবলি", en: "Terms of Service" },

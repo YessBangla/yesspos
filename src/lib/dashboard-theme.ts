@@ -162,7 +162,7 @@ export function downloadThemeFile(state: DashboardThemeState) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `daily-bazar-dashboard-theme-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `bazar-bari-dashboard-theme-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();

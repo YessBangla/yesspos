@@ -83,10 +83,10 @@ import {
 export const Route = createFileRoute("/_authenticated/pos")({
   head: () => ({
     meta: [
-      { title: "Sales counter — Daily Bazar" },
+      { title: "Sales counter — Bazar Bari" },
       { name: "description", content: "Ring up sales, apply coupons and print thermal receipts." },
-      { property: "og:title", content: "Sales counter — Daily Bazar" },
-      { property: "og:description", content: "Ring up sales and print receipts with Daily Bazar." },
+      { property: "og:title", content: "Sales counter — Bazar Bari" },
+      { property: "og:description", content: "Ring up sales and print receipts with Bazar Bari." },
     ],
   }),
   component: PosPage,

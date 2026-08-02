@@ -14,9 +14,9 @@ import { BACKUP_TABLES, buildBackup, downloadJson, parseBackup, restoreBackup, t
 export const Route = createFileRoute("/_authenticated/data-backup")({
   head: () => ({
     meta: [
-      { title: "Daily data backup & restore — Daily Bazar" },
+      { title: "Daily data backup & restore — Bazar Bari" },
       { name: "description", content: "Download every day's shop data as a backup file and upload it again to restore." },
-      { property: "og:title", content: "Daily data backup & restore — Daily Bazar" },
+      { property: "og:title", content: "Daily data backup & restore — Bazar Bari" },
       { property: "og:description", content: "Export and import your full shop data, day by day." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -59,9 +59,9 @@ function DataBackupPage() {
     try {
       const file = await buildBackup(from, to, full, (table, i, total) => setProgress(`${table} (${i}/${total})`));
       const total = Object.values(file.tables).reduce((s, r) => s + r.length, 0);
-      downloadJson(`daily-bazar-backup-${full ? "full" : from === to ? from : `${from}_${to}`}.json`, file);
+      downloadJson(`bazar-bari-backup-${full ? "full" : from === to ? from : `${from}_${to}`}.json`, file);
       downloadCsv(
-        `daily-bazar-backup-summary-${from}.csv`,
+        `bazar-bari-backup-summary-${from}.csv`,
         [t("table"), t("rows")],
         Object.entries(file.tables).map(([k, v]) => [k, v.length]),
       );

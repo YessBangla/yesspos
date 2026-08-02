@@ -1,7 +1,7 @@
 {
-  "name": "Daily Bazar — প্রতিদিনের বাজার",
-  "short_name": "Daily Bazar",
-  "description": "Daily Bazar retail POS, inventory and home delivery portal.",
+  "name": "Bazar Bari — বাজার বাড়ি",
+  "short_name": "Bazar Bari",
+  "description": "Bazar Bari retail POS, inventory and home delivery portal.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

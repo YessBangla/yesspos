@@ -13,13 +13,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/coupons")({
   head: () => ({
     meta: [
-      { title: "Coupon manager — Daily Bazar" },
+      { title: "Coupon manager — Bazar Bari" },
       {
         name: "description",
         content:
-          "Create discount coupons with validity dates, usage limits and minimum order value for the Daily Bazar storefront.",
+          "Create discount coupons with validity dates, usage limits and minimum order value for the Bazar Bari storefront.",
       },
-      { property: "og:title", content: "Coupon manager — Daily Bazar" },
+      { property: "og:title", content: "Coupon manager — Bazar Bari" },
       {
         property: "og:description",
         content: "Create and control storefront discount codes, limits and expiry.",

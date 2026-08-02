@@ -13,9 +13,9 @@ import { getPrinterSize, PRINTER_SIZES, setPrinterSize, type PrinterSize } from 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
-      { title: "Shop settings — Daily Bazar" },
+      { title: "Shop settings — Bazar Bari" },
       { name: "description", content: "Set your shop name, address, VAT rate and receipt footer." },
-      { property: "og:title", content: "Shop settings — Daily Bazar" },
+      { property: "og:title", content: "Shop settings — Bazar Bari" },
       { property: "og:description", content: "Shop name, address, VAT rate and receipt footer." },
     ],
   }),
@@ -90,7 +90,7 @@ function SettingsPage() {
   const save = useMutation({
     mutationFn: async () => {
       const payload = {
-        shop_name: form.shop_name.trim().slice(0, 80) || "Daily Bazar",
+        shop_name: form.shop_name.trim().slice(0, 80) || "Bazar Bari",
         address: form.address.trim().slice(0, 200) || null,
         phone: form.phone.trim().slice(0, 20) || null,
         currency_symbol: form.currency_symbol.trim().slice(0, 4) || "৳",

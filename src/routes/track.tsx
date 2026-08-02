@@ -24,13 +24,13 @@ import { Textarea } from "@/components/ui/textarea";
 export const Route = createFileRoute("/track")({
   head: () => ({
     meta: [
-      { title: "Track your grocery order — Daily Bazar" },
+      { title: "Track your grocery order — Bazar Bari" },
       {
         name: "description",
         content:
           "Check the live status of your home delivery grocery order with order number and phone.",
       },
-      { property: "og:title", content: "Track your grocery order — Daily Bazar" },
+      { property: "og:title", content: "Track your grocery order — Bazar Bari" },
       { property: "og:description", content: "Live status of your home delivery order." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

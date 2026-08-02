@@ -25,12 +25,12 @@ import { ShareInvoiceButtons } from "@/components/ShareInvoiceButtons";
 export const Route = createFileRoute("/_authenticated/sales")({
   head: () => ({
     meta: [
-      { title: "Sales, quotations & returns — Daily Bazar" },
+      { title: "Sales, quotations & returns — Bazar Bari" },
       {
         name: "description",
         content: "Search invoices, reprint receipts, collect dues, convert quotations and record sale returns.",
       },
-      { property: "og:title", content: "Sales, quotations & returns — Daily Bazar" },
+      { property: "og:title", content: "Sales, quotations & returns — Bazar Bari" },
       { property: "og:description", content: "Invoices, dues, quotations and returns in one register." },
     ],
   }),
@@ -330,7 +330,7 @@ function SalesPage() {
       `<div class="row${bold ? " total" : ""}"><span>${escapeHtml(a)}</span><span>${escapeHtml(b)}</span></div>`;
     printHtml(
       `<div class="center">
-        <p class="shop">${escapeHtml(s?.shop_name ?? "Daily Bazar")}</p>
+        <p class="shop">${escapeHtml(s?.shop_name ?? "Bazar Bari")}</p>
         ${s?.address ? `<div class="sm">${escapeHtml(s.address)}</div>` : ""}
         ${s?.phone ? `<div class="sm">${escapeHtml(s.phone)}</div>` : ""}
         <div class="sm muted">${t("invoice")} #${sale.invoice_no} · ${new Date(sale.created_at).toLocaleString()}</div>
@@ -592,7 +592,7 @@ function SalesPage() {
                   tax: Number(viewing.tax),
                   total: Number(viewing.total),
                   paid: Number(viewing.paid),
-                  shopName: settings.data?.shop_name ?? "Daily Bazar",
+                  shopName: settings.data?.shop_name ?? "Bazar Bari",
                   shopPhone: settings.data?.phone ?? "",
                   customer: viewing.customer_name ?? "",
                   footer: settings.data?.receipt_footer ?? "",

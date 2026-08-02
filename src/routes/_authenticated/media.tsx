@@ -5,12 +5,12 @@ import { useI18n } from "@/lib/i18n";
 export const Route = createFileRoute("/_authenticated/media")({
   head: () => ({
     meta: [
-      { title: "Image gallery — Daily Bazar" },
+      { title: "Image gallery — Bazar Bari" },
       {
         name: "description",
         content: "Store, organise and reuse product, brand and banner images from one dashboard gallery.",
       },
-      { property: "og:title", content: "Image gallery — Daily Bazar" },
+      { property: "og:title", content: "Image gallery — Bazar Bari" },
       { property: "og:description", content: "Upload once, reuse images anywhere in the POS and storefront." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

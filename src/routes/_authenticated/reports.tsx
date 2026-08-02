@@ -16,9 +16,9 @@ import { ReportInsight } from "@/components/ReportInsight";
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
     meta: [
-      { title: "Profit & loss report — Daily Bazar" },
+      { title: "Profit & loss report — Bazar Bari" },
       { name: "description", content: "See sales, purchases, expenses, returns and net profit for any date range." },
-      { property: "og:title", content: "Profit & loss report — Daily Bazar" },
+      { property: "og:title", content: "Profit & loss report — Bazar Bari" },
       { property: "og:description", content: "Sales, purchases, expenses and net profit by date range." },
     ],
   }),
@@ -304,7 +304,7 @@ function ReportsPage() {
         </div>
         {tab === "due" ? (
           <div className="p-3">
-            <DueCollection sales={report.data?.dueSales ?? []} shopName={shop.data?.shop_name ?? "Daily Bazar"} />
+            <DueCollection sales={report.data?.dueSales ?? []} shopName={shop.data?.shop_name ?? "Bazar Bari"} />
           </div>
         ) : (
           <div className="overflow-x-auto">

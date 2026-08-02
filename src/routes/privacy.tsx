@@ -5,16 +5,16 @@ import { useI18n } from "@/lib/i18n";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy — Daily Bazar" },
+      { title: "Privacy Policy — Bazar Bari" },
       {
         name: "description",
         content:
-          "How Daily Bazar collects, processes, stores and protects merchant and customer data, including your rights under GDPR-aligned practices.",
+          "How Bazar Bari collects, processes, stores and protects merchant and customer data, including your rights under GDPR-aligned practices.",
       },
-      { property: "og:title", content: "Privacy Policy — Daily Bazar" },
+      { property: "og:title", content: "Privacy Policy — Bazar Bari" },
       {
         property: "og:description",
-        content: "Data collection, processing, retention, security and your privacy rights at Daily Bazar.",
+        content: "Data collection, processing, retention, security and your privacy rights at Bazar Bari.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -32,7 +32,7 @@ function PrivacyPage() {
         {
           heading: "পরিচিতি ও পরিধি",
           body: [
-            "এই প্রাইভেসি পলিসি ব্যাখ্যা করে Daily Bazar (“আমরা”) কীভাবে আমাদের পয়েন্ট-অফ-সেল ও ব্যবসা ব্যবস্থাপনা প্ল্যাটফর্ম ব্যবহারের সময় তথ্য সংগ্রহ, ব্যবহার, সংরক্ষণ ও প্রকাশ করে। প্ল্যাটফর্ম ব্যবহার করলে আপনি এই নীতিমালায় সম্মত হচ্ছেন।",
+            "এই প্রাইভেসি পলিসি ব্যাখ্যা করে Bazar Bari (“আমরা”) কীভাবে আমাদের পয়েন্ট-অফ-সেল ও ব্যবসা ব্যবস্থাপনা প্ল্যাটফর্ম ব্যবহারের সময় তথ্য সংগ্রহ, ব্যবহার, সংরক্ষণ ও প্রকাশ করে। প্ল্যাটফর্ম ব্যবহার করলে আপনি এই নীতিমালায় সম্মত হচ্ছেন।",
           ],
         },
         {
@@ -103,7 +103,7 @@ function PrivacyPage() {
         {
           heading: "Introduction and scope",
           body: [
-            "This Privacy Policy explains how Daily Bazar (“we”, “us”) collects, uses, stores and discloses information when you access our point-of-sale and business management platform. By using the platform you agree to the practices described here.",
+            "This Privacy Policy explains how Bazar Bari (“we”, “us”) collects, uses, stores and discloses information when you access our point-of-sale and business management platform. By using the platform you agree to the practices described here.",
           ],
         },
         {
@@ -183,7 +183,7 @@ function PrivacyPage() {
       intro={
         bn
           ? "আপনার ব্যবসায়িক ও গ্রাহক তথ্যের গোপনীয়তা আমাদের কাছে গুরুত্বপূর্ণ। নিচে আমাদের ডেটা সংক্রান্ত নীতিমালা বিস্তারিতভাবে দেওয়া হলো।"
-          : "Protecting merchant and customer information is fundamental to how we build Daily Bazar. This policy sets out, in plain language, what we collect, why we collect it and the controls we maintain."
+          : "Protecting merchant and customer information is fundamental to how we build Bazar Bari. This policy sets out, in plain language, what we collect, why we collect it and the controls we maintain."
       }
       sections={sections}
       footnote={

@@ -6,12 +6,12 @@ import { useI18n } from "@/lib/i18n";
 export const Route = createFileRoute("/_authenticated/site-content")({
   head: () => ({
     meta: [
-      { title: "Website content — Daily Bazar" },
+      { title: "Website content — Bazar Bari" },
       {
         name: "description",
         content: "Edit every public text of the storefront and home page from the dashboard.",
       },
-      { property: "og:title", content: "Website content — Daily Bazar" },
+      { property: "og:title", content: "Website content — Bazar Bari" },
       { property: "og:description", content: "Edit public website texts from the dashboard." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

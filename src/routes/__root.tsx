@@ -15,6 +15,12 @@ import { I18nProvider } from "@/lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { registerServiceWorker } from "@/lib/pwa";
+import { CareChat } from "@/components/CareChat";
+
+/** Staff dashboard routes where the public Care chat is hidden. */
+const DASHBOARD_PATHS = [
+  "accounts","api-hub","assistant","audit-logs","branches","catalog","chart-of-accounts","commerce","contacts","coupons","dashboard","data-backup","day-book","delivery-orders","delivery-zones","expenses","financials","inventory","journal","labels","media","mobile-payments","notifications","party-statement","payments","pos","product-audit","products","promotions","purchase-orders","purchases","reports","reviews","riders","sales","settings","site-content","stock-adjustments","stock-count","stock-transfers","users",
+].map((r) => `/${r}`);
 
 
 function NotFoundComponent() {
@@ -84,15 +90,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#0f766e" },
 
-      { title: "Daily Bazar — Shop Billing, Stock & Reports" },
-      { name: "description", content: "Daily Bazar is a browser point-of-sale for retail shops: fast billing, automatic stock updates, daily sales reports. Bengali and English." },
-      { name: "author", content: "Daily Bazar" },
+      { title: "Bazar Bari — Shop Billing, Stock & Reports" },
+      { name: "description", content: "Bazar Bari is a browser point-of-sale for retail shops: fast billing, automatic stock updates, daily sales reports. Bengali and English." },
+      { name: "author", content: "Bazar Bari" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "Daily Bazar — Shop Billing, Stock & Reports" },
-      { name: "twitter:title", content: "Daily Bazar — Shop Billing, Stock & Reports" },
-      { property: "og:description", content: "Daily Bazar is a browser point-of-sale for retail shops: fast billing, automatic stock updates, daily sales reports. Bengali and English." },
-      { name: "twitter:description", content: "Daily Bazar is a browser point-of-sale for retail shops: fast billing, automatic stock updates, daily sales reports. Bengali and English." },
+      { property: "og:title", content: "Bazar Bari — Shop Billing, Stock & Reports" },
+      { name: "twitter:title", content: "Bazar Bari — Shop Billing, Stock & Reports" },
+      { property: "og:description", content: "Bazar Bari is a browser point-of-sale for retail shops: fast billing, automatic stock updates, daily sales reports. Bengali and English." },
+      { name: "twitter:description", content: "Bazar Bari is a browser point-of-sale for retail shops: fast billing, automatic stock updates, daily sales reports. Bengali and English." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7aaf6c28-2774-4e90-804e-d7f75381e47e/id-preview-4ca43efd--43fef4c0-9947-45bd-9f85-e8ddb480b1c4.lovable.app-1785148415388.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7aaf6c28-2774-4e90-804e-d7f75381e47e/id-preview-4ca43efd--43fef4c0-9947-45bd-9f85-e8ddb480b1c4.lovable.app-1785148415388.png" },
     ],
@@ -146,6 +152,10 @@ function AuthSync() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+  const pathname = router.state.location.pathname;
+  // Staff dashboard has its own AI assistant page; Care chat is for the public site.
+  const showCare = !pathname.startsWith("/auth") && !DASHBOARD_PATHS.some((p: string) => pathname.startsWith(p));
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -153,6 +163,7 @@ function RootComponent() {
         <AuthSync />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        {showCare && <CareChat />}
         <Toaster position="top-center" />
       </I18nProvider>
     </QueryClientProvider>

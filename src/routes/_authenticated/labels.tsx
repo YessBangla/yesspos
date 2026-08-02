@@ -13,9 +13,9 @@ import { money, useI18n } from "@/lib/i18n";
 export const Route = createFileRoute("/_authenticated/labels")({
   head: () => ({
     meta: [
-      { title: "Barcode labels — Daily Bazar" },
+      { title: "Barcode labels — Bazar Bari" },
       { name: "description", content: "Print barcode price labels for any product, sized for sticker sheets." },
-      { property: "og:title", content: "Barcode labels — Daily Bazar" },
+      { property: "og:title", content: "Barcode labels — Bazar Bari" },
       { property: "og:description", content: "Print barcode price label sheets." },
     ],
   }),
