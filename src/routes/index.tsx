@@ -16,7 +16,6 @@ import {
   Plug,
   Printer,
   Quote,
-  ReceiptText,
   ShieldCheck,
   ShoppingBag,
   ShoppingCart,
