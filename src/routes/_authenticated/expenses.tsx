@@ -22,9 +22,9 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/_authenticated/expenses")({
   head: () => ({
     meta: [
-      { title: "Expenses — Sokoler Bazar" },
+      { title: "Expenses — Daily Bazar" },
       { name: "description", content: "Track shop expenses by category and keep profit figures accurate." },
-      { property: "og:title", content: "Expenses — Sokoler Bazar" },
+      { property: "og:title", content: "Expenses — Daily Bazar" },
       { property: "og:description", content: "Track shop expenses by category." },
     ],
   }),

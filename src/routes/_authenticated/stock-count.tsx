@@ -16,9 +16,9 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/_authenticated/stock-count")({
   head: () => ({
     meta: [
-      { title: "Stock count — Sokoler Bazar" },
+      { title: "Stock count — Daily Bazar" },
       { name: "description", content: "Count physical stock per branch and reconcile differences in one click." },
-      { property: "og:title", content: "Stock count — Sokoler Bazar" },
+      { property: "og:title", content: "Stock count — Daily Bazar" },
       { property: "og:description", content: "Physical stock counting and reconciliation for every branch." },
     ],
   }),

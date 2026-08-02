@@ -13,9 +13,9 @@ import { downloadCsv } from "@/lib/audit";
 export const Route = createFileRoute("/_authenticated/audit-logs")({
   head: () => ({
     meta: [
-      { title: "Audit log — Sokoler Bazar" },
+      { title: "Audit log — Daily Bazar" },
       { name: "description", content: "See every login and important action taken in your shop account." },
-      { property: "og:title", content: "Audit log — Sokoler Bazar" },
+      { property: "og:title", content: "Audit log — Daily Bazar" },
       { property: "og:description", content: "Login history and important action trail." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

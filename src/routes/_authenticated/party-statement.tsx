@@ -13,9 +13,9 @@ import { printHtml } from "@/lib/print";
 export const Route = createFileRoute("/_authenticated/party-statement")({
   head: () => ({
     meta: [
-      { title: "Party statement — Sokoler Bazar" },
+      { title: "Party statement — Daily Bazar" },
       { name: "description", content: "Full running ledger of sales, purchases and payments for any customer or supplier." },
-      { property: "og:title", content: "Party statement — Sokoler Bazar" },
+      { property: "og:title", content: "Party statement — Daily Bazar" },
       { property: "og:description", content: "Running ledger for any customer or supplier." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -17,13 +17,13 @@ const SITE = "https://yesspos.lovable.app";
 export const Route = createFileRoute("/my-orders")({
   head: () => ({
     meta: [
-      { title: "My orders — Sokoler Bazar grocery delivery" },
+      { title: "My orders — Daily Bazar grocery delivery" },
       {
         name: "description",
         content:
           "Your grocery order history with live tracking links, status updates and one-click reorder.",
       },
-      { property: "og:title", content: "My orders — Sokoler Bazar" },
+      { property: "og:title", content: "My orders — Daily Bazar" },
       { property: "og:description", content: "Order history, tracking and one-click reorder." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: `${SITE}/my-orders` },

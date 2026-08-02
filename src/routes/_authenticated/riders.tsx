@@ -14,12 +14,12 @@ import { useActiveBranch } from "@/lib/active-branch";
 export const Route = createFileRoute("/_authenticated/riders")({
   head: () => ({
     meta: [
-      { title: "Delivery riders — Sokoler Bazar" },
+      { title: "Delivery riders — Daily Bazar" },
       {
         name: "description",
         content: "Manage delivery riders, contact numbers, vehicles and live order load.",
       },
-      { property: "og:title", content: "Delivery riders — Sokoler Bazar" },
+      { property: "og:title", content: "Delivery riders — Daily Bazar" },
       {
         property: "og:description",
         content: "Rider roster and assignment load for home delivery operations.",

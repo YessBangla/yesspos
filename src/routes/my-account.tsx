@@ -23,9 +23,9 @@ export const Route = createFileRoute("/my-account")({
   },
   head: () => ({
     meta: [
-      { title: "My account — Sokoler Bazar online grocery" },
+      { title: "My account — Daily Bazar online grocery" },
       { name: "description", content: "See your grocery order history, track deliveries and manage saved delivery addresses." },
-      { property: "og:title", content: "My account — Sokoler Bazar" },
+      { property: "og:title", content: "My account — Daily Bazar" },
       { property: "og:description", content: "Order history, delivery tracking and saved addresses in one place." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: `${SITE}/my-account` },
