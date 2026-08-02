@@ -1,3 +1,4 @@
+import { BrandLogo } from "@/components/BrandLogo";
 import { LangToggle } from "@/components/LangToggle";
 import {
   TIME_SLOTS,

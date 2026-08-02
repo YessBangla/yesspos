@@ -1,3 +1,4 @@
+import { BrandLogo } from "@/components/BrandLogo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
