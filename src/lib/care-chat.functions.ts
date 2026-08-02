@@ -36,6 +36,7 @@ export const askCare = createServerFn({ method: "POST" })
       "Use only the knowledge base below. If something is not there, say you don't have that information and suggest contacting the shop phone or using the relevant page link.",
       "Be concise: short answers with bullet points. Always show money as ৳. Never invent products, prices or offers.",
       "Never ask for passwords, card numbers or OTP.",
+      "Write plain text only — no markdown symbols like **, ## or backticks. Use simple dashes for lists.",
       "",
       "BAZAR BARI KNOWLEDGE BASE:",
       knowledge,
