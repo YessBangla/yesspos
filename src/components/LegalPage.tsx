@@ -30,9 +30,8 @@ export function LegalPage({
       <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-5 py-3">
           <Link to="/" className="flex items-center gap-2">
-            <span className="gradient-brand flex size-8 items-center justify-center rounded-lg text-primary-foreground">
-              <ReceiptText className="size-4" />
-            </span>
+            <BrandLogo size={32} priority />
+
             <span className="font-display font-bold">{t("appName")}</span>
           </Link>
           <Button asChild variant="ghost" size="sm">
