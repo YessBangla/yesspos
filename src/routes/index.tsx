@@ -1,3 +1,4 @@
+import { BrandLogo } from "@/components/BrandLogo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
@@ -15,7 +16,6 @@ import {
   Plug,
   Printer,
   Quote,
-  ReceiptText,
   ShieldCheck,
   ShoppingBag,
   ShoppingCart,
@@ -384,9 +384,7 @@ function Index() {
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-5 py-4">
           <div className="flex items-center gap-2">
-            <span className="gradient-brand flex size-9 items-center justify-center rounded-lg text-primary-foreground">
-              <ReceiptText className="size-5" />
-            </span>
+            <BrandLogo size={36} priority />
             <span className="font-display text-lg font-bold">{sc("brand.name", t("appName"))}</span>
           </div>
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground lg:flex">
@@ -754,9 +752,7 @@ function Index() {
         <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="gradient-brand flex size-8 items-center justify-center rounded-lg text-primary-foreground">
-                <ReceiptText className="size-4" />
-              </span>
+              <BrandLogo size={32} />
               <span className="font-display font-bold">{sc("brand.name", t("appName"))}</span>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">

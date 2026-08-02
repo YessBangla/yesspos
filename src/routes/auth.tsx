@@ -1,6 +1,6 @@
+import { BrandLogo } from "@/components/BrandLogo";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ReceiptText } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -112,9 +112,7 @@ function AuthPage() {
     <div className="flex min-h-screen flex-col bg-background">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5">
         <Link to="/" className="flex items-center gap-2">
-          <span className="gradient-brand flex size-9 items-center justify-center rounded-lg text-primary-foreground">
-            <ReceiptText className="size-5" />
-          </span>
+          <BrandLogo size={36} priority />
           <span className="font-display text-lg font-bold">{t("appName")}</span>
         </Link>
         <LangToggle />
