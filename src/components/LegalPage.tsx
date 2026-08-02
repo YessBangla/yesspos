@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { ReceiptText, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 
