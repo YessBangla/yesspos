@@ -774,8 +774,24 @@ function ShopPage() {
               }}
               maxLength={60}
               placeholder={bn ? "চাল, তেল, ডিম… খুঁজুন" : "Search rice, oil, eggs…"}
-              className="h-12 rounded-full border-transparent bg-muted pl-10 text-base shadow-none focus-visible:bg-card"
+              className="h-10 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0"
             />
+            {query && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setLimit(PAGE);
+                }}
+                className="shrink-0 rounded-md px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+              >
+                {bn ? "মুছুন" : "Clear"}
+              </button>
+            )}
+            <span className="hidden h-9 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground sm:inline-flex">
+              {bn ? "খুঁজুন" : "Search"}
+            </span>
+            </div>
             <span id="shop-search-hint" className="sr-only">
               {bn
                 ? "লিখুন, তারপর তীর চিহ্ন দিয়ে সাজেশন বেছে নিন এবং এন্টার চাপুন"
@@ -784,6 +800,7 @@ function ShopPage() {
             <p aria-live="polite" className="sr-only">
               {`${visible.length} ${bn ? "পণ্য পাওয়া গেছে" : "products found"}`}
             </p>
+
 
             {sugOpen && suggestions.length > 0 && (
               <ul
