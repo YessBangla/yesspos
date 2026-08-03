@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-/** Legacy storefront path — permanently moved to /homedelivery. */
+/** Legacy storefront path — permanently moved to /. */
 export const Route = createFileRoute("/shop")({
   server: {
     handlers: {
@@ -9,7 +9,7 @@ export const Route = createFileRoute("/shop")({
         const url = new URL(request.url);
         return new Response(null, {
           status: 301,
-          headers: { Location: `/homedelivery${url.search}${url.hash}` },
+          headers: { Location: `/${url.search}${url.hash}` },
         });
       },
     },

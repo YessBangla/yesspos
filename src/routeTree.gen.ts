@@ -16,6 +16,7 @@ import { Route as ShopRouteImport } from './routes/shop'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MyOrdersRouteImport } from './routes/my-orders'
 import { Route as MyAccountRouteImport } from './routes/my-account'
+import { Route as HomedeliveryRouteImport } from './routes/homedelivery'
 import { Route as CorporateRouteImport } from './routes/corporate'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -95,6 +96,11 @@ const MyOrdersRoute = MyOrdersRouteImport.update({
 const MyAccountRoute = MyAccountRouteImport.update({
   id: '/my-account',
   path: '/my-account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HomedeliveryRoute = HomedeliveryRouteImport.update({
+  id: '/homedelivery',
+  path: '/homedelivery',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CorporateRoute = CorporateRouteImport.update({
@@ -337,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/corporate': typeof CorporateRoute
+  '/homedelivery': typeof HomedeliveryRoute
   '/my-account': typeof MyAccountRoute
   '/my-orders': typeof MyOrdersRoute
   '/privacy': typeof PrivacyRoute
@@ -390,6 +397,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/corporate': typeof CorporateRoute
+  '/homedelivery': typeof HomedeliveryRoute
   '/my-account': typeof MyAccountRoute
   '/my-orders': typeof MyOrdersRoute
   '/privacy': typeof PrivacyRoute
@@ -445,6 +453,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/corporate': typeof CorporateRoute
+  '/homedelivery': typeof HomedeliveryRoute
   '/my-account': typeof MyAccountRoute
   '/my-orders': typeof MyOrdersRoute
   '/privacy': typeof PrivacyRoute
@@ -500,6 +509,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/corporate'
+    | '/homedelivery'
     | '/my-account'
     | '/my-orders'
     | '/privacy'
@@ -553,6 +563,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/corporate'
+    | '/homedelivery'
     | '/my-account'
     | '/my-orders'
     | '/privacy'
@@ -607,6 +618,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/corporate'
+    | '/homedelivery'
     | '/my-account'
     | '/my-orders'
     | '/privacy'
@@ -662,6 +674,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CorporateRoute: typeof CorporateRoute
+  HomedeliveryRoute: typeof HomedeliveryRoute
   MyAccountRoute: typeof MyAccountRoute
   MyOrdersRoute: typeof MyOrdersRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -720,6 +733,13 @@ declare module '@tanstack/react-router' {
       path: '/my-account'
       fullPath: '/my-account'
       preLoaderRoute: typeof MyAccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/homedelivery': {
+      id: '/homedelivery'
+      path: '/homedelivery'
+      fullPath: '/homedelivery'
+      preLoaderRoute: typeof HomedeliveryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/corporate': {
@@ -1136,6 +1156,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CorporateRoute: CorporateRoute,
+  HomedeliveryRoute: HomedeliveryRoute,
   MyAccountRoute: MyAccountRoute,
   MyOrdersRoute: MyOrdersRoute,
   PrivacyRoute: PrivacyRoute,

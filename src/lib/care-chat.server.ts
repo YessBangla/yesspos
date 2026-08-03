@@ -44,7 +44,7 @@ export async function buildCareKnowledge(): Promise<string> {
     "",
     "WEBSITE PAGES CUSTOMERS CAN USE:",
     "- / : home / corporate landing page",
-    "- /homedelivery : online grocery storefront (search, categories, cart, checkout with delivery slot, coupon, payment)",
+    "- / : online grocery storefront (home page) (search, categories, cart, checkout with delivery slot, coupon, payment)",
     "- /my-orders : order history, reorder, cancel or reschedule an order (phone verification)",
     "- /track : live delivery tracking with rider name, phone and ETA",
     "- /my-account : customer account and loyalty points",
