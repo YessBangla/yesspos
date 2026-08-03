@@ -12,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { money, num, useI18n } from "@/lib/i18n";
 import { isValidPhone, normalizePhone, useCustomerSession } from "@/lib/customer-auth";
-import { CustomerAuthDialog } from "@/components/CustomerAccountMenu";
 
 const SITE = "https://yesspos.lovable.app";
 
@@ -55,7 +54,6 @@ function MyAccountPage() {
   const { tab } = Route.useSearch();
   const navigate = Route.useNavigate();
   const qc = useQueryClient();
-  const [authOpen, setAuthOpen] = useState(false);
   const [form, setForm] = useState(emptyAddress);
   const [saving, setSaving] = useState(false);
 
@@ -167,10 +165,9 @@ function MyAccountPage() {
             <p className="text-sm text-muted-foreground">
               {bn ? "অর্ডার ও ঠিকানা দেখতে লগইন করুন।" : "Sign in to see your orders and saved addresses."}
             </p>
-            <Button className="mt-4" onClick={() => setAuthOpen(true)}>
-              {bn ? "লগইন / রেজিস্টার" : "Sign in / Register"}
+            <Button asChild className="mt-4">
+              <Link to="/signin">{bn ? "লগইন / রেজিস্টার" : "Sign in / Register"}</Link>
             </Button>
-            <CustomerAuthDialog open={authOpen} onOpenChange={setAuthOpen} />
           </div>
         ) : (
           <>
