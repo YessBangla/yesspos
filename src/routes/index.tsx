@@ -868,7 +868,7 @@ function ShopPage() {
           >
             {bn ? "সব পণ্য" : "All products"}
           </button>
-          {(categories.data ?? []).slice(0, 6).map((c) => (
+          {(categories.data ?? []).slice(0, 10).map((c) => (
             <button
               key={c.id}
               type="button"
@@ -949,7 +949,7 @@ function ShopPage() {
         )}
       </header>
 
-      <div className="mx-auto max-w-7xl gap-6 px-4 lg:grid lg:grid-cols-[236px_minmax(0,1fr)_330px]">
+      <div className="mx-auto max-w-7xl gap-6 px-4 lg:grid lg:grid-cols-[272px_minmax(0,1fr)_330px]">
         {/* ---- Category sidebar ---- */}
         <aside className="hidden lg:block">
           <div className="shop-card sticky top-28 mt-6 max-h-[calc(100vh-9rem)] overflow-y-auto p-3">
@@ -2187,7 +2187,7 @@ function SideCat({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "flex min-h-11 w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "flex min-h-12 w-full items-center justify-between gap-2 rounded-xl px-3 py-3 text-left text-[0.95rem] leading-snug transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         active
           ? "bg-primary font-semibold text-primary-foreground"
           : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -2197,7 +2197,7 @@ function SideCat({
       <span className="truncate">{label}</span>
       <span
         className={cn(
-          "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+          "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
           active ? "bg-primary-foreground/20" : "bg-muted",
         )}
       >
