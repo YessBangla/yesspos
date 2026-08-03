@@ -413,8 +413,6 @@ function Index() {
             </Button>
           </div>
         </div>
-
-        </div>
       </header>
 
       <main>
