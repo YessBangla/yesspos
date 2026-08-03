@@ -382,10 +382,10 @@ function Index() {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-5 py-4">
-          <div className="flex items-center gap-2">
+        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:px-5 lg:flex lg:justify-between">
+          <div className="flex min-w-0 items-center gap-2">
             <BrandLogo size={36} priority />
-            <span className="font-display text-lg font-bold">{sc("brand.name", t("appName"))}</span>
+            <span className="truncate font-display text-lg font-bold">{sc("brand.name", t("appName"))}</span>
           </div>
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground lg:flex">
             <a href="#platform" className="hover:text-foreground">{L("প্ল্যাটফর্ম", "Platform")}</a>
@@ -395,12 +395,14 @@ function Index() {
             <a href="#industries" className="hover:text-foreground">{L("কাদের জন্য", "Industries")}</a>
             <a href="#faq" className="hover:text-foreground">{L("প্রশ্নোত্তর", "FAQ")}</a>
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <LangToggle />
             <Button asChild variant="accent" size="sm">
               <Link to="/homedelivery">
-                <ShoppingBag className="mr-1 size-4" />
-                {sc("home.cta_primary", L("হোম ডেলিভারি অর্ডার দিন", "Order home delivery"))}
+                <ShoppingBag className="size-4 sm:mr-1" />
+                <span className="hidden sm:inline">
+                  {sc("home.cta_primary", L("হোম ডেলিভারি অর্ডার দিন", "Order home delivery"))}
+                </span>
               </Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
@@ -410,6 +412,8 @@ function Index() {
               <Link to="/auth">{t("getStarted")}</Link>
             </Button>
           </div>
+        </div>
+
         </div>
       </header>
 
