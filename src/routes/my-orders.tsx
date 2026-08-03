@@ -56,10 +56,6 @@ function MyOrdersPage() {
   const cart = useShopCart();
   const [busy, setBusy] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!loading && !user) setAuthOpen(true);
-  }, [loading, user]);
-
   const signedIn = !!user && isCustomer;
 
   const orders = useQuery({

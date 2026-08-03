@@ -57,10 +57,6 @@ function MyAccountPage() {
   const [form, setForm] = useState(emptyAddress);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) setAuthOpen(true);
-  }, [loading, user]);
-
   const signedIn = !!user && isCustomer;
 
   const orders = useQuery({
