@@ -389,7 +389,7 @@ function DashboardPage() {
             </a>
           </Button>
           <Button asChild variant="outline" size="sm" className="gap-1.5">
-            <a href="/homedelivery" target="_blank" rel="noreferrer">
+            <a href="/" target="_blank" rel="noreferrer">
               <ShoppingBasket className="size-4" />
               {lang === "bn" ? "হোম ডেলিভারি" : "Home delivery"}
             </a>

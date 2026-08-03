@@ -517,7 +517,7 @@ function TrackPage() {
           </div>
         )}
       </div>
-      <Link to="/homedelivery" className="mt-6 inline-block text-sm text-primary underline">
+      <Link to="/" className="mt-6 inline-block text-sm text-primary underline">
         {bn ? "← দোকানে ফিরে যান" : "← Back to shop"}
       </Link>
     </main>

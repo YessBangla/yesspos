@@ -142,14 +142,14 @@ function MyAccountPage() {
     qc.clear();
     await supabase.auth.signOut();
     toast.success(bn ? "লগআউট হয়েছে" : "Signed out");
-    void navigate({ to: "/homedelivery", replace: true });
+    void navigate({ to: "/", replace: true });
   }
 
   return (
     <main className="min-h-screen bg-muted/30">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
-          <Link to="/homedelivery" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+          <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="size-4" />
             {bn ? "দোকানে ফিরুন" : "Back to shop"}
           </Link>
@@ -204,7 +204,7 @@ function MyAccountPage() {
                     {bn ? "এখনো কোনো অর্ডার নেই।" : "No orders yet."}
                     <div className="mt-3">
                       <Button asChild size="sm">
-                        <Link to="/homedelivery">{bn ? "কেনাকাটা শুরু করুন" : "Start shopping"}</Link>
+                        <Link to="/">{bn ? "কেনাকাটা শুরু করুন" : "Start shopping"}</Link>
                       </Button>
                     </div>
                   </div>

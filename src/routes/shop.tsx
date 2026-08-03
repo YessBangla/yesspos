@@ -15,6 +15,6 @@ export const Route = createFileRoute("/shop")({
     },
   },
   beforeLoad: ({ search }) => {
-    throw redirect({ to: "/homedelivery", search: search as never, replace: true });
+    throw redirect({ to: "/", search: search as never, replace: true });
   },
 });
