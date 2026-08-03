@@ -143,7 +143,7 @@ function MyOrdersPage() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
           <Link
-            to="/homedelivery"
+            to="/"
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="size-4" />
@@ -189,7 +189,7 @@ function MyOrdersPage() {
                   {bn ? "এখনো কোনো অর্ডার নেই।" : "You have not ordered yet."}
                 </p>
                 <Button asChild className="mt-4">
-                  <Link to="/homedelivery">{bn ? "কেনাকাটা শুরু করুন" : "Start shopping"}</Link>
+                  <Link to="/">{bn ? "কেনাকাটা শুরু করুন" : "Start shopping"}</Link>
                 </Button>
               </div>
             )}
@@ -269,7 +269,7 @@ function MyOrdersPage() {
                       }}
                     />
                     <Button asChild size="sm" variant="ghost">
-                      <Link to="/homedelivery" search={{ checkout: true }}>
+                      <Link to="/" search={{ checkout: true }}>
                         <ShoppingBasket className="mr-1 size-4" />
                         {bn ? "কার্টে যান" : "Go to cart"}
                       </Link>

@@ -43,7 +43,7 @@ const EMPTY = {
   title: "",
   subtitle: "",
   image_url: "",
-  link_url: "/homedelivery",
+  link_url: "/",
   kind: "banner",
   placement: "hero",
   bg_color: "#0f766e",

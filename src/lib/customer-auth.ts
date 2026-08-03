@@ -69,7 +69,7 @@ export async function customerSignUp(phone: string, pin: string, fullName: strin
     email: phoneToEmail(phone),
     password: pin,
     options: {
-      emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/homedelivery` : undefined,
+      emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/` : undefined,
       data: { full_name: fullName, phone: normalizePhone(phone) },
     },
   });

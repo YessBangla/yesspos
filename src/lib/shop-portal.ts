@@ -1,14 +1,14 @@
 /**
  * Resolves where the consumer storefront ("home delivery" portal) lives.
  *
- * The portal is served from the in-app `/homedelivery` route. If a dedicated
+ * The portal is served from the in-app `/` route. If a dedicated
  * origin is ever needed, set VITE_SHOP_PORTAL_URL and every "Order home
  * delivery" link will point there instead.
  */
 const CONFIGURED = (import.meta.env.VITE_SHOP_PORTAL_URL as string | undefined)?.trim();
 
 /** Base path of the storefront inside this app. */
-export const SHOP_PORTAL_PATH = "/homedelivery";
+export const SHOP_PORTAL_PATH = "/";
 
 /** Absolute portal origin, or null when the portal is served from this app. */
 export function shopPortalOrigin(): string | null {

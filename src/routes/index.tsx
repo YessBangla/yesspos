@@ -1,820 +1,2223 @@
 import { BrandLogo } from "@/components/BrandLogo";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  BarChart3,
-  Boxes,
-  Building2,
-  CheckCircle2,
-  Clock,
-  CreditCard,
-  Database,
-  FileSpreadsheet,
-  Globe2,
-  Landmark,
-  Lock,
-  Plug,
-  Printer,
-  Quote,
-  ShieldCheck,
-  ShoppingBag,
-  ShoppingCart,
-  Truck,
-  Users,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useI18n } from "@/lib/i18n";
 import { LangToggle } from "@/components/LangToggle";
+import {
+  TIME_SLOTS,
+  dayKey,
+  nextDays,
+  slotNotPassed,
+  slotStates,
+  useSlotAvailability,
+} from "@/lib/slots";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  BadgePercent,
+  Check,
+  Clock,
+  CloudUpload,
+  Loader2,
+  Minus,
+  Phone,
+  Plus,
+  RefreshCw,
+  Search,
+  ShoppingBag,
+  Home,
+  ShoppingBasket,
+  Truck,
+  WifiOff,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { toast } from "sonner";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useSiteContent } from "@/lib/site-content";
-import heroShade from "@/assets/hero-shade.jpg";
-import cardShade from "@/assets/card-shade.jpg";
-
-const shadeStyle = { "--card-shade": `url(${cardShade})` } as React.CSSProperties;
-
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { deliveryFeeFor, useShopCart, type ShopLine } from "@/lib/shop-cart";
+import { applyCoupon } from "@/lib/coupon";
+import { money, num, useI18n } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
+import { checkPackCart } from "@/lib/pack-size";
+import { useCustomerSession, normalizePhone } from "@/lib/customer-auth";
+import { CustomerAccountMenu } from "@/components/CustomerAccountMenu";
+import { checkOrderConsistency, formatIssues } from "@/lib/order-check";
+import {
+  QUEUE_MAX_ATTEMPTS,
+  dropQueuedOrder,
+  isQueueSupported,
+  listQueuedOrders,
+  queueOrder,
+  subscribeQueue,
+  syncQueuedOrders,
+  type QueuedOrder,
+} from "@/lib/delivery-queue";
 
 const SITE = "https://yesspos.lovable.app";
 
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Bazar Bari — Retail Billing, Inventory & Accounting Platform" },
-      {
-        name: "description",
-        content:
-          "Bazar Bari is an enterprise-grade browser POS and ERP for retail: fast billing, multi-branch inventory, dues, double-entry accounting and reports in Bengali and English.",
-      },
-      {
-        property: "og:title",
-        content: "Bazar Bari — Retail Billing, Inventory & Accounting Platform",
-      },
-      {
-        property: "og:description",
-        content:
-          "Enterprise-grade POS and ERP for retail chains: billing, multi-branch stock, dues, double-entry accounting and analytics in one platform.",
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: SITE },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-    links: [{ rel: "canonical", href: SITE }],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "SoftwareApplication",
-          name: "Bazar Bari",
-          applicationCategory: "BusinessApplication",
-          operatingSystem: "Web",
-          description:
-            "Enterprise point of sale and ERP for retail businesses: billing, multi-branch inventory, dues, double-entry accounting and reports.",
-          url: SITE,
-          offers: { "@type": "Offer", price: "0", priceCurrency: "BDT" },
-        }),
-      },
-    ],
-  }),
-  component: Index,
+/** Sort options for the storefront grid. */
+export const SORTS = ["relevance", "price_asc", "price_desc", "name_asc", "name_desc"] as const;
+export type SortKey = (typeof SORTS)[number];
+
+/** Human-readable slug used for SEO-friendly category URLs. */
+export function slugify(s: string) {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 60);
+}
+
+function titleCase(slug: string) {
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+/** Deep-linkable portal state: ?q=rice&cat=<id>&c=fresh-fruits&sort=price_asc&checkout=1 */
+const searchSchema = z.object({
+  q: z.string().trim().max(60).optional(),
+  cat: z.string().trim().max(64).optional(),
+  c: z.string().trim().max(64).optional(),
+  sort: z.enum(SORTS).optional(),
+  checkout: z.boolean().optional(),
 });
 
-function Index() {
-  const { t, lang } = useI18n();
+export const Route = createFileRoute("/")({
+  validateSearch: (input: Record<string, unknown>) => {
+    const truthy =
+      input.checkout === true ||
+      input.checkout === 1 ||
+      input.checkout === "1" ||
+      input.checkout === "true";
+    const parsed = searchSchema.safeParse({
+      q: typeof input.q === "string" && input.q.trim() ? input.q : undefined,
+      cat: typeof input.cat === "string" && input.cat.trim() ? input.cat : undefined,
+      c: typeof input.c === "string" && input.c.trim() ? slugify(input.c) : undefined,
+      sort: typeof input.sort === "string" ? (input.sort as SortKey) : undefined,
+      checkout: truthy ? true : undefined,
+    });
+    return parsed.success ? parsed.data : {};
+  },
+
+  // Per-category / per-search SEO: unique title, description, OG tags and canonical.
+  head: ({ match }) => {
+    const s = (match.search ?? {}) as z.infer<typeof searchSchema>;
+    const catName = s.c ? titleCase(s.c) : "";
+    const query = s.q?.trim() ?? "";
+
+    const title = catName
+      ? `${catName} online in Dhaka — home delivery | Bazar Bari`
+      : query
+        ? `"${query}" grocery search — Bazar Bari`
+        : "Online grocery & home delivery — Bazar Bari";
+
+    const description = catName
+      ? `Buy ${catName.toLowerCase()} online at Bazar Bari. Fresh stock, transparent prices, 1-hour home delivery in Dhaka and free delivery above ৳1000.`
+      : query
+        ? `Grocery search results for "${query}" at Bazar Bari — order online with fast home delivery in Dhaka.`
+        : "Order fresh groceries online and get home delivery, or pay in store. Rice, oil, dairy, snacks and daily essentials.";
+
+    const params = new URLSearchParams();
+    if (s.c) params.set("c", s.c);
+    if (s.cat) params.set("cat", s.cat);
+    const canonical = `${SITE}/${params.size ? `?${params.toString()}` : ""}`;
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonical },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+      ],
+      links: [{ rel: "canonical", href: canonical }],
+    };
+  },
+
+  component: ShopPage,
+});
+
+type P = {
+  id: string;
+  name_en: string;
+  name_bn: string;
+  price: number;
+  pack_size: string | null;
+  image_url: string | null;
+  brand: string | null;
+  category_id: string | null;
+};
+
+const PAGE = 24;
+
+/** Delivery windows, cut-off rules and live capacity live in one shared module. */
+const slotAvailable = (d: Date | string, id: string) => slotNotPassed(d, id);
+
+const checkoutSchema = z.object({
+  name: z.string().trim().min(2, "name").max(60),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^(?:\+?88)?01[3-9]\d{8}$/, "phone"),
+  address: z.string().trim().min(10, "address").max(300),
+  area: z.string().trim().min(2, "area").max(80),
+  note: z.string().trim().max(200),
+});
+
+function ShopPage() {
+  const { lang } = useI18n();
   const bn = lang === "bn";
-  const L = (b: string, e: string) => (bn ? b : e);
   const { text: sc } = useSiteContent();
+  const cart = useShopCart();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [query, setQuery] = useState(search.q ?? "");
+  const [cat, setCat] = useState<string>(search.cat ?? "");
+  const [sort, setSort] = useState<SortKey>(search.sort ?? "relevance");
+  const [limit, setLimit] = useState(PAGE);
+  const [checkout, setCheckout] = useState(!!search.checkout);
+  const [step, setStep] = useState(0);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [sugOpen, setSugOpen] = useState(false);
+  const [sugIdx, setSugIdx] = useState(-1);
 
-  const heroMetrics = [
-    { icon: Boxes, label: L("স্টক আইটেম", "Stock items"), value: L("১,২৪০", "1,240") },
-    { icon: Users, label: L("কাস্টমার", "Customers"), value: L("৮৬২", "862") },
-    { icon: Building2, label: L("শাখা", "Branches"), value: L("০৩", "03") },
-    { icon: CreditCard, label: L("বকেয়া আদায়", "Dues collected"), value: "৳3,150" },
-  ];
+  const [online, setOnline] = useState(true);
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    area: "",
+    note: "",
+    payment: "cod",
+  });
+  const [placed, setPlaced] = useState<number | null>(null);
+  const [slotDay, setSlotDay] = useState(() => dayKey(nextDays(1)[0]));
+  const [slotTime, setSlotTime] = useState<string>("");
+  const slotAvail = useSlotAvailability(slotDay, true);
+  const slots = useMemo(() => slotStates(slotDay, slotAvail.data), [slotDay, slotAvail.data]);
+  const chosenSlot = slots.find((x) => x.slot.id === slotTime);
+  const altSlots = useMemo(() => slots.filter((x) => x.bookable).slice(0, 3), [slots]);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [fieldErrs, setFieldErrs] = useState<Record<string, string>>({});
+  const [placedInfo, setPlacedInfo] = useState<{ phone: string; slot: string; total: number } | null>(
+    null,
+  );
+  const [queued, setQueued] = useState<QueuedOrder[]>([]);
+  const [syncing, setSyncing] = useState(false);
+  const [placing, setPlacing] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponMsg, setCouponMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [couponBusy, setCouponBusy] = useState(false);
 
-  const heroCards = [
-    {
-      icon: ShoppingCart,
-      tag: L("বিলিং", "Billing"),
-      metric: L("< ১০ সে.", "< 10 sec"),
-      title: L("প্রতি বিলে গড় সময়", "Average time per bill"),
-      body: L(
-        "বারকোড স্ক্যান, কিবোর্ড শর্টকাট আর এক-ক্লিক পেমেন্টে কাউন্টার দ্রুত চলে।",
-        "Barcode scan, keyboard shortcuts and one-click payment keep the counter moving.",
-      ),
+  const { user, isCustomer, name: accName, phone: accPhone } = useCustomerSession();
+  const [prefilled, setPrefilled] = useState(false);
+
+  const savedAddresses = useQuery({
+    queryKey: ["shop-addresses", user?.id],
+    enabled: !!user && isCustomer,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("customer_addresses")
+        .select("id,label,full_name,phone,address,area,note,is_default")
+        .order("is_default", { ascending: false });
+      if (error) throw error;
+      return data;
     },
-    {
-      icon: Boxes,
-      tag: L("ইনভেন্টরি", "Inventory"),
-      metric: L("রিয়েল-টাইম", "Real-time"),
-      title: L("শাখাভিত্তিক স্টক আপডেট", "Branch-wise stock updates"),
-      body: L(
-        "প্রতিটি বিক্রি, ক্রয় ও ট্রান্সফারে স্টক সাথে সাথেই সমন্বয় হয়, লো-স্টক অ্যালার্টসহ।",
-        "Every sale, purchase and transfer adjusts stock instantly, with low-stock alerts.",
-      ),
-    },
-    {
-      icon: Landmark,
-      tag: L("অ্যাকাউন্টিং", "Accounting"),
-      metric: L("ডাবল-এন্ট্রি", "Double-entry"),
-      title: L("স্বয়ংক্রিয় লেজার ও ভাউচার", "Automated ledgers & vouchers"),
-      body: L(
-        "চার্ট অব অ্যাকাউন্টস, ডে-বুক ও আর্থিক বিবরণী নিজে থেকেই তৈরি হয়।",
-        "Chart of accounts, day book and financial statements build themselves.",
-      ),
-    },
-    {
-      icon: ShieldCheck,
-      tag: L("গভর্ন্যান্স", "Governance"),
-      metric: L("৫ রোল", "5 roles"),
-      title: L("অ্যাক্সেস কন্ট্রোল ও অডিট", "Access control & audit"),
-      body: L(
-        "সুপার অ্যাডমিন থেকে স্টাফ পর্যন্ত অনুমতি, আর প্রতিটি অ্যাকশনের অডিট লগ।",
-        "Permissions from super admin to staff, with an audit log for every action.",
-      ),
-    },
-  ];
+  });
+
+  // Signed-in shoppers get their default address pre-filled at checkout.
+  useEffect(() => {
+    if (prefilled || !user || !isCustomer) return;
+    const a = savedAddresses.data?.[0];
+    setForm((f) => ({
+      ...f,
+      name: a?.full_name || accName || f.name,
+      phone: a?.phone || normalizePhone(accPhone) || f.phone,
+      address: a?.address || f.address,
+      area: a?.area || f.area,
+      note: a?.note || f.note,
+    }));
+    if (savedAddresses.data) setPrefilled(true);
+  }, [user, isCustomer, accName, accPhone, savedAddresses.data, prefilled]);
+
+  // Back/forward navigation should move the portal too.
+  useEffect(() => {
+    setQuery(search.q ?? "");
+    setCat(search.cat ?? "");
+    setSort(search.sort ?? "relevance");
+    setCheckout(!!search.checkout);
+  }, [search.q, search.cat, search.sort, search.checkout]);
 
 
+  const refreshQueue = useCallback(async () => setQueued(await listQueuedOrders()), []);
 
-  const modules = [
-    {
-      icon: ShoppingCart,
-      title: L("পয়েন্ট অব সেল", "Point of Sale"),
-      body: L(
-        "বারকোড স্ক্যান, কুপন ও ডিসকাউন্ট, কিবোর্ড শর্টকাট এবং থার্মাল/A4 রসিদ প্রিন্ট।",
-        "Barcode scan, coupons and discounts, keyboard shortcuts, thermal and A4 receipts.",
-      ),
+  const runSync = useCallback(
+    async (force = false) => {
+      if (!isQueueSupported()) return;
+      setSyncing(true);
+      try {
+        const res = await syncQueuedOrders(force);
+        if (res.synced > 0)
+          toast.success(
+            bn
+              ? `${res.synced}টি অপেক্ষমাণ অর্ডার পাঠানো হয়েছে (#${res.placed.join(", #")})`
+              : `${res.synced} queued order(s) sent (#${res.placed.join(", #")})`,
+          );
+        if (res.failed > 0)
+          toast.error(
+            bn ? "কিছু অর্ডার পাঠানো যায়নি — আবার চেষ্টা হবে" : "Some orders failed — will retry",
+          );
+      } finally {
+        setSyncing(false);
+        await refreshQueue();
+      }
     },
-    {
-      icon: Boxes,
-      title: L("ইনভেন্টরি", "Inventory"),
-      body: L(
-        "ক্যাটাগরি, ব্র্যান্ড, ইউনিট, স্টক অ্যাডজাস্টমেন্ট ও লো-স্টক অ্যালার্ট।",
-        "Categories, brands, units, stock adjustments and low-stock alerts.",
-      ),
-    },
-    {
-      icon: Building2,
-      title: L("মাল্টি ব্রাঞ্চ", "Multi-branch"),
-      body: L(
-        "শাখাভিত্তিক স্টক, শাখার মধ্যে ট্রান্সফার এবং শাখা অনুযায়ী রিপোর্ট।",
-        "Per-branch stock, inter-branch transfers and branch-wise reporting.",
-      ),
-    },
-    {
-      icon: CreditCard,
-      title: L("বাকি ও পেমেন্ট", "Dues & Payments"),
-      body: L(
-        "নগদ, ব্যাংক, বিকাশ, নগদসহ সব মাধ্যম; ডিউ কালেকশন ও পেমেন্ট লেজার।",
-        "Cash, bank, bKash, Nagad and more; due collection and payment ledgers.",
-      ),
-    },
-    {
-      icon: Landmark,
-      title: L("অ্যাকাউন্টিং", "Accounting"),
-      body: L(
-        "চার্ট অব অ্যাকাউন্টস, জার্নাল ভাউচার, ডে-বুক ও আর্থিক বিবরণী।",
-        "Chart of accounts, journal vouchers, day book and financial statements.",
-      ),
-    },
-    {
-      icon: Truck,
-      title: L("ক্রয় ও সরবরাহকারী", "Purchase & Suppliers"),
-      body: L(
-        "ক্রয় ইনভয়েস, ক্রয় রিটার্ন, সাপ্লায়ার প্রোফাইল ও পার্টি স্টেটমেন্ট।",
-        "Purchase invoices, purchase returns, supplier profiles and party statements.",
-      ),
-    },
-    {
-      icon: BarChart3,
-      title: L("রিপোর্ট ও অ্যানালিটিক্স", "Reports & Analytics"),
-      body: L(
-        "দৈনিক বিক্রি, সেরা পণ্য, স্টক ভ্যালু, লাভ-ক্ষতি ও ডিউ রিপোর্ট।",
-        "Daily sales, best sellers, stock value, profit and dues reports.",
-      ),
-    },
-    {
-      icon: ShieldCheck,
-      title: L("ইউজার ও গভর্ন্যান্স", "Users & Governance"),
-      body: L(
-        "রোলভিত্তিক অ্যাক্সেস, পাসওয়ার্ড রিসেট এবং সম্পূর্ণ অডিট লগ।",
-        "Role-based access, password reset and a full audit log.",
-      ),
-    },
-  ];
-
-  const stats = [
-    { value: "20+", label: L("সমন্বিত মডিউল", "Integrated modules") },
-    { value: "5", label: L("ইউজার রোল লেভেল", "User role levels") },
-    { value: "2", label: L("ভাষা (বাংলা/ইংরেজি)", "Languages (BN/EN)") },
-    { value: "99.9%", label: L("লক্ষ্যমাত্রা আপটাইম", "Target uptime") },
-  ];
-
-  const outcomes = [
-    {
-      icon: Clock,
-      title: L("দ্রুত চেকআউট", "Faster checkout"),
-      body: L(
-        "কিবোর্ড শর্টকাট ও বারকোড স্ক্যানে কাউন্টারে অপেক্ষা কমে।",
-        "Keyboard shortcuts and barcode scanning cut queue time at the counter.",
-      ),
-    },
-    {
-      icon: Database,
-      title: L("এক সত্য উৎস", "One source of truth"),
-      body: L(
-        "বিক্রি, স্টক ও লেজার একসাথে আপডেট হয় — ডেটা দুইবার লিখতে হয় না।",
-        "Sales, stock and ledgers update together — no duplicate data entry.",
-      ),
-    },
-    {
-      icon: Globe2,
-      title: L("যেকোনো ডিভাইসে", "Any device, anywhere"),
-      body: L(
-        "ব্রাউজারেই চলে — ডেস্কটপ, ট্যাব বা মোবাইল, ইনস্টলেশন ছাড়াই।",
-        "Runs in the browser on desktop, tablet or mobile with zero installation.",
-      ),
-    },
-  ];
-
-  const workflow = [
-    {
-      step: "01",
-      title: L("প্রতিষ্ঠান সেটআপ", "Set up your business"),
-      body: L("শাখা, ইউজার রোল, ট্যাক্স ও রসিদ সেটিংস ঠিক করুন।", "Configure branches, roles, tax and receipt settings."),
-    },
-    {
-      step: "02",
-      title: L("পণ্য ও পার্টি যোগ", "Add products & parties"),
-      body: L("বারকোডসহ পণ্য, কাস্টমার ও সাপ্লায়ার ইমপোর্ট বা যোগ করুন।", "Add or import products with barcodes, customers and suppliers."),
-    },
-    {
-      step: "03",
-      title: L("বিক্রি শুরু", "Start selling"),
-      body: L("POS থেকে বিল করুন, স্টক ও লেজার নিজে থেকেই আপডেট হয়।", "Bill from the POS; stock and ledgers update automatically."),
-    },
-    {
-      step: "04",
-      title: L("হিসাব ও সিদ্ধান্ত", "Review & decide"),
-      body: L("ড্যাশবোর্ড ও রিপোর্টে লাভ, ডিউ আর ক্যাশফ্লো দেখুন।", "Track profit, dues and cash flow on the dashboard and reports."),
-    },
-  ];
-
-  const audiences = [
-    L("মুদি ও ডিপার্টমেন্টাল স্টোর", "Grocery & departmental stores"),
-    L("ফার্মেসি ও কসমেটিকস", "Pharmacy & cosmetics"),
-    L("ইলেকট্রনিক্স ও মোবাইল শপ", "Electronics & mobile shops"),
-    L("পাইকারি ও ডিস্ট্রিবিউশন", "Wholesale & distribution"),
-    L("ফ্যাশন ও গার্মেন্টস আউটলেট", "Fashion & garment outlets"),
-    L("রেস্টুরেন্ট ও বেকারি", "Restaurants & bakeries"),
-  ];
-
-  const governance = [
-    {
-      icon: Lock,
-      title: L("রোলভিত্তিক অ্যাক্সেস", "Role-based access"),
-      body: L(
-        "সুপার অ্যাডমিন থেকে স্টাফ — প্রতিটি মেনু ও অ্যাকশন রোল অনুযায়ী নিয়ন্ত্রিত।",
-        "Super admin to staff — every menu and action is gated by role.",
-      ),
-    },
-    {
-      icon: ShieldCheck,
-      title: L("অডিট ট্রেইল", "Audit trail"),
-      body: L(
-        "লগইন, বিক্রি, রিটার্ন ও সেটিংস পরিবর্তনের সম্পূর্ণ রেকর্ড।",
-        "A complete record of logins, sales, returns and settings changes.",
-      ),
-    },
-    {
-      icon: Database,
-      title: L("সার্ভার-সাইড যাচাই", "Server-side validation"),
-      body: L(
-        "প্রতিটি সংবেদনশীল অপারেশন সার্ভারে যাচাই হয়, শুধু ব্রাউজারে নয়।",
-        "Sensitive operations are verified on the server, not just in the browser.",
-      ),
-    },
-    {
-      icon: Plug,
-      title: L("API হাব", "API hub"),
-      body: L(
-        "ইন্টিগ্রেশন ও কী ব্যবস্থাপনা এক জায়গা থেকে কনফিগার করুন।",
-        "Configure integrations and key management from a single place.",
-      ),
-    },
-  ];
-
-  const testimonials = [
-    {
-      quote: L(
-        "তিনটি শাখার স্টক আর ডিউ এখন একই ড্যাশবোর্ডে দেখি — মাস শেষের হিসাব দুই দিনের বদলে এক ঘণ্টায়।",
-        "Stock and dues for three branches now sit on one dashboard — month-end closing takes an hour instead of two days.",
-      ),
-      name: L("রায়হান করিম", "Raihan Karim"),
-      role: L("পরিচালক, রিটেইল চেইন", "Director, retail chain"),
-    },
-    {
-      quote: L(
-        "কাউন্টারের স্টাফরা এক দিনেই শিখে গেছে, আর থার্মাল প্রিন্টে রসিদ সাথে সাথেই বেরোয়।",
-        "Counter staff learned it in a day, and thermal receipts print instantly.",
-      ),
-      name: L("নুসরাত জাহান", "Nusrat Jahan"),
-      role: L("ম্যানেজার, ফার্মেসি", "Manager, pharmacy"),
-    },
-    {
-      quote: L(
-        "ক্রয়, বিক্রি আর জার্নাল একসাথে থাকায় অ্যাকাউন্ট্যান্টকে আলাদা এক্সেল দিতে হয় না।",
-        "Purchases, sales and journals live together, so our accountant no longer needs separate spreadsheets.",
-      ),
-      name: L("সাইফুল ইসলাম", "Saiful Islam"),
-      role: L("মালিক, হোলসেল ডিপো", "Owner, wholesale depot"),
-    },
-  ];
-
-  const faqs = [
-    {
-      q: L("ইন্সটল করতে হবে কি?", "Do I need to install anything?"),
-      a: L(
-        "না। ব্রাউজার থেকেই চলে — ডেস্কটপ, ল্যাপটপ, ট্যাব বা মোবাইলে।",
-        "No. It runs in the browser on desktop, laptop, tablet or mobile.",
-      ),
-    },
-    {
-      q: L("কোন প্রিন্টার সাপোর্ট করে?", "Which printers are supported?"),
-      a: L(
-        "৫৮/৮০ মিমি থার্মাল প্রিন্টার এবং সাধারণ A4 প্রিন্টার — দুটোতেই রসিদ প্রিন্ট হয়।",
-        "58/80 mm thermal printers as well as standard A4 printers.",
-      ),
-    },
-    {
-      q: L("একাধিক শাখা চালানো যাবে?", "Can I run multiple branches?"),
-      a: L(
-        "হ্যাঁ, প্রতিটি শাখার আলাদা স্টক, ট্রান্সফার ও রিপোর্ট আছে।",
-        "Yes — each branch has its own stock, transfers and reports.",
-      ),
-    },
-    {
-      q: L("ডেটা কতটা নিরাপদ?", "How secure is the data?"),
-      a: L(
-        "রোলভিত্তিক অ্যাক্সেস কন্ট্রোল, সার্ভার-সাইড যাচাই এবং অডিট লগ দিয়ে প্রতিটি গুরুত্বপূর্ণ অ্যাকশন রেকর্ড থাকে।",
-        "Role-based access control, server-side checks and an audit log of every important action.",
-      ),
-    },
-    {
-      q: L("দলের সবাই কি একসাথে কাজ করতে পারবে?", "Can my whole team work at once?"),
-      a: L(
-        "হ্যাঁ। পাঁচটি রোল লেভেল আছে এবং একাধিক ইউজার একই সময়ে আলাদা কাউন্টার বা শাখায় কাজ করতে পারে।",
-        "Yes. Five role levels are available and multiple users can work concurrently across counters or branches.",
-      ),
-    },
-    {
-      q: L("বাংলা ও ইংরেজি দুটোই আছে?", "Is it available in both Bengali and English?"),
-      a: L(
-        "আছে। পুরো ইন্টারফেস এক ক্লিকে বাংলা বা ইংরেজিতে বদলানো যায়, হিসাব টাকা (৳) ভিত্তিক।",
-        "Yes. The entire interface switches between Bengali and English in one click, with Taka (৳) native accounting.",
-      ),
-    },
-  ];
-
-  const Eyebrow = ({ children }: { children: React.ReactNode }) => (
-    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-primary">{children}</p>
+    [bn, refreshQueue],
   );
 
+  useEffect(() => {
+    refreshQueue();
+    const unsub = subscribeQueue(() => void refreshQueue());
+    void runSync();
+    const onOnline = () => void runSync(true);
+    window.addEventListener("online", onOnline);
+    const timer = window.setInterval(() => void runSync(), 30_000);
+    return () => {
+      unsub();
+      window.removeEventListener("online", onOnline);
+      window.clearInterval(timer);
+    };
+  }, [refreshQueue, runSync]);
+
+  useEffect(() => {
+    const sync = () => setOnline(navigator.onLine);
+    sync();
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", sync);
+    return () => {
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", sync);
+    };
+  }, []);
+
+  const categories = useQuery({
+    queryKey: ["shop-categories"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id,name_en,name_bn")
+        .order("name_en");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const products = useQuery({
+    queryKey: ["shop-products"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id,name_en,name_bn,price,pack_size,image_url,brand,category_id")
+        .eq("is_active", true)
+        .order("name_en")
+        .limit(1000);
+      if (error) throw error;
+      return data as unknown as P[];
+    },
+  });
+
+  const activeCat = useMemo(
+    () => (categories.data ?? []).find((c) => c.id === cat) ?? null,
+    [categories.data, cat],
+  );
+
+  // Keep search / category / sort / checkout shareable and reload-safe in the URL.
+  useEffect(() => {
+    const q = query.trim() || undefined;
+    const c = cat || undefined;
+    const slug = activeCat ? slugify(activeCat.name_en) : undefined;
+    const so = sort === "relevance" ? undefined : sort;
+    const ck = checkout;
+    if (
+      search.q === q &&
+      search.cat === c &&
+      search.c === slug &&
+      search.sort === so &&
+      (search.checkout ?? false) === ck
+    )
+      return;
+    void navigate({
+      search: { q, cat: c, c: slug, sort: so, checkout: ck || undefined },
+      replace: true,
+    });
+  }, [
+    query,
+    cat,
+    sort,
+    checkout,
+    activeCat,
+    navigate,
+    search.q,
+    search.cat,
+    search.c,
+    search.sort,
+    search.checkout,
+  ]);
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const list = (products.data ?? []).filter(
+      (p) =>
+        (!cat || p.category_id === cat) &&
+        (!q ||
+          p.name_en.toLowerCase().includes(q) ||
+          p.name_bn.includes(query.trim()) ||
+          (p.brand ?? "").toLowerCase().includes(q)),
+    );
+    const nameOf = (p: P) => (bn ? p.name_bn : p.name_en);
+    switch (sort) {
+      case "price_asc":
+        return [...list].sort((a, b) => Number(a.price) - Number(b.price));
+      case "price_desc":
+        return [...list].sort((a, b) => Number(b.price) - Number(a.price));
+      case "name_asc":
+        return [...list].sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
+      case "name_desc":
+        return [...list].sort((a, b) => nameOf(b).localeCompare(nameOf(a)));
+      default:
+        return list;
+    }
+  }, [products.data, query, cat, sort, bn]);
+
+  const shown = visible.slice(0, limit);
+
+  const fee = deliveryFeeFor(cart.subtotal);
+  const discount = Math.min(coupon?.discount ?? 0, cart.subtotal);
+  const total = Math.max(cart.subtotal - discount + fee, 0);
+
+  async function checkCoupon(code: string) {
+    setCouponBusy(true);
+    const res = await applyCoupon(code, cart.subtotal, bn);
+    setCouponBusy(false);
+    setCouponMsg({ ok: res.ok, text: res.message });
+    setCoupon(res.ok ? { code: res.code, discount: res.discount } : null);
+    return res.ok;
+  }
+
+  function clearCoupon() {
+    setCoupon(null);
+    setCouponInput("");
+    setCouponMsg(null);
+  }
+
+  // Re-check the applied coupon whenever the cart value changes.
+  useEffect(() => {
+    if (!coupon) return;
+    let cancelled = false;
+    void applyCoupon(coupon.code, cart.subtotal, bn).then((res) => {
+      if (cancelled) return;
+      if (!res.ok) {
+        setCoupon(null);
+        setCouponMsg({ ok: false, text: res.message });
+      } else if (res.discount !== coupon.discount) {
+        setCoupon({ code: res.code, discount: res.discount });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart.subtotal, bn]);
+
+
+  const slotLabel = useMemo(() => {
+    if (!slotTime) return "";
+    const t = TIME_SLOTS.find((x) => x.id === slotTime);
+    return `${slotDay} ${t ? (bn ? t.bn : t.en) : slotTime}`;
+  }, [slotDay, slotTime, bn]);
+
+  function validate() {
+    const found: string[] = [];
+    const fields: Record<string, string> = {};
+    const parsed = checkoutSchema.safeParse(form);
+    if (!parsed.success) {
+      const codes = new Set(parsed.error.issues.map((i) => String(i.message)));
+      if (codes.has("name"))
+        fields.name = bn
+          ? "পুরো নাম লিখুন (কমপক্ষে ২ অক্ষর)"
+          : "Enter your full name (min 2 characters)";
+      if (codes.has("phone"))
+        fields.phone = bn
+          ? "সঠিক বাংলাদেশি মোবাইল নম্বর দিন (01XXXXXXXXX)"
+          : "Enter a valid Bangladeshi mobile number (01XXXXXXXXX)";
+      if (codes.has("address"))
+        fields.address = bn
+          ? "সম্পূর্ণ ঠিকানা দিন — বাসা/রোড/এলাকা (কমপক্ষে ১০ অক্ষর)"
+          : "Enter a full address — house/road/area (min 10 characters)";
+      if (codes.has("area")) fields.area = bn ? "এলাকা লিখুন" : "Enter your area";
+      if (parsed.error.issues.some((i) => i.path[0] === "note"))
+        fields.note = bn ? "নোট সর্বোচ্চ ২০০ অক্ষর" : "Note can be at most 200 characters";
+    }
+    if (!slotTime) fields.slot = bn ? "ডেলিভারির সময় বেছে নিন" : "Choose a delivery slot";
+    else if (chosenSlot && !chosenSlot.bookable && chosenSlot.available <= 0)
+      fields.slot = bn
+        ? "এই স্লটটি পূর্ণ — অন্য একটি বেছে নিন"
+        : "That slot is fully booked — pick another one";
+    else if (!slotAvailable(new Date(slotDay), slotTime))
+      fields.slot = bn
+        ? "এই স্লটটি আর নেওয়া যাবে না, অন্যটি বেছে নিন"
+        : "That slot has passed — pick another one";
+
+    Object.values(fields).forEach((m) => found.push(m));
+    if (cart.lines.length === 0) found.push(bn ? "কার্ট খালি" : "Cart is empty");
+
+    checkPackCart(
+      cart.lines.map((l) => ({
+        name: bn ? l.name_bn : l.name_en,
+        pack_size: l.pack_size,
+        qty: l.qty,
+      })),
+    ).forEach((i) => found.push(bn ? i.bn : i.en));
+
+    return { ok: found.length === 0, found, fields, parsed };
+  }
+
+  /** Per-step gate so shoppers cannot advance with invalid data. */
+  function stepErrors(index: number) {
+    const { fields } = validate();
+    if (index === 0)
+      return [fields.name, fields.phone, fields.area, fields.address, fields.note].filter(
+        Boolean,
+      ) as string[];
+    if (index === 1) return [fields.slot].filter(Boolean) as string[];
+    return [];
+  }
+
+
+  async function placeOrder() {
+    const { ok, found, fields, parsed } = validate();
+    setErrors(found);
+    setFieldErrs(fields);
+    if (!ok || !parsed.success) {
+      if (fields.name || fields.phone || fields.area || fields.address) setStep(0);
+      else if (fields.slot) setStep(1);
+      toast.error(found[0] ?? (bn ? "তথ্য ঠিক করুন" : "Please fix the highlighted fields"));
+      return;
+    }
+
+
+    const orderRow = {
+      user_id: user && isCustomer ? user.id : null,
+      customer_name: parsed.data.name,
+      customer_phone: parsed.data.phone,
+      address: parsed.data.address,
+      area: parsed.data.area,
+      note: parsed.data.note || null,
+      slot: slotLabel,
+      slot_date: slotDay,
+      slot_id: slotTime,
+      payment_method: form.payment,
+      subtotal: cart.subtotal,
+      discount,
+      coupon_code: coupon?.code ?? null,
+      delivery_fee: fee,
+
+      total,
+    };
+    const items = cart.lines.map((l) => ({
+      product_id: l.id,
+      name_snapshot: bn ? l.name_bn : l.name_en,
+      unit_price: l.price,
+      quantity: l.qty,
+      line_total: l.price * l.qty,
+    }));
+
+    // Offline → queue with retry, nothing is lost.
+    if (!navigator.onLine) {
+      await queueOrder(orderRow, items);
+      cart.clear();
+      setCheckout(false);
+      toast.success(
+        bn
+          ? "অফলাইন — অনলাইনে এলে অর্ডার স্বয়ংক্রিয়ভাবে যাবে"
+          : "Offline — your order will be sent automatically when you reconnect",
+      );
+      return;
+    }
+
+    setPlacing(true);
+    try {
+      // Backend consistency check: price, pack size and stock across all branches.
+      const issues = await checkOrderConsistency(
+        cart.lines.map((l) => ({
+          product_id: l.id,
+          name: bn ? l.name_bn : l.name_en,
+          price: l.price,
+          pack_size: l.pack_size,
+          quantity: l.qty,
+        })),
+      );
+      if (issues.length > 0) {
+        const msgs = formatIssues(issues, bn).split("\n");
+        setErrors(msgs);
+        toast.error(
+          bn
+            ? "অর্ডার দেওয়া যাবে না — পণ্যের তথ্য মেলেনি"
+            : "Cannot place order — product data mismatch",
+        );
+        void products.refetch();
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("delivery_orders")
+        .insert(orderRow)
+        .select("id,order_no")
+        .single();
+      if (error) throw error;
+
+      const { error: itemErr } = await supabase
+        .from("delivery_order_items")
+        .insert(items.map((i) => ({ ...i, order_id: data.id })));
+      if (itemErr) throw itemErr;
+
+      // Remember the address for signed-in shoppers (first one becomes default).
+      if (user && isCustomer) {
+        const dup = (savedAddresses.data ?? []).some(
+          (a) => a.address === parsed.data.address && a.area === parsed.data.area,
+        );
+        if (!dup) {
+          await supabase.from("customer_addresses").insert({
+            user_id: user.id,
+            label:
+              (savedAddresses.data ?? []).length === 0 ? "Home" : parsed.data.area.slice(0, 20),
+            full_name: parsed.data.name,
+            phone: parsed.data.phone,
+            address: parsed.data.address,
+            area: parsed.data.area,
+            note: parsed.data.note || null,
+            is_default: (savedAddresses.data ?? []).length === 0,
+          });
+          void savedAddresses.refetch();
+        }
+      }
+
+      setPlacedInfo({ phone: parsed.data.phone, slot: slotLabel, total });
+      clearCoupon();
+      cart.clear();
+
+      setCheckout(false);
+      setStep(0);
+      setErrors([]);
+      setFieldErrs({});
+      setPlaced(Number(data.order_no));
+    } catch (e) {
+      // Network/server hiccup → queue it instead of losing the order.
+      await queueOrder(orderRow, items);
+      cart.clear();
+      setCheckout(false);
+      toast.warning(
+        bn
+          ? "অর্ডার পাঠানো যায়নি — সারিতে রাখা হয়েছে, স্বয়ংক্রিয়ভাবে আবার চেষ্টা হবে"
+          : "Could not reach the server — order queued and will retry automatically",
+      );
+      console.error(e);
+    } finally {
+      setPlacing(false);
+    }
+  }
+
+  const suggestions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return (products.data ?? [])
+      .filter((p) => p.name_en.toLowerCase().includes(q) || p.name_bn.includes(query.trim()))
+      .slice(0, 6);
+  }, [products.data, query]);
+
+  const catCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    (products.data ?? []).forEach((p) => {
+      if (p.category_id) m.set(p.category_id, (m.get(p.category_id) ?? 0) + 1);
+    });
+    return m;
+  }, [products.data]);
+
+  const addToCart = (p: P) =>
+    cart.add({
+      id: p.id,
+      name_en: p.name_en,
+      name_bn: p.name_bn,
+      price: Number(p.price),
+      pack_size: p.pack_size,
+      image_url: p.image_url,
+    });
+
+  const pickSuggestion = (p: P) => {
+    addToCart(p);
+    setQuery("");
+    setSugOpen(false);
+    setSugIdx(-1);
+    toast.success(bn ? "কার্টে যোগ হয়েছে" : "Added to cart");
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
-        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:px-5 lg:flex lg:justify-between">
-          <div className="flex min-w-0 items-center gap-2">
-            <BrandLogo size={36} priority />
-            <span className="truncate font-display text-lg font-bold">{sc("brand.name", t("appName"))}</span>
-          </div>
-          <nav className="hidden items-center gap-6 text-sm text-muted-foreground lg:flex">
-            <a href="#platform" className="hover:text-foreground">{L("প্ল্যাটফর্ম", "Platform")}</a>
-            <a href="#modules" className="hover:text-foreground">{L("মডিউল", "Modules")}</a>
-            <a href="#workflow" className="hover:text-foreground">{L("কিভাবে কাজ করে", "How it works")}</a>
-            <a href="#security" className="hover:text-foreground">{L("নিরাপত্তা", "Security")}</a>
-            <a href="#industries" className="hover:text-foreground">{L("কাদের জন্য", "Industries")}</a>
-            <a href="#faq" className="hover:text-foreground">{L("প্রশ্নোত্তর", "FAQ")}</a>
-          </nav>
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <LangToggle />
-            <Button asChild variant="accent" size="sm">
-              <Link to="/homedelivery">
-                <ShoppingBag className="size-4 sm:mr-1" />
-                <span className="hidden sm:inline">
-                  {sc("home.cta_primary", L("হোম ডেলিভারি অর্ডার দিন", "Order home delivery"))}
-                </span>
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/auth">{t("signIn")}</Link>
-            </Button>
-            <Button asChild size="sm" className="hidden sm:inline-flex">
-              <Link to="/auth">{t("getStarted")}</Link>
-            </Button>
-          </div>
+    <main className="storefront min-h-screen bg-background pb-28 lg:pb-10">
+      {/* ---- Top utility bar ---- */}
+      <div className="bg-primary text-primary-foreground">
+        <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-1.5 text-xs">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <Truck className="size-3.5 shrink-0" />
+            <span className="truncate">
+              {bn
+                ? "ঢাকায় ১ ঘণ্টায় ডেলিভারি · ৳১০০০+ অর্ডারে ফ্রি"
+                : "1-hour delivery in Dhaka · Free above ৳1000"}
+            </span>
+          </span>
+          <span className="flex max-w-full items-center gap-3 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+
+            <LangToggle className="bg-card" />
+            <Link to="/corporate" className="flex items-center gap-1 font-semibold hover:underline">
+              <Home className="size-3.5" />
+              {bn ? "মূল ওয়েবসাইট" : "Main site"}
+            </Link>
+
+
+            <a href="tel:16710" className="flex items-center gap-1 hover:underline">
+              <Phone className="size-3.5" /> 16710
+            </a>
+            <Link to="/track" className="hover:underline">
+              {bn ? "অর্ডার ট্র্যাক" : "Track order"}
+            </Link>
+            <Link to="/my-orders" className="hover:underline">
+              {bn ? "আমার অ্যাকাউন্ট" : "My account"}
+            </Link>
+            <Link to="/auth" className="hidden hover:underline sm:inline">
+              {bn ? "স্টাফ লগইন" : "Staff login"}
+            </Link>
+          </span>
         </div>
-      </header>
+      </div>
 
-      <main>
-        {/* Hero */}
-        <section className="relative overflow-hidden border-b border-border">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center opacity-[0.10]"
-            style={{ backgroundImage: `url(${heroShade})` }}
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/40 via-background/80 to-background"
-          />
-          <div className="mx-auto max-w-6xl px-5 pb-16 pt-12 md:pt-20">
-            <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr]">
-              <div className="rise-in">
-                <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/80 px-3 py-1 text-xs font-semibold tracking-wide text-secondary-foreground backdrop-blur">
-                  <span className="size-1.5 rounded-full bg-primary" />
-                  {sc("home.hero_badge", "POS • Inventory • Accounting • Analytics")}
-                </p>
-                <h1 className="font-display text-3xl font-bold leading-[1.15] tracking-tight sm:text-4xl md:text-5xl">
-                  {sc("home.hero_title", t("tagline"))}
-                </h1>
-                <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground">
-                  {sc("home.hero_subtitle", t("heroSub"))}
-                </p>
-                <ul className="mt-6 grid gap-2 text-sm sm:grid-cols-2">
-                  {[
-                    L("এক স্ক্রিনে বিলিং, স্টক আর হিসাব", "Billing, stock and accounts on one screen"),
-                    L("বাংলা ও ইংরেজি — টাকা (৳) ভিত্তিক", "Bengali and English, Taka (৳) native"),
-                    L("থার্মাল ও A4 প্রিন্টারে রসিদ", "Receipts on thermal and A4 printers"),
-                    L("রোলভিত্তিক অ্যাক্সেস ও অডিট লগ", "Role-based access with a full audit log"),
-                  ].map((li) => (
-                    <li key={li} className="flex items-start gap-2">
-                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-                      <span className="text-muted-foreground">{li}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <Button asChild size="lg">
-                    <Link to="/auth">
-                      {t("getStarted")} <ArrowRight className="ml-1 size-4" />
-                    </Link>
-                  </Button>
-                  <Button asChild size="lg" variant="accent">
-                    <Link to="/homedelivery">
-                      <ShoppingBag className="mr-1 size-4" />
-                      {sc("home.cta_primary", L("হোম ডেলিভারি অর্ডার দিন", "Order home delivery"))}
-                    </Link>
-                  </Button>
-                  <Button asChild size="lg" variant="outline">
-                    <Link to="/auth">{sc("home.cta_secondary", t("signIn"))}</Link>
-                  </Button>
-                </div>
-                <p className="mt-4 text-xs text-muted-foreground">
-                  {L(
-                    "কোনো ইনস্টলেশন লাগে না • ব্রাউজারেই চলে • বাংলা ও ইংরেজি",
-                    "No installation • Runs in the browser • Bengali & English",
-                  )}
-                </p>
-              </div>
+      {/* ---- Header ---- */}
+      <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3.5">
+          <Link to="/" className="flex shrink-0 items-center gap-2.5">
+            <BrandLogo size={44} priority />
 
-              <div className="rise-in soft-float surface-panel shade-card p-4" style={shadeStyle}>
-                <div className="gradient-brand rounded-lg p-4 text-primary-foreground">
-                  <p className="text-xs opacity-80">{t("todaySales")}</p>
-                  <p className="font-display text-3xl font-bold">৳12,480.00</p>
-                  <p className="mt-1 text-xs opacity-80">
-                    {L("৪২টি ইনভয়েস • ৩ শাখা", "42 invoices • 3 branches")}
-                  </p>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  {heroMetrics.map((m) => (
-                    <div key={m.label} className="rounded-lg border border-border bg-muted/40 p-3">
-                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <m.icon className="size-3.5 text-primary" /> {m.label}
+            <span className="hidden leading-tight sm:block">
+              <span className="block font-display text-lg font-extrabold text-primary">
+                {sc("brand.name", "Bazar Bari")}
+              </span>
+              <span className="block text-[11px] font-medium text-muted-foreground">
+                {bn ? "অনলাইন সুপারশপ" : "Online supershop"}
+              </span>
+            </span>
+          </Link>
+
+          <div className="relative min-w-[160px] flex-1">
+            <label htmlFor="shop-search" className="sr-only">
+              {bn ? "পণ্য খুঁজুন" : "Search products"}
+            </label>
+            <Search
+              aria-hidden="true"
+              className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              id="shop-search"
+              type="search"
+              role="combobox"
+              aria-expanded={sugOpen && suggestions.length > 0}
+              aria-controls="shop-search-suggestions"
+              aria-autocomplete="list"
+              aria-activedescendant={
+                sugIdx >= 0 && suggestions[sugIdx] ? `sug-${suggestions[sugIdx].id}` : undefined
+              }
+              aria-describedby="shop-search-hint"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setLimit(PAGE);
+                setSugOpen(true);
+                setSugIdx(-1);
+              }}
+              onFocus={() => setSugOpen(true)}
+              onBlur={() => window.setTimeout(() => setSugOpen(false), 120)}
+              onKeyDown={(e) => {
+                if (!suggestions.length) return;
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSugOpen(true);
+                  setSugIdx((i) => (i + 1) % suggestions.length);
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSugIdx((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+                } else if (e.key === "Enter" && sugIdx >= 0) {
+                  e.preventDefault();
+                  pickSuggestion(suggestions[sugIdx]);
+                } else if (e.key === "Escape") {
+                  setSugOpen(false);
+                  setSugIdx(-1);
+                }
+              }}
+              maxLength={60}
+              placeholder={bn ? "চাল, তেল, ডিম… খুঁজুন" : "Search rice, oil, eggs…"}
+              className="h-12 rounded-full border-transparent bg-muted pl-10 text-base shadow-none focus-visible:bg-card"
+            />
+            <span id="shop-search-hint" className="sr-only">
+              {bn
+                ? "লিখুন, তারপর তীর চিহ্ন দিয়ে সাজেশন বেছে নিন এবং এন্টার চাপুন"
+                : "Type to search, use arrow keys to browse suggestions and press Enter to add"}
+            </span>
+            <p aria-live="polite" className="sr-only">
+              {`${visible.length} ${bn ? "পণ্য পাওয়া গেছে" : "products found"}`}
+            </p>
+
+            {sugOpen && suggestions.length > 0 && (
+              <ul
+                id="shop-search-suggestions"
+                role="listbox"
+                aria-label={bn ? "পণ্যের সাজেশন" : "Product suggestions"}
+                className="absolute inset-x-0 top-12 z-40 overflow-hidden rounded-2xl border border-border bg-card shadow-lg"
+              >
+                {suggestions.map((sug, i) => (
+                  <li key={sug.id} role="none">
+                    <button
+                      id={`sug-${sug.id}`}
+                      role="option"
+                      aria-selected={i === sugIdx}
+                      type="button"
+                      className={cn(
+                        "flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-muted focus-visible:bg-muted focus-visible:outline-none",
+                        i === sugIdx && "bg-muted",
+                      )}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => pickSuggestion(sug)}
+                    >
+                      {sug.image_url ? (
+                        <img
+                          src={sug.image_url}
+                          alt=""
+                          loading="lazy"
+                          className="size-8 rounded object-cover"
+                        />
+                      ) : (
+                        <span className="size-8 rounded bg-muted" />
+                      )}
+                      <span className="min-w-0 flex-1 truncate text-sm">
+                        {bn ? sug.name_bn : sug.name_en}
                       </span>
-                      <p className="mt-1 font-display text-lg font-bold">{m.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Hero info cards */}
-            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {heroCards.map((c, i) => (
-                <article
-                  key={c.title}
-                  className="surface-panel shade-card rise-in p-5"
-                  style={{ ...shadeStyle, animationDelay: `${0.08 * (i + 1)}s` }}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="flex size-10 items-center justify-center rounded-lg bg-secondary text-primary">
-                      <c.icon className="size-5" />
-                    </span>
-                    <span className="rounded-full border border-border bg-background/60 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
-                      {c.tag}
-                    </span>
-                  </div>
-                  <p className="mt-4 font-display text-2xl font-bold">{c.metric}</p>
-                  <h2 className="mt-0.5 text-sm font-semibold">{c.title}</h2>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{c.body}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-
-        {/* Stats */}
-        <section className="border-b border-border bg-muted/30">
-          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-5 py-10 md:grid-cols-4">
-            {stats.map((s) => (
-              <div key={s.label} className="text-center">
-                <p className="font-display text-3xl font-bold text-primary">{s.value}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Platform / outcomes */}
-        <section id="platform" className="mx-auto max-w-6xl px-5 py-16">
-          <div className="max-w-2xl">
-            <Eyebrow>{L("প্ল্যাটফর্ম", "Platform")}</Eyebrow>
-            <h2 className="font-display text-3xl font-bold tracking-tight">
-              {L("কাউন্টার থেকে বোর্ডরুম — একটাই সিস্টেম", "One system from counter to boardroom")}
-            </h2>
-            <p className="mt-3 text-muted-foreground">
-              {L(
-                "প্রতিটি বিক্রি সাথে সাথেই স্টক, ডিউ আর লেজারে প্রতিফলিত হয়, তাই ব্যবস্থাপনা সব সময় সঠিক তথ্যে সিদ্ধান্ত নিতে পারে।",
-                "Every sale flows straight into stock, dues and the ledger, so management always decides on current numbers.",
-              )}
-            </p>
-          </div>
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {outcomes.map((o) => (
-              <div key={o.title} className="surface-panel shade-card p-6" style={shadeStyle}>
-                <span className="mb-4 flex size-10 items-center justify-center rounded-lg bg-secondary text-primary">
-                  <o.icon className="size-5" />
-                </span>
-                <h3 className="text-base font-semibold">{o.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{o.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Modules */}
-        <section id="modules" className="border-y border-border bg-muted/30">
-          <div className="mx-auto max-w-6xl px-5 py-16">
-            <div className="max-w-2xl">
-              <Eyebrow>{L("মডিউল", "Modules")}</Eyebrow>
-              <h2 className="font-display text-3xl font-bold tracking-tight">
-                {L("সম্পূর্ণ ব্যবসা এক প্ল্যাটফর্মে", "Your whole business, one platform")}
-              </h2>
-              <p className="mt-3 text-muted-foreground">
-                {L(
-                  "বিক্রি থেকে হিসাব — প্রতিটি মডিউল একে অপরের সাথে যুক্ত, তাই ডেটা দুইবার লিখতে হয় না।",
-                  "From the counter to the ledger, every module is connected — no double entry.",
-                )}
-              </p>
-            </div>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {modules.map((m) => (
-                <article key={m.title} className="surface-panel shade-card p-5" style={shadeStyle}>
-                  <span className="mb-3 flex size-10 items-center justify-center rounded-lg bg-secondary text-primary">
-                    <m.icon className="size-5" />
-                  </span>
-                  <h3 className="text-base font-semibold">{m.title}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{m.body}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Workflow */}
-        <section id="workflow" className="mx-auto max-w-6xl px-5 py-16">
-          <div className="max-w-2xl">
-            <Eyebrow>{L("ইমপ্লিমেন্টেশন", "Implementation")}</Eyebrow>
-            <h2 className="font-display text-3xl font-bold tracking-tight">{L("চার ধাপে শুরু", "Live in four steps")}</h2>
-            <p className="mt-3 text-muted-foreground">
-              {L(
-                "সাধারণত একদিনেই সেটআপ শেষ হয় — আলাদা সার্ভার বা ইনস্টলেশন লাগে না।",
-                "Most teams are live within a day — no servers to buy, nothing to install.",
-              )}
-            </p>
-          </div>
-          <div className="mt-8 grid gap-4 md:grid-cols-4">
-            {workflow.map((w) => (
-              <div key={w.step} className="surface-panel shade-card p-5" style={shadeStyle}>
-                <p className="font-display text-2xl font-bold text-primary/70">{w.step}</p>
-                <h3 className="mt-2 text-base font-semibold">{w.title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{w.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Security & governance */}
-        <section id="security" className="border-y border-border bg-muted/30">
-          <div className="mx-auto grid max-w-6xl gap-8 px-5 py-16 lg:grid-cols-[0.9fr_1.1fr]">
-            <div>
-              <Eyebrow>{L("নিরাপত্তা ও গভর্ন্যান্স", "Security & governance")}</Eyebrow>
-              <h2 className="font-display text-3xl font-bold tracking-tight">
-                {L("নিয়ন্ত্রণ আপনার হাতে", "Control stays with you")}
-              </h2>
-              <p className="mt-3 text-muted-foreground">
-                {L(
-                  "কে কী দেখতে ও করতে পারবে তা রোল দিয়ে নির্ধারিত, আর প্রতিটি গুরুত্বপূর্ণ অ্যাকশন অডিট লগে সংরক্ষিত থাকে।",
-                  "Roles define exactly who can see and do what, and every important action is retained in the audit log.",
-                )}
-              </p>
-              <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-                {L(
-                  "এই পৃষ্ঠার তথ্য প্ল্যাটফর্মে বিদ্যমান ফিচারের বর্ণনা — এটি কোনো স্বাধীন সার্টিফিকেশন নয়।",
-                  "This page describes controls available in the product; it is not an independent certification.",
-                )}
-              </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {governance.map((g) => (
-                <div key={g.title} className="surface-panel shade-card p-5" style={shadeStyle}>
-                  <g.icon className="size-5 text-primary" />
-                  <h3 className="mt-3 text-base font-semibold">{g.title}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{g.body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Industries + capability strip */}
-        <section id="industries" className="mx-auto max-w-6xl px-5 py-16">
-          <div className="grid gap-8 lg:grid-cols-2">
-            <div>
-              <Eyebrow>{L("ইন্ডাস্ট্রি", "Industries")}</Eyebrow>
-              <h2 className="font-display text-3xl font-bold tracking-tight">{L("কাদের জন্য", "Built for")}</h2>
-              <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-                {audiences.map((a) => (
-                  <li key={a} className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-                    <span>{a}</span>
+                      <span className="text-xs font-semibold text-primary">
+                        {money(Number(sug.price), lang)}
+                      </span>
+                    </button>
                   </li>
                 ))}
               </ul>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                { icon: Printer, t: L("রসিদ ও লেবেল", "Receipts & labels"), b: L("থার্মাল রসিদ ও বারকোড লেবেল প্রিন্ট।", "Thermal receipts and barcode label printing.") },
-                { icon: Users, t: L("রোল ব্যবস্থাপনা", "Role management"), b: L("সুপার অ্যাডমিন থেকে স্টাফ পর্যন্ত অনুমতি।", "Permissions from super admin to staff.") },
-                { icon: FileSpreadsheet, t: L("এক্সপোর্ট", "Exports"), b: L("ইউজার ও রিপোর্ট CSV আকারে নামান।", "Download users and reports as CSV.") },
-                { icon: ShieldCheck, t: L("অডিট ট্রেইল", "Audit trail"), b: L("লগইন ও গুরুত্বপূর্ণ অ্যাকশনের রেকর্ড।", "Records of logins and key actions.") },
-              ].map((c) => (
-                <div key={c.t} className="surface-panel shade-card p-5" style={shadeStyle}>
-                  <c.icon className="size-5 text-primary" />
-                  <h3 className="mt-3 text-base font-semibold">{c.t}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{c.b}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+            )}
 
-        {/* Testimonials */}
-        <section className="border-y border-border bg-muted/30">
-          <div className="mx-auto max-w-6xl px-5 py-16">
-            <div className="max-w-2xl">
-              <Eyebrow>{L("গ্রাহক মতামত", "Customer voices")}</Eyebrow>
-              <h2 className="font-display text-3xl font-bold tracking-tight">
-                {L("যারা প্রতিদিন কাউন্টারে চালান", "Teams running the counter every day")}
-              </h2>
-            </div>
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
-              {testimonials.map((tm) => (
-                <figure key={tm.name} className="surface-panel flex h-full flex-col p-6">
-                  <Quote className="size-5 text-primary/60" />
-                  <blockquote className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
-                    {tm.quote}
-                  </blockquote>
-                  <figcaption className="mt-4 border-t border-border pt-3 text-sm">
-                    <span className="font-semibold">{tm.name}</span>
-                    <span className="block text-xs text-muted-foreground">{tm.role}</span>
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
           </div>
-        </section>
 
-        {/* FAQ */}
-        <section id="faq" className="mx-auto max-w-4xl px-5 py-16">
-          <Eyebrow>{L("প্রশ্নোত্তর", "FAQ")}</Eyebrow>
-          <h2 className="font-display text-3xl font-bold tracking-tight">
-            {L("সাধারণ প্রশ্ন", "Frequently asked questions")}
-          </h2>
-          <dl className="mt-8 grid gap-4 sm:grid-cols-2">
-            {faqs.map((f) => (
-              <div key={f.q} className="surface-panel shade-card p-5" style={shadeStyle}>
-                <dt className="font-semibold">{f.q}</dt>
-                <dd className="mt-1 text-sm leading-relaxed text-muted-foreground">{f.a}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
+          <div className="hidden shrink-0 items-center gap-2 sm:flex">
+            <CustomerAccountMenu />
+          </div>
 
-        {/* CTA */}
-        <section className="border-t border-border bg-muted/30">
-          <div className="mx-auto max-w-6xl px-5 py-16">
-            <div className="surface-panel flex flex-col items-center gap-4 p-10 text-center">
-              <h2 className="font-display text-3xl font-bold tracking-tight">
-                {L("আজই আপনার দোকানের হিসাব ডিজিটাল করুন", "Digitise your retail operation today")}
-              </h2>
-              <p className="max-w-xl text-muted-foreground">
-                {L(
-                  "অ্যাকাউন্ট খুলে কয়েক মিনিটেই বিলিং শুরু করুন — কোনো ইনস্টলেশন লাগবে না।",
-                  "Create an account and start billing in minutes — no installation required.",
-                )}
-              </p>
-              <div className="mt-2 flex flex-wrap justify-center gap-3">
-                <Button asChild size="lg">
-                  <Link to="/auth">
-                    {t("getStarted")} <ArrowRight className="ml-1 size-4" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link to="/auth">{t("signIn")}</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
+          <Button
+            className="h-12 shrink-0 rounded-full px-5 font-semibold"
+            onClick={() => setCheckout(true)}
+          >
+            <ShoppingBag className="mr-1.5 size-4" />
+            <span className="hidden sm:inline">{num(cart.count, lang)} · </span>
+            {money(cart.subtotal, lang)}
+          </Button>
 
-      <footer className="border-t border-border">
-        <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <BrandLogo size={32} />
-              <span className="font-display font-bold">{sc("brand.name", t("appName"))}</span>
-            </div>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              {sc(
-                "footer.about",
-                L(
-                  "রিটেইল ব্যবসার জন্য বিলিং, ইনভেন্টরি ও হিসাব ব্যবস্থাপনা — বাংলা ও ইংরেজিতে।",
-                  "Billing, inventory and accounting for retail businesses — in Bengali and English.",
-                ),
-              )}
-            </p>
-            <p className="mt-3 text-sm text-muted-foreground">
-              {sc("brand.support_phone", "")} {sc("brand.support_email", "")}
-            </p>
-          </div>
-          <div className="text-sm">
-            <p className="font-semibold">{L("পণ্য", "Product")}</p>
-            <ul className="mt-3 space-y-2 text-muted-foreground">
-              <li><a href="#platform" className="hover:text-foreground">{L("প্ল্যাটফর্ম", "Platform")}</a></li>
-              <li><a href="#modules" className="hover:text-foreground">{L("মডিউল", "Modules")}</a></li>
-              <li><a href="#workflow" className="hover:text-foreground">{L("কিভাবে কাজ করে", "How it works")}</a></li>
-              <li><a href="#security" className="hover:text-foreground">{L("নিরাপত্তা", "Security")}</a></li>
-            </ul>
-          </div>
-          <div className="text-sm">
-            <p className="font-semibold">{L("সমাধান", "Solutions")}</p>
-            <ul className="mt-3 space-y-2 text-muted-foreground">
-              <li><Link to="/homedelivery" className="hover:text-foreground">{L("হোম ডেলিভারি অর্ডার", "Home delivery orders")}</Link></li>
-              <li><Link to="/track" className="hover:text-foreground">{L("অর্ডার ট্র্যাক", "Track order")}</Link></li>
-              <li><a href="#industries" className="hover:text-foreground">{L("ইন্ডাস্ট্রি", "Industries")}</a></li>
-              <li><a href="#faq" className="hover:text-foreground">{L("প্রশ্নোত্তর", "FAQ")}</a></li>
-
-            </ul>
-          </div>
-          <div className="text-sm">
-            <p className="font-semibold">{L("অ্যাকাউন্ট", "Account")}</p>
-            <ul className="mt-3 space-y-2 text-muted-foreground">
-              <li><Link to="/auth" className="hover:text-foreground">{t("signIn")}</Link></li>
-              <li><Link to="/auth" className="hover:text-foreground">{t("getStarted")}</Link></li>
-            </ul>
-            <p className="mt-5 font-semibold">{L("আইনগত", "Legal")}</p>
-            <ul className="mt-3 space-y-2 text-muted-foreground">
-              <li><Link to="/privacy" className="hover:text-foreground">{L("প্রাইভেসি পলিসি", "Privacy Policy")}</Link></li>
-              <li><Link to="/terms" className="hover:text-foreground">{L("সেবার শর্তাবলি", "Terms of Service")}</Link></li>
-            </ul>
-          </div>
         </div>
-        <div className="border-t border-border">
-          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-5 py-5 text-sm text-muted-foreground sm:flex-row">
-            <p>{sc("footer.copyright", `© ${new Date().getFullYear()} ${t("appName")}`)}</p>
-            <p className="text-center">
-              {L(
-                "Bazar Bari — Shondhaan এর একটি অংশ, Yess Bangla Private Limited এর সিস্টার কনসার্ন",
-                "Bazar Bari is a part of Shondhaan, a sister concern of Yess Bangla Private Limited",
+
+        {/* ---- Portal menu ---- */}
+        <nav className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 pb-2 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <Link
+            to="/corporate"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-3 py-1.5 font-medium hover:bg-muted"
+          >
+            <Home className="size-4 text-primary" />
+            {bn ? "কর্পোরেট সাইট" : "Corporate site"}
+          </Link>
+
+
+          <button
+            type="button"
+            className="whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted"
+            onClick={() => {
+              setCat("");
+              setQuery("");
+              setLimit(PAGE);
+            }}
+          >
+            {bn ? "সব পণ্য" : "All products"}
+          </button>
+          {(categories.data ?? []).slice(0, 6).map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className={cn(
+                "whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted",
+                cat === c.id && "bg-primary/10 font-semibold text-primary",
               )}
+              onClick={() => {
+                setCat(c.id);
+                setLimit(PAGE);
+              }}
+            >
+              {bn ? c.name_bn : c.name_en}
+            </button>
+          ))}
+          <Link
+            to="/track"
+            className="ml-auto whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted"
+          >
+            {bn ? "অর্ডার ট্র্যাক" : "Track order"}
+          </Link>
+          <Link
+            to="/my-account"
+            search={{ tab: "orders" }}
+            className="whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted sm:hidden"
+          >
+            {bn ? "অ্যাকাউন্ট" : "Account"}
+          </Link>
+        </nav>
+
+        {!online && (
+          <div className="flex items-center justify-center gap-2 bg-warning/20 py-1 text-xs">
+            <WifiOff className="size-3" />
+            {bn
+              ? "অফলাইন মোড — ব্রাউজ ও কার্ট কাজ করবে"
+              : "Offline mode — browsing and cart still work"}
+          </div>
+        )}
+        {queued.length > 0 && (
+          <div className="flex flex-wrap items-center justify-center gap-2 bg-primary/10 px-3 py-1.5 text-xs">
+            <CloudUpload className="size-3.5 text-primary" />
+            <span>
+              {bn
+                ? `${num(queued.length, lang)}টি অর্ডার সিঙ্কের অপেক্ষায়`
+                : `${queued.length} order(s) waiting to sync`}
+              {queued.some((q) => q.attempts > 0) &&
+                ` · ${bn ? "পুনঃচেষ্টা" : "retry"} ${queued[0].attempts}/${QUEUE_MAX_ATTEMPTS}`}
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[11px]"
+              disabled={syncing}
+              onClick={() => runSync(true)}
+            >
+              {syncing ? (
+                <Loader2 className="mr-1 size-3 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-1 size-3" />
+              )}
+              {bn ? "এখনই পাঠান" : "Sync now"}
+            </Button>
+            {queued.some((q) => q.attempts >= QUEUE_MAX_ATTEMPTS) && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[11px] text-destructive"
+                onClick={() =>
+                  queued
+                    .filter((q) => q.attempts >= QUEUE_MAX_ATTEMPTS)
+                    .forEach((q) => void dropQueuedOrder(q.id))
+                }
+              >
+                {bn ? "ব্যর্থগুলো মুছুন" : "Discard failed"}
+              </Button>
+            )}
+          </div>
+        )}
+      </header>
+
+      <div className="mx-auto max-w-7xl gap-6 px-4 lg:grid lg:grid-cols-[236px_minmax(0,1fr)_330px]">
+        {/* ---- Category sidebar ---- */}
+        <aside className="hidden lg:block">
+          <div className="shop-card sticky top-28 mt-6 max-h-[calc(100vh-9rem)] overflow-y-auto p-3">
+
+            <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {bn ? "ক্যাটাগরি" : "Categories"}
             </p>
+            <SideCat
+              active={!cat}
+              onClick={() => setCat("")}
+              label={bn ? "সব পণ্য" : "All products"}
+              count={products.data?.length ?? 0}
+            />
+            {(categories.data ?? []).map((c) => (
+              <SideCat
+                key={c.id}
+                active={cat === c.id}
+                onClick={() => {
+                  setCat(c.id);
+                  setLimit(PAGE);
+                }}
+                label={bn ? c.name_bn : c.name_en}
+                count={catCounts.get(c.id) ?? 0}
+              />
+            ))}
+          </div>
+        </aside>
+
+        {/* ---- Main column ---- */}
+        <div>
+          <section className="mt-6 grid gap-4 lg:grid-cols-6">
+            <div className="gradient-brand relative col-span-full flex flex-col justify-between overflow-hidden rounded-[2rem] p-6 text-primary-foreground sm:p-8 lg:col-span-4">
+              <span className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-primary-foreground/10" />
+              <span className="pointer-events-none absolute -bottom-24 right-10 size-48 rounded-full bg-primary-foreground/5" />
+              <div className="relative">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]">
+                  <Truck className="size-3.5" />
+                  {bn ? "অনলাইন সুপারশপ" : "Online supershop"}
+                </span>
+                <h1 className="mt-4 max-w-lg font-display text-3xl font-extrabold leading-[1.1] sm:text-[2.6rem]">
+                  {sc(
+                    "shop.hero_title",
+                    bn
+                      ? "বাজার এখন দরজায়, ১ ঘণ্টায় ডেলিভারি"
+                      : "Your daily bazar, delivered in 1 hour",
+                  )}
+                </h1>
+                <p className="mt-3 max-w-md text-sm opacity-90 sm:text-base">
+                  {sc(
+                    "shop.hero_subtitle",
+                    bn
+                      ? "৳১০০০+ অর্ডারে ফ্রি ডেলিভারি · ক্যাশ অন ডেলিভারি"
+                      : "Free delivery above ৳1000 · Cash on delivery",
+                  )}
+                </p>
+              </div>
+              <div className="relative mt-6 flex flex-wrap gap-2">
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="rounded-full font-semibold"
+                  onClick={() => {
+                    setCat("");
+                    setQuery("");
+                    setLimit(PAGE);
+                  }}
+                >
+                  {bn ? "কেনাকাটা শুরু করুন" : "Start shopping"}
+                </Button>
+                <Link
+                  to="/track"
+                  className="inline-flex items-center rounded-full border border-primary-foreground/40 px-5 text-sm font-semibold transition-colors hover:bg-primary-foreground/10"
+                >
+                  {bn ? "অর্ডার ট্র্যাক" : "Track order"}
+                </Link>
+              </div>
+            </div>
+
+            <div className="col-span-full grid gap-4 sm:grid-cols-2 lg:col-span-2 lg:grid-cols-1">
+              <div className="flex flex-col justify-between rounded-[2rem] bg-accent p-6 text-accent-foreground">
+                <BadgePercent className="size-6" />
+                <p className="mt-4 font-display text-2xl font-extrabold leading-none">
+                  {bn ? "১০ টাকায় ১ পয়েন্ট" : "1 point per ৳10"}
+                </p>
+                <p className="mt-1.5 text-sm opacity-80">
+                  {bn
+                    ? "১০০০ পয়েন্ট হলেই ছাড় শুরু — মেম্বার হোন ফ্রি।"
+                    : "Discounts unlock at 1000 points — membership is free."}
+                </p>
+              </div>
+              <div className="shop-card flex flex-col justify-between p-6">
+                <Clock className="size-6 text-primary" />
+                <p className="mt-4 font-display text-2xl font-extrabold leading-none">
+                  {bn ? "সকাল ৮টা – রাত ৮টা" : "8 AM – 8 PM"}
+                </p>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  {bn
+                    ? "নিজের সুবিধামতো ডেলিভারি স্লট বেছে নিন।"
+                    : "Choose the delivery window that suits you."}
+                </p>
+              </div>
+            </div>
+
+            <div className="col-span-full grid gap-3 sm:grid-cols-3">
+              <Perk
+                icon={Truck}
+                title={bn ? "ফ্রি ডেলিভারি" : "Free delivery"}
+                sub={bn ? "৳১০০০+ অর্ডারে" : "On orders above ৳1000"}
+              />
+              <Perk
+                icon={ShoppingBasket}
+                title={bn ? "তাজা ও যাচাইকৃত" : "Fresh & checked"}
+                sub={bn ? "প্রতিটি পণ্য হাতে বাছাই" : "Every item hand-picked"}
+              />
+              <Perk
+                icon={Phone}
+                title={bn ? "২৪/৭ সাপোর্ট" : "24/7 support"}
+                sub={bn ? "কল করুন ১৬৭১০" : "Call 16710"}
+              />
+            </div>
+          </section>
+
+          <nav
+            aria-label={bn ? "ক্যাটাগরি ফিল্টার" : "Category filters"}
+            className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden"
+          >
+            <CatChip
+              active={!cat}
+              onClick={() => setCat("")}
+              label={bn ? "সব" : "All"}
+            />
+            {(categories.data ?? []).map((c) => (
+              <CatChip
+                key={c.id}
+                active={cat === c.id}
+                onClick={() => {
+                  setCat(c.id);
+                  setLimit(PAGE);
+                }}
+                label={bn ? c.name_bn : c.name_en}
+              />
+            ))}
+          </nav>
+
+          <div className="mt-8 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                {bn ? "আজকের বাজার" : "Today's aisle"}
+              </p>
+              <h2 className="font-display text-2xl font-extrabold">
+                {activeCat
+                  ? (bn ? activeCat.name_bn : activeCat.name_en)
+                  : query.trim()
+                    ? `“${query.trim()}”`
+                    : bn
+                      ? "সব পণ্য"
+                      : "All products"}
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted-foreground" aria-live="polite">
+                {num(visible.length, lang)} {bn ? "পণ্য" : "items"}
+              </span>
+
+              <label htmlFor="shop-category" className="sr-only">
+                {bn ? "ক্যাটাগরি" : "Category"}
+              </label>
+              <select
+                id="shop-category"
+                value={cat}
+                onChange={(e) => {
+                  setCat(e.target.value);
+                  setLimit(PAGE);
+                }}
+                className="h-9 rounded-full border border-border bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
+              >
+                <option value="">{bn ? "সব ক্যাটাগরি" : "All categories"}</option>
+                {(categories.data ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {bn ? c.name_bn : c.name_en}
+                  </option>
+                ))}
+              </select>
+
+              <label htmlFor="shop-sort" className="sr-only">
+                {bn ? "সাজান" : "Sort products"}
+              </label>
+              <select
+                id="shop-sort"
+                value={sort}
+                onChange={(e) => {
+                  setSort(e.target.value as SortKey);
+                  setLimit(PAGE);
+                }}
+                className="h-9 rounded-full border border-border bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="relevance">{bn ? "ডিফল্ট" : "Recommended"}</option>
+                <option value="price_asc">{bn ? "দাম: কম → বেশি" : "Price: low to high"}</option>
+                <option value="price_desc">{bn ? "দাম: বেশি → কম" : "Price: high to low"}</option>
+                <option value="name_asc">{bn ? "নাম: ক → হ" : "Name: A to Z"}</option>
+                <option value="name_desc">{bn ? "নাম: হ → ক" : "Name: Z to A"}</option>
+              </select>
+
+              {(cat || query.trim() || sort !== "relevance") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 rounded-full"
+                  onClick={() => {
+                    setCat("");
+                    setQuery("");
+                    setSort("relevance");
+                    setLimit(PAGE);
+                  }}
+                >
+                  {bn ? "ফিল্টার মুছুন" : "Clear filters"}
+                </Button>
+              )}
+            </div>
           </div>
 
+          <ul
+            aria-label={bn ? "পণ্যের তালিকা" : "Product list"}
+            className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4"
+          >
+            {shown.map((p) => (
+              <li key={p.id} className="contents">
+                <ProductCard
+                  p={p}
+                  bn={bn}
+                  qty={cart.lines.find((l) => l.id === p.id)?.qty ?? 0}
+                  onAdd={() => addToCart(p)}
+                  onSet={(q) => cart.setQty(p.id, q)}
+                />
+              </li>
+            ))}
+          </ul>
+
+
+          {products.isLoading && <p className="py-10 text-center text-muted-foreground">…</p>}
+          {!products.isLoading && visible.length === 0 && (
+            <p className="py-12 text-center text-sm text-muted-foreground">
+              {bn ? "কোনো পণ্য পাওয়া যায়নি" : "No products found"}
+            </p>
+          )}
+          {shown.length < visible.length && (
+            <div className="py-6 text-center">
+              <Button variant="outline" onClick={() => setLimit((n) => n + PAGE * 2)}>
+                {bn ? "আরও দেখুন" : "Load more"} ({num(visible.length - shown.length, lang)})
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* ---- Desktop cart rail ---- */}
+        <aside className="hidden lg:block">
+          <div className="shop-card sticky top-28 mt-6 overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <span className="font-display text-base font-extrabold">
+                {bn ? "আপনার কার্ট" : "Your basket"}
+              </span>
+              <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-secondary-foreground">
+                {num(cart.count, lang)} {bn ? "পণ্য" : "items"}
+              </span>
+            </div>
+            <div className="max-h-[42vh] divide-y divide-border overflow-y-auto">
+              {cart.lines.map((l) => (
+                <CartRow key={l.id} l={l} bn={bn} lang={lang} onSet={(q) => cart.setQty(l.id, q)} />
+              ))}
+              {cart.lines.length === 0 && (
+                <div className="px-6 py-10 text-center">
+                  <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
+                    <ShoppingBasket className="size-5" />
+                  </span>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {bn ? "কার্ট খালি — পণ্য যোগ করুন" : "Cart is empty — add some products"}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="space-y-1.5 border-t border-border bg-muted/40 p-5 text-sm">
+              <Row label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
+              {discount > 0 && (
+                <Row
+                  label={`${bn ? "ছাড়" : "Discount"}${coupon ? ` (${coupon.code})` : ""}`}
+                  value={`− ${money(discount, lang)}`}
+                />
+              )}
+              <Row label={bn ? "ডেলিভারি" : "Delivery"} value={money(fee, lang)} />
+              <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
+              {cart.subtotal > 0 && cart.subtotal < 1000 && (
+                <p className="rounded-xl bg-accent/25 px-3 py-2 text-xs font-medium text-accent-foreground">
+                  {bn
+                    ? `আর ${money(1000 - cart.subtotal, lang)} কিনলে ডেলিভারি ফ্রি`
+                    : `Add ${money(1000 - cart.subtotal, lang)} more for free delivery`}
+                </p>
+              )}
+              <Button
+                size="lg"
+                className="mt-2 w-full rounded-full font-semibold"
+                disabled={cart.lines.length === 0}
+                onClick={() => setCheckout(true)}
+              >
+                {bn ? "চেকআউট" : "Checkout"}
+              </Button>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+
+      <footer className="mt-12 border-t border-border bg-card pb-24 lg:pb-0">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 text-sm sm:grid-cols-3">
+          <div>
+            <p className="font-display text-base font-bold text-primary">
+              {sc("brand.name", "Bazar Bari")}
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              {bn
+                ? "সুপারশপের সব পণ্য অনলাইনে — অর্ডার করুন, ঘরে বসে বুঝে নিন।"
+                : "Every supershop aisle online — order now, receive at home."}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="font-semibold">{bn ? "সেবা" : "Service"}</p>
+            <Link to="/track" className="block text-muted-foreground hover:text-foreground">
+              {bn ? "অর্ডার ট্র্যাক" : "Track order"}
+            </Link>
+            <a href="tel:16710" className="block text-muted-foreground hover:text-foreground">
+              {bn ? "কল করুন ১৬৭১০" : "Call 16710"}
+            </a>
+          </div>
+          <div className="space-y-1">
+            <p className="font-semibold">{bn ? "তথ্য" : "Information"}</p>
+            <Link to="/privacy" className="block text-muted-foreground hover:text-foreground">
+              {bn ? "প্রাইভেসি পলিসি" : "Privacy policy"}
+            </Link>
+            <Link to="/terms" className="block text-muted-foreground hover:text-foreground">
+              {bn ? "শর্তাবলি" : "Terms of service"}
+            </Link>
+          </div>
         </div>
       </footer>
+
+      {cart.count > 0 && !checkout && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card p-3 lg:hidden">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => setCartOpen(true)}
+              className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm"
+            >
+              <ShoppingBasket className="size-5 shrink-0 text-primary" />
+              <span className="truncate">
+                {num(cart.count, lang)} {bn ? "পণ্য" : "items"} · <b>{money(total, lang)}</b>
+                <span className="block text-xs text-primary">
+                  {bn ? "কার্ট দেখুন / পরিমাণ বদলান" : "View cart / edit qty"}
+                </span>
+              </span>
+            </button>
+            <Button variant="outline" onClick={() => setCartOpen(true)}>
+              {bn ? "কার্ট" : "Cart"}
+            </Button>
+            <Button onClick={() => setCheckout(true)}>{bn ? "চেকআউট" : "Checkout"}</Button>
+          </div>
+        </div>
+      )}
+
+      {cartOpen && !checkout && (
+        <div
+          className="fixed inset-0 z-40 flex flex-col justify-end bg-foreground/40 lg:hidden"
+          onClick={() => setCartOpen(false)}
+        >
+          <div
+            className="max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-border bg-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card px-4 py-3">
+              <span className="font-display font-bold">{bn ? "আপনার কার্ট" : "Your cart"}</span>
+              <Button variant="ghost" size="sm" onClick={() => setCartOpen(false)}>
+                ✕
+              </Button>
+            </div>
+            <div className="divide-y divide-border">
+              {cart.lines.map((l) => (
+                <CartRow key={l.id} l={l} bn={bn} lang={lang} onSet={(q) => cart.setQty(l.id, q)} />
+              ))}
+              {cart.lines.length === 0 && (
+                <p className="p-6 text-center text-sm text-muted-foreground">
+                  {bn ? "কার্ট খালি" : "Cart is empty"}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1 border-t border-border p-4 text-sm">
+              <Row label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
+              {discount > 0 && (
+                <Row
+                  label={`${bn ? "ছাড়" : "Discount"}${coupon ? ` (${coupon.code})` : ""}`}
+                  value={`− ${money(discount, lang)}`}
+                />
+              )}
+              <Row label={bn ? "ডেলিভারি" : "Delivery"} value={money(fee, lang)} />
+              <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
+              <Button
+                className="mt-2 w-full"
+                disabled={cart.lines.length === 0}
+                onClick={() => {
+                  setCartOpen(false);
+                  setCheckout(true);
+                }}
+              >
+                {bn ? "চেকআউট" : "Checkout"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {checkout && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={bn ? "চেকআউট" : "Checkout"}
+          className="fixed inset-0 z-40 overflow-y-auto bg-background/95 p-4 backdrop-blur"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setCheckout(false);
+          }}
+        >
+          <div className="mx-auto max-w-lg space-y-4 py-6">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-display text-xl font-bold">
+                {bn ? "চেকআউট" : "Checkout"}
+                <span className="ml-2 text-sm font-medium text-muted-foreground">
+                  {bn ? "ধাপ" : "Step"} {num(step + 1, lang)}/{num(3, lang)}
+                </span>
+              </h2>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <LangToggle className="bg-card" />
+                <Button variant="outline" size="sm" onClick={() => setCheckout(false)}>
+                  {bn ? "আরও পণ্য ক্রয় করুন" : "Buy more products"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={bn ? "চেকআউট বন্ধ করুন" : "Close checkout"}
+                  onClick={() => setCheckout(false)}
+                >
+                  ✕
+                </Button>
+              </div>
+            </div>
+
+            {/* ---- Step indicator ---- */}
+            <ol className="flex items-center gap-2" aria-label={bn ? "চেকআউট ধাপ" : "Checkout steps"}>
+              {STEPS.map((s, i) => (
+                <li key={s.id} className="flex flex-1 items-center gap-2">
+                  <button
+                    type="button"
+                    aria-current={step === i ? "step" : undefined}
+                    onClick={() => {
+                      if (i <= step) setStep(i);
+                    }}
+                    disabled={i > step}
+                    className={cn(
+                      "flex min-h-11 w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      step === i
+                        ? "border-primary bg-primary/10 font-semibold text-primary"
+                        : i < step
+                          ? "border-primary/40 text-primary"
+                          : "border-border text-muted-foreground",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-bold",
+                        i <= step
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                      aria-hidden="true"
+                    >
+                      {i < step ? <Check className="size-3.5" /> : i + 1}
+                    </span>
+                    <span className="truncate">{bn ? s.bn : s.en}</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+
+            {/* ---- Step 1: address ---- */}
+            {step === 0 && (
+              <div className="space-y-4">
+                {user && isCustomer ? (
+                  (savedAddresses.data ?? []).length > 0 && (
+                    <div className="space-y-2">
+                      <Label id="saved-addr-label">
+                        {bn ? "সংরক্ষিত ঠিকানা" : "Saved addresses"}
+                      </Label>
+                      <div className="flex flex-wrap gap-2" aria-labelledby="saved-addr-label">
+                        {(savedAddresses.data ?? []).map((a) => (
+                          <button
+                            key={a.id}
+                            type="button"
+                            className="min-h-11 rounded-xl border border-border px-3 py-2 text-left text-xs hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            onClick={() =>
+                              setForm((f) => ({
+                                ...f,
+                                name: a.full_name,
+                                phone: a.phone,
+                                address: a.address,
+                                area: a.area,
+                                note: a.note ?? "",
+                              }))
+                            }
+                          >
+                            <span className="font-semibold">{a.label}</span>
+                            <span className="block text-muted-foreground">{a.area}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                ) : (
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-dashed border-border p-3 text-sm">
+                    <span className="text-muted-foreground">
+                      {bn
+                        ? "লগইন করলে ঠিকানা ও অর্ডার সংরক্ষিত থাকবে"
+                        : "Sign in to save addresses and track orders"}
+                    </span>
+                    <CustomerAccountMenu compact />
+                  </div>
+                )}
+
+                <div className="grid gap-3">
+                  <F
+                    id="co-name"
+                    label={bn ? "নাম" : "Name"}
+                    v={form.name}
+                    err={fieldErrs.name}
+                    autoComplete="name"
+                    on={(v) => setForm({ ...form, name: v })}
+                  />
+                  <F
+                    id="co-phone"
+                    label={bn ? "মোবাইল" : "Phone"}
+                    v={form.phone}
+                    err={fieldErrs.phone}
+                    inputMode="tel"
+                    autoComplete="tel"
+                    hint={bn ? "উদাহরণ: 01712345678" : "Example: 01712345678"}
+                    on={(v) => setForm({ ...form, phone: v })}
+                  />
+                  <F
+                    id="co-area"
+                    label={bn ? "এলাকা" : "Area"}
+                    v={form.area}
+                    err={fieldErrs.area}
+                    autoComplete="address-level2"
+                    on={(v) => setForm({ ...form, area: v })}
+                  />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="co-address">{bn ? "সম্পূর্ণ ঠিকানা" : "Full address"}</Label>
+                    <Textarea
+                      id="co-address"
+                      value={form.address}
+                      maxLength={300}
+                      autoComplete="street-address"
+                      aria-invalid={!!fieldErrs.address}
+                      aria-describedby={fieldErrs.address ? "co-address-err" : undefined}
+                      onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    />
+                    {fieldErrs.address && (
+                      <p id="co-address-err" role="alert" className="text-xs text-destructive">
+                        {fieldErrs.address}
+                      </p>
+                    )}
+                  </div>
+                  <F
+                    id="co-note"
+                    label={bn ? "নোট (ঐচ্ছিক)" : "Note (optional)"}
+                    v={form.note}
+                    err={fieldErrs.note}
+                    on={(v) => setForm({ ...form, note: v })}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* ---- Step 2: slot + payment ---- */}
+            {step === 1 && (
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label id="day-label">{bn ? "ডেলিভারির দিন" : "Delivery day"}</Label>
+                  <div className="flex flex-wrap gap-2" role="group" aria-labelledby="day-label">
+                    {nextDays(5).map((d) => {
+                      const key = dayKey(d);
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          aria-pressed={slotDay === key}
+                          onClick={() => {
+                            setSlotDay(key);
+                            if (slotTime && !slotAvailable(d, slotTime)) setSlotTime("");
+                          }}
+                          className={cn(
+                            "min-h-11 rounded-xl border px-3 py-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            slotDay === key
+                              ? "border-primary bg-primary/10 font-semibold text-primary"
+                              : "border-border",
+                          )}
+                        >
+                          {d.toLocaleDateString(bn ? "bn-BD" : "en-GB", {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <Label id="time-label">{bn ? "ডেলিভারির সময়" : "Delivery time"}</Label>
+                  <div className="grid grid-cols-2 gap-2" role="group" aria-labelledby="time-label">
+                    {slots.map((st) => {
+                      const t = st.slot;
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          disabled={!st.bookable}
+                          aria-pressed={slotTime === t.id}
+                          onClick={() => setSlotTime(t.id)}
+                          className={cn(
+                            "min-h-11 rounded-xl border px-3 py-2 text-left text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            !st.bookable && "cursor-not-allowed opacity-40",
+                            slotTime === t.id
+                              ? "border-primary bg-primary/10 font-semibold text-primary"
+                              : "border-border",
+                          )}
+                        >
+                          <span className="block">{bn ? t.bn : t.en}</span>
+                          <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
+                            {st.passed
+                              ? bn
+                                ? "সময় পার হয়েছে"
+                                : "Time passed"
+                              : st.closed
+                                ? bn
+                                  ? "বন্ধ"
+                                  : "Closed"
+                                : st.available <= 0
+                                  ? bn
+                                    ? "পূর্ণ"
+                                    : "Fully booked"
+                                  : bn
+                                    ? `${num(st.available, lang)} টি জায়গা বাকি`
+                                    : `${st.available} slots left`}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {slotAvail.isFetching
+                      ? bn
+                        ? "লাইভ অ্যাভেইলেবিলিটি যাচাই হচ্ছে…"
+                        : "Checking live availability…"
+                      : bn
+                        ? "অ্যাভেইলেবিলিটি প্রতি ৩০ সেকেন্ডে আপডেট হয়।"
+                        : "Availability refreshes every 30 seconds."}
+                  </p>
+                  {chosenSlot && !chosenSlot.bookable && altSlots.length > 0 && (
+                    <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+                      <p className="font-semibold">
+                        {bn ? "এই স্লটটি এখন নেওয়া যাচ্ছে না — বিকল্প:" : "That slot is unavailable — alternatives:"}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {altSlots.map((a) => (
+                          <button
+                            key={a.slot.id}
+                            type="button"
+                            onClick={() => setSlotTime(a.slot.id)}
+                            className="rounded-lg border border-border bg-background px-2 py-1"
+                          >
+                            {bn ? a.slot.bn : a.slot.en}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {fieldErrs.slot && (
+                    <p role="alert" className="text-xs text-destructive">
+                      {fieldErrs.slot}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label id="pay-label">{bn ? "পেমেন্ট" : "Payment"}</Label>
+                  <div className="flex flex-wrap gap-2" role="group" aria-labelledby="pay-label">
+                    {[
+                      { id: "cod", bn: "ক্যাশ অন ডেলিভারি", en: "Cash on delivery" },
+                      { id: "bkash", bn: "বিকাশ", en: "bKash" },
+                      { id: "nagad", bn: "নগদ", en: "Nagad" },
+                      { id: "card", bn: "কার্ড", en: "Card" },
+                    ].map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        aria-pressed={form.payment === m.id}
+                        onClick={() => setForm({ ...form, payment: m.id })}
+                        className={cn(
+                          "min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          form.payment === m.id
+                            ? "border-primary bg-primary/10 font-semibold text-primary"
+                            : "border-border",
+                        )}
+                      >
+                        {bn ? m.bn : m.en}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ---- Step 3: review ---- */}
+            {step === 2 && (
+              <div className="space-y-4">
+                <div className="surface-panel divide-y divide-border">
+                  {cart.lines.map((l) => (
+                    <CartRow
+                      key={l.id}
+                      l={l}
+                      bn={bn}
+                      lang={lang}
+                      onSet={(q) => cart.setQty(l.id, q)}
+                    />
+                  ))}
+                  {cart.lines.length === 0 && (
+                    <p className="p-4 text-sm text-muted-foreground">
+                      {bn ? "কার্ট খালি" : "Cart is empty"}
+                    </p>
+                  )}
+                </div>
+
+                <div className="surface-panel space-y-1 p-4 text-sm">
+                  <Row label={bn ? "নাম" : "Name"} value={form.name || "—"} />
+                  <Row label={bn ? "মোবাইল" : "Phone"} value={form.phone || "—"} />
+                  <Row label={bn ? "ঠিকানা" : "Address"} value={form.address || "—"} />
+                  <Row label={bn ? "স্লট" : "Slot"} value={slotLabel || "—"} />
+                  <Row label={bn ? "পেমেন্ট" : "Payment"} value={form.payment.toUpperCase()} />
+                </div>
+
+                <div className="surface-panel space-y-2 p-4">
+                  <Label htmlFor="coupon-code" className="text-sm font-semibold">
+                    {bn ? "কুপন / প্রোমো কোড" : "Coupon / promo code"}
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="coupon-code"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void checkCoupon(couponInput);
+                        }
+                      }}
+                      placeholder={bn ? "যেমন SAVE10" : "e.g. SAVE10"}
+                      maxLength={24}
+                      disabled={!!coupon}
+                      aria-describedby="coupon-msg"
+                      className="uppercase"
+                    />
+                    {coupon ? (
+                      <Button type="button" variant="outline" onClick={clearCoupon}>
+                        {bn ? "সরান" : "Remove"}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={() => void checkCoupon(couponInput)}
+                        disabled={couponBusy || couponInput.trim().length === 0}
+                      >
+                        {bn ? "প্রয়োগ" : "Apply"}
+                      </Button>
+                    )}
+                  </div>
+                  <p
+                    id="coupon-msg"
+                    role="status"
+                    aria-live="polite"
+                    className={cn(
+                      "text-xs",
+                      couponMsg
+                        ? couponMsg.ok
+                          ? "font-medium text-primary"
+                          : "text-destructive"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {couponMsg
+                      ? couponMsg.ok && discount > 0
+                        ? `${couponMsg.text} — ${money(discount, lang)}`
+                        : couponMsg.text
+                      : bn
+                        ? "কোড থাকলে এখানে লিখুন, ছাড় সঙ্গে সঙ্গে যোগ হবে।"
+                        : "Have a code? Enter it here and the discount applies instantly."}
+                  </p>
+                </div>
+
+                <div className="surface-panel space-y-2 p-4">
+                  <p className="text-sm font-semibold">
+                    {bn ? "অর্ডারের পরের ধাপগুলো" : "What happens next"}
+                  </p>
+                  <StatusPreview bn={bn} />
+                </div>
+              </div>
+            )}
+
+            <div className="surface-panel space-y-1 p-4 text-sm">
+              <Row label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
+              {discount > 0 && (
+                <Row
+                  label={`${bn ? "ছাড়" : "Discount"}${coupon ? ` (${coupon.code})` : ""}`}
+                  value={`− ${money(discount, lang)}`}
+                />
+              )}
+              <Row label={bn ? "ডেলিভারি" : "Delivery"} value={money(fee, lang)} />
+              <Row label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
+            </div>
+
+            {errors.length > 0 && (
+              <ul
+                role="alert"
+                className="space-y-1 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive"
+              >
+                {errors.map((e) => (
+                  <li key={e}>• {e}</li>
+                ))}
+              </ul>
+            )}
+
+            <div className="flex gap-2">
+              {step > 0 && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="flex-1"
+                  onClick={() => setStep((s) => s - 1)}
+                >
+                  {bn ? "পিছনে" : "Back"}
+                </Button>
+              )}
+              {step < 2 ? (
+                <Button
+                  className="flex-1"
+                  size="lg"
+                  disabled={cart.lines.length === 0}
+                  onClick={() => {
+                    const errs = stepErrors(step);
+                    const { fields } = validate();
+                    setFieldErrs(fields);
+                    setErrors(errs);
+                    if (errs.length) {
+                      toast.error(errs[0]);
+                      return;
+                    }
+                    setErrors([]);
+                    setStep((s) => s + 1);
+                  }}
+                >
+                  {bn ? "পরবর্তী ধাপ" : "Continue"}
+                </Button>
+              ) : (
+                <Button
+                  className="flex-1"
+                  size="lg"
+                  disabled={cart.lines.length === 0 || placing}
+                  onClick={placeOrder}
+                >
+                  {placing && <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />}
+                  {bn ? "অর্ডার কনফার্ম করুন" : "Place order"}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {placed !== null && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={bn ? "অর্ডার নিশ্চিত" : "Order confirmation"}
+          className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-background/95 p-6 backdrop-blur"
+        >
+          <div className="surface-panel w-full max-w-sm space-y-4 p-6">
+            <div className="text-center">
+              <span className="mx-auto grid size-12 place-items-center rounded-full bg-primary/10 text-primary">
+                <Check className="size-6" aria-hidden="true" />
+              </span>
+              <h2 className="mt-3 font-display text-xl font-bold text-primary">
+                {bn ? "অর্ডার নেওয়া হয়েছে!" : "Order placed!"}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {bn ? "আপনার অর্ডার নম্বর" : "Your order number"}: <b>#{placed}</b>
+              </p>
+              {placedInfo?.slot && (
+                <p className="text-xs text-muted-foreground">
+                  {bn ? "ডেলিভারি স্লট" : "Delivery slot"}: {placedInfo.slot}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-border p-3">
+              <p className="mb-2 text-sm font-semibold">
+                {bn ? "অর্ডার স্ট্যাটাস" : "Order status"}
+              </p>
+              <StatusPreview bn={bn} />
+            </div>
+
+            <Button
+              className="w-full"
+              onClick={() => {
+                setPlaced(null);
+                setCheckout(false);
+              }}
+            >
+              {bn ? "আরও কেনাকাটা" : "Continue shopping"}
+            </Button>
+            <a
+              href={`/track?order=${placed}&phone=${encodeURIComponent(placedInfo?.phone ?? "")}`}
+              className="block text-center text-sm text-primary underline"
+            >
+              {bn ? "লাইভ ট্র্যাকিং দেখুন" : "Track this order live"}
+            </a>
+          </div>
+        </div>
+      )}
+
+    </main>
+  );
+}
+
+function CatChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        active
+          ? "border-primary bg-primary/10 font-semibold text-primary"
+          : "border-border text-muted-foreground",
+      )}
+    >
+
+      {label}
+    </button>
+  );
+}
+
+function ProductCard({
+  p,
+  bn,
+  qty,
+  onAdd,
+  onSet,
+}: {
+  p: P;
+  bn: boolean;
+  qty: number;
+  onAdd: () => void;
+  onSet: (q: number) => void;
+}) {
+  const { lang } = useI18n();
+  return (
+    <div className="shop-card shop-tile group flex flex-col p-2.5">
+      <div className="relative overflow-hidden rounded-2xl bg-muted">
+        {p.image_url ? (
+          <img
+            src={p.image_url}
+            alt={bn ? p.name_bn : p.name_en}
+            loading="lazy"
+            decoding="async"
+            width={320}
+            height={320}
+            className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
+          />
+        ) : (
+          <div className="aspect-square w-full" />
+        )}
+        {p.pack_size && (
+          <span className="absolute left-2 top-2 rounded-full bg-card/90 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground backdrop-blur">
+            {p.pack_size}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col gap-1 px-1.5 pb-1 pt-3">
+        <span className="line-clamp-2 text-sm font-semibold leading-snug">
+          {bn ? p.name_bn : p.name_en}
+        </span>
+        {p.brand && (
+          <span className="truncate text-[11px] uppercase tracking-wide text-muted-foreground">
+            {p.brand}
+          </span>
+        )}
+        <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+          <span className="font-display text-lg font-extrabold leading-none text-primary">
+            {money(Number(p.price), lang)}
+          </span>
+          {qty === 0 ? (
+            <Button
+              size="icon"
+              className="size-11 shrink-0 rounded-full"
+              aria-label={`${bn ? "কার্টে যোগ করুন" : "Add to cart"}: ${bn ? p.name_bn : p.name_en}`}
+              onClick={onAdd}
+            >
+              <Plus className="size-4" aria-hidden="true" />
+            </Button>
+          ) : (
+            <div
+              role="group"
+              aria-label={`${bn ? "পরিমাণ" : "Quantity"}: ${bn ? p.name_bn : p.name_en}`}
+              className="flex shrink-0 items-center gap-0.5 rounded-full bg-primary p-0.5 text-primary-foreground"
+            >
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label={`${bn ? "পরিমাণ কমান" : "Decrease quantity"}: ${bn ? p.name_bn : p.name_en}`}
+                className="size-9 rounded-full hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                onClick={() => onSet(qty - 1)}
+              >
+                <Minus className="size-3.5" aria-hidden="true" />
+              </Button>
+              <span aria-live="polite" className="min-w-5 text-center text-sm font-bold">
+                {num(qty, lang)}
+              </span>
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label={`${bn ? "পরিমাণ বাড়ান" : "Increase quantity"}: ${bn ? p.name_bn : p.name_en}`}
+                className="size-9 rounded-full hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                onClick={() => onSet(qty + 1)}
+              >
+                <Plus className="size-3.5" aria-hidden="true" />
+              </Button>
+            </div>
+          )}
+
+        </div>
+      </div>
     </div>
   );
+}
+
+
+function CartRow({
+  l,
+  bn,
+  lang,
+  onSet,
+}: {
+  l: ShopLine;
+  bn: boolean;
+  lang: "bn" | "en";
+  onSet: (q: number) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      {l.image_url ? (
+        <img
+          src={l.image_url}
+          alt=""
+          loading="lazy"
+          className="size-11 shrink-0 rounded-xl bg-muted object-cover"
+        />
+      ) : (
+        <span className="size-11 shrink-0 rounded-xl bg-muted" />
+      )}
+      <div className="min-w-0 flex-1">
+        <span className="line-clamp-1 text-sm font-medium">{bn ? l.name_bn : l.name_en}</span>
+        <span className="text-xs text-muted-foreground">{money(l.price * l.qty, lang)}</span>
+      </div>
+      <div
+        role="group"
+        aria-label={`${bn ? "পরিমাণ" : "Quantity"}: ${bn ? l.name_bn : l.name_en}`}
+        className="flex shrink-0 items-center gap-0.5 rounded-full border border-border"
+      >
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label={`${bn ? "পরিমাণ কমান" : "Decrease quantity"}: ${bn ? l.name_bn : l.name_en}`}
+          className="size-9 rounded-full"
+          onClick={() => onSet(l.qty - 1)}
+        >
+          <Minus className="size-3" aria-hidden="true" />
+        </Button>
+        <span aria-live="polite" className="w-5 text-center text-sm font-semibold">
+          {num(l.qty, lang)}
+        </span>
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label={`${bn ? "পরিমাণ বাড়ান" : "Increase quantity"}: ${bn ? l.name_bn : l.name_en}`}
+          className="size-9 rounded-full"
+          onClick={() => onSet(l.qty + 1)}
+        >
+          <Plus className="size-3" aria-hidden="true" />
+        </Button>
+      </div>
+
+    </div>
+  );
+
+}
+
+function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+  return (
+    <div className={cn("flex justify-between", bold && "text-base font-bold")}>
+      <span className="text-muted-foreground">{label}</span>
+      <span>{value}</span>
+    </div>
+  );
+}
+
+function F({
+  id,
+  label,
+  v,
+  on,
+  err,
+  hint,
+  inputMode,
+  autoComplete,
+}: {
+  id?: string;
+  label: string;
+  v: string;
+  on: (v: string) => void;
+  err?: string;
+  hint?: string;
+  inputMode?: "text" | "tel" | "numeric" | "email";
+  autoComplete?: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        value={v}
+        maxLength={120}
+        inputMode={inputMode}
+        autoComplete={autoComplete}
+        aria-invalid={!!err}
+        aria-describedby={err ? `${id}-err` : hint ? `${id}-hint` : undefined}
+        onChange={(e) => on(e.target.value)}
+      />
+      {err ? (
+        <p id={`${id}-err`} role="alert" className="text-xs text-destructive">
+          {err}
+        </p>
+      ) : hint ? (
+        <p id={`${id}-hint`} className="text-xs text-muted-foreground">
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** Checkout steps shown in the stepper. */
+const STEPS = [
+  { id: "address", bn: "ঠিকানা", en: "Address" },
+  { id: "slot", bn: "স্লট ও পেমেন্ট", en: "Slot & payment" },
+  { id: "review", bn: "রিভিউ", en: "Review" },
+] as const;
+
+/** Read-only timeline showing how an order progresses after checkout. */
+function StatusPreview({ bn }: { bn: boolean }) {
+  const steps = [
+    { bn: "অর্ডার গৃহীত", en: "Order placed" },
+    { bn: "কনফার্মড", en: "Confirmed" },
+    { bn: "প্যাকিং সম্পন্ন", en: "Packed" },
+    { bn: "রাস্তায়", en: "On the way" },
+    { bn: "ডেলিভার্ড", en: "Delivered" },
+  ];
+  return (
+    <ol className="space-y-1.5">
+      {steps.map((s, i) => (
+        <li key={s.en} className="flex items-center gap-2 text-xs">
+          <span
+            aria-hidden="true"
+            className={cn(
+              "size-2.5 rounded-full",
+              i === 0 ? "bg-primary" : "border border-border bg-background",
+            )}
+          />
+          <span className={i === 0 ? "font-semibold" : "text-muted-foreground"}>
+            {bn ? s.bn : s.en}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+
+function SideCat({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "flex min-h-11 w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        active
+          ? "bg-primary font-semibold text-primary-foreground"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      )}
+    >
+
+      <span className="truncate">{label}</span>
+      <span
+        className={cn(
+          "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+          active ? "bg-primary-foreground/20" : "bg-muted",
+        )}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
+
+function Perk({ icon: Icon, title, sub }: { icon: LucideIcon; title: string; sub: string }) {
+  return (
+    <div className="shop-card flex items-center gap-3 p-4">
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary text-primary">
+        <Icon className="size-5" />
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold">{title}</p>
+        <p className="truncate text-xs text-muted-foreground">{sub}</p>
+      </div>
+    </div>
+  );
+
 }

@@ -157,7 +157,7 @@ export function CustomerAccountMenu({ compact = false }: { compact?: boolean }) 
     qc.clear();
     await supabase.auth.signOut();
     toast.success(bn ? "লগআউট হয়েছে" : "Signed out");
-    navigate({ to: "/homedelivery", replace: true });
+    navigate({ to: "/", replace: true });
   }
 
   if (!user || !isCustomer) {

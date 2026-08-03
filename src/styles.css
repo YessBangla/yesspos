@@ -589,7 +589,7 @@
 
 /*
  * Storefront skin — "Editorial bento" direction for the consumer shop
- * (/homedelivery). Scoped so the operator dashboard keeps its own type scale.
+ * (/). Scoped so the operator dashboard keeps its own type scale.
  */
 .storefront {
   font-family: "Figtree", "Hind Siliguri", ui-sans-serif, system-ui, sans-serif;
