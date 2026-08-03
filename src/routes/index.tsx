@@ -849,12 +849,13 @@ function ShopPage() {
         {/* ---- Portal menu ---- */}
         <nav className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 pb-2 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Link
-            to="/"
+            to="/corporate"
             className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-3 py-1.5 font-medium hover:bg-muted"
           >
             <Home className="size-4 text-primary" />
-            {bn ? "মূল হোম পেজ" : "Main home page"}
+            {bn ? "কর্পোরেট সাইট" : "Corporate site"}
           </Link>
+
 
           <button
             type="button"
