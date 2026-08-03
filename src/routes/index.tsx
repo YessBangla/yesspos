@@ -949,7 +949,7 @@ function ShopPage() {
         )}
       </header>
 
-      <div className="mx-auto max-w-7xl gap-6 px-4 lg:grid lg:grid-cols-[236px_minmax(0,1fr)_330px]">
+      <div className="mx-auto max-w-7xl gap-6 px-4 lg:grid lg:grid-cols-[272px_minmax(0,1fr)_330px]">
         {/* ---- Category sidebar ---- */}
         <aside className="hidden lg:block">
           <div className="shop-card sticky top-28 mt-6 max-h-[calc(100vh-9rem)] overflow-y-auto p-3">
