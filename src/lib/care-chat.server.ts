@@ -43,7 +43,7 @@ export async function buildCareKnowledge(): Promise<string> {
   lines.push(
     "",
     "WEBSITE PAGES CUSTOMERS CAN USE:",
-    "- / : home / corporate landing page",
+    "- /product/<id> : product details page (price, pack size, stock, related items)",
     "- / : online grocery storefront (home page) (search, categories, cart, checkout with delivery slot, coupon, payment)",
     "- /my-orders : order history, reorder, cancel or reschedule an order (phone verification)",
     "- /track : live delivery tracking with rider name, phone and ETA",
