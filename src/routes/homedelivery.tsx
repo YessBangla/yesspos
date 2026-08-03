@@ -678,14 +678,17 @@ function ShopPage() {
     <main className="storefront min-h-screen bg-background pb-28 lg:pb-10">
       {/* ---- Top utility bar ---- */}
       <div className="bg-primary text-primary-foreground">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-1.5 text-xs">
-          <span className="flex items-center gap-1.5">
-            <Truck className="size-3.5" />
-            {bn
-              ? "ঢাকায় ১ ঘণ্টায় ডেলিভারি · ৳১০০০+ অর্ডারে ফ্রি"
-              : "1-hour delivery in Dhaka · Free above ৳1000"}
+        <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-1.5 text-xs">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <Truck className="size-3.5 shrink-0" />
+            <span className="truncate">
+              {bn
+                ? "ঢাকায় ১ ঘণ্টায় ডেলিভারি · ৳১০০০+ অর্ডারে ফ্রি"
+                : "1-hour delivery in Dhaka · Free above ৳1000"}
+            </span>
           </span>
-          <span className="flex items-center gap-3">
+          <span className="flex max-w-full items-center gap-3 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+
             <LangToggle className="bg-card" />
             <Link to="/" className="flex items-center gap-1 font-semibold hover:underline">
               <Home className="size-3.5" />
@@ -844,7 +847,7 @@ function ShopPage() {
         </div>
 
         {/* ---- Portal menu ---- */}
-        <nav className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 pb-2 text-sm">
+        <nav className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 pb-2 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Link
             to="/"
             className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-3 py-1.5 font-medium hover:bg-muted"
@@ -1070,7 +1073,7 @@ function ShopPage() {
 
           <nav
             aria-label={bn ? "ক্যাটাগরি ফিল্টার" : "Category filters"}
-            className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden"
+            className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden"
           >
             <CatChip
               active={!cat}
@@ -1659,7 +1662,7 @@ function ShopPage() {
                         aria-pressed={form.payment === m.id}
                         onClick={() => setForm({ ...form, payment: m.id })}
                         className={cn(
-                          "min-h-11 rounded-full border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          "min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                           form.payment === m.id
                             ? "border-primary bg-primary/10 font-semibold text-primary"
                             : "border-border",
@@ -1908,7 +1911,7 @@ function CatChip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "min-h-11 rounded-full border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         active
           ? "border-primary bg-primary/10 font-semibold text-primary"
           : "border-border text-muted-foreground",

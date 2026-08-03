@@ -198,8 +198,15 @@
 }
 
 .app-fit :where(h1, h2, h3, p, span, td, th, label, a, li, button) {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
+
+/* Never let the global wrap rule break intentionally single-line chips/rows */
+.app-fit .whitespace-nowrap,
+.app-fit .truncate {
+  overflow-wrap: normal;
+}
+
 
 /* Form controls never push a column wider than the screen */
 .app-fit :where(input, select, textarea) {
