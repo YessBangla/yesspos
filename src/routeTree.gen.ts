@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrackRouteImport } from './routes/track'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SigninRouteImport } from './routes/signin'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MyOrdersRouteImport } from './routes/my-orders'
@@ -77,6 +78,11 @@ const TermsRoute = TermsRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ShopRoute = ShopRouteImport.update({
@@ -354,6 +360,7 @@ export interface FileRoutesByFullPath {
   '/my-orders': typeof MyOrdersRoute
   '/privacy': typeof PrivacyRoute
   '/shop': typeof ShopRoute
+  '/signin': typeof SigninRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
@@ -409,6 +416,7 @@ export interface FileRoutesByTo {
   '/my-orders': typeof MyOrdersRoute
   '/privacy': typeof PrivacyRoute
   '/shop': typeof ShopRoute
+  '/signin': typeof SigninRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
@@ -466,6 +474,7 @@ export interface FileRoutesById {
   '/my-orders': typeof MyOrdersRoute
   '/privacy': typeof PrivacyRoute
   '/shop': typeof ShopRoute
+  '/signin': typeof SigninRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/track': typeof TrackRoute
@@ -523,6 +532,7 @@ export interface FileRouteTypes {
     | '/my-orders'
     | '/privacy'
     | '/shop'
+    | '/signin'
     | '/sitemap.xml'
     | '/terms'
     | '/track'
@@ -578,6 +588,7 @@ export interface FileRouteTypes {
     | '/my-orders'
     | '/privacy'
     | '/shop'
+    | '/signin'
     | '/sitemap.xml'
     | '/terms'
     | '/track'
@@ -634,6 +645,7 @@ export interface FileRouteTypes {
     | '/my-orders'
     | '/privacy'
     | '/shop'
+    | '/signin'
     | '/sitemap.xml'
     | '/terms'
     | '/track'
@@ -691,6 +703,7 @@ export interface RootRouteChildren {
   MyOrdersRoute: typeof MyOrdersRoute
   PrivacyRoute: typeof PrivacyRoute
   ShopRoute: typeof ShopRoute
+  SigninRoute: typeof SigninRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   TrackRoute: typeof TrackRoute
@@ -718,6 +731,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/shop': {
@@ -1181,6 +1201,7 @@ const rootRouteChildren: RootRouteChildren = {
   MyOrdersRoute: MyOrdersRoute,
   PrivacyRoute: PrivacyRoute,
   ShopRoute: ShopRoute,
+  SigninRoute: SigninRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   TrackRoute: TrackRoute,
