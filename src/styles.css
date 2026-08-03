@@ -201,19 +201,11 @@
   overflow-wrap: anywhere;
 }
 
-/* Fluid page gutters + width caps so every section fits any screen */
-.app-fit :where([class*="max-w-"]) {
-  max-width: min(100%, var(--tw-max-width, 100%));
-}
-
+/* Form controls never push a column wider than the screen */
 .app-fit :where(input, select, textarea) {
   max-width: 100%;
 }
 
-/* Media keeps its aspect while never overflowing its column */
-.app-fit :where(img, video) {
-  object-fit: cover;
-}
 
 
 
