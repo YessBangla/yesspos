@@ -145,10 +145,32 @@
     border-color: var(--color-border);
   }
 
+  html {
+    /* Fluid base size so the whole UI auto-fits small laptops → large screens */
+    font-size: clamp(15px, 0.92rem + 0.18vw, 18px);
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    overflow-x: hidden;
+  }
+
+  /* Nothing may push the page wider than the viewport */
+  img,
+  video,
+  canvas,
+  svg,
+  iframe {
+    max-width: 100%;
+    height: auto;
+  }
+
+  pre,
+  code {
+    overflow-x: auto;
+    max-width: 100%;
   }
 
   h1,
@@ -159,6 +181,21 @@
     letter-spacing: -0.02em;
   }
 }
+
+/* Auto-fit content areas: wide tables scroll inside their panel, text wraps */
+.app-fit :where(table) {
+  width: 100%;
+}
+
+.app-fit :where([data-slot="table-container"], .table-wrap) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.app-fit :where(h1, h2, h3, p, span, td, th, label) {
+  overflow-wrap: anywhere;
+}
+
 
 @utility surface-panel {
   background-color: var(--color-card);
