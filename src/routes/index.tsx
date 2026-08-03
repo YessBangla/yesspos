@@ -23,7 +23,6 @@ import {
   RefreshCw,
   Search,
   ShoppingBag,
-  Home,
   ShoppingBasket,
   Truck,
   WifiOff,
