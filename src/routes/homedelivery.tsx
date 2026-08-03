@@ -678,14 +678,17 @@ function ShopPage() {
     <main className="storefront min-h-screen bg-background pb-28 lg:pb-10">
       {/* ---- Top utility bar ---- */}
       <div className="bg-primary text-primary-foreground">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-1.5 text-xs">
-          <span className="flex items-center gap-1.5">
-            <Truck className="size-3.5" />
-            {bn
-              ? "ঢাকায় ১ ঘণ্টায় ডেলিভারি · ৳১০০০+ অর্ডারে ফ্রি"
-              : "1-hour delivery in Dhaka · Free above ৳1000"}
+        <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-1.5 text-xs">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <Truck className="size-3.5 shrink-0" />
+            <span className="truncate">
+              {bn
+                ? "ঢাকায় ১ ঘণ্টায় ডেলিভারি · ৳১০০০+ অর্ডারে ফ্রি"
+                : "1-hour delivery in Dhaka · Free above ৳1000"}
+            </span>
           </span>
-          <span className="flex items-center gap-3">
+          <span className="flex max-w-full items-center gap-3 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+
             <LangToggle className="bg-card" />
             <Link to="/" className="flex items-center gap-1 font-semibold hover:underline">
               <Home className="size-3.5" />
