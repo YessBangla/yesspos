@@ -147,7 +147,7 @@
 
   html {
     /* Fluid base size so the whole UI auto-fits small laptops → large screens */
-    font-size: clamp(15px, 0.92rem + 0.18vw, 18px);
+    font-size: calc(clamp(15px, 0.92rem + 0.18vw, 18px) * var(--text-scale, 1));
   }
 
   body {

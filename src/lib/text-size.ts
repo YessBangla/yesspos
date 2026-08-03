@@ -4,11 +4,11 @@ export const TEXT_SIZES = ["normal", "large", "xlarge"] as const;
 export type TextSize = (typeof TEXT_SIZES)[number];
 
 const STORAGE_KEY = "sb-text-size";
-const SCALE: Record<TextSize, string> = { normal: "100%", large: "112.5%", xlarge: "125%" };
+const SCALE: Record<TextSize, string> = { normal: "1", large: "1.125", xlarge: "1.25" };
 
 export function applyTextSize(size: TextSize) {
   if (typeof document === "undefined") return;
-  document.documentElement.style.fontSize = SCALE[size];
+  document.documentElement.style.setProperty("--text-scale", SCALE[size]);
   document.documentElement.dataset.textSize = size;
 }
 
