@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, BellRing, PackageSearch, RotateCcw, ShoppingBasket, Truck } from "lucide-react";
 import { toast } from "sonner";
