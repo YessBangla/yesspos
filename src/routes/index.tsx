@@ -1930,7 +1930,11 @@ function ProductCard({
   const { lang } = useI18n();
   return (
     <div className="shop-card shop-tile group flex flex-col p-2.5">
-      <div className="relative overflow-hidden rounded-2xl bg-muted">
+      <Link
+        to="/product/$id"
+        params={{ id: p.id }}
+        className="relative block overflow-hidden rounded-2xl bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         {p.image_url ? (
           <img
             src={p.image_url}
@@ -1949,16 +1953,21 @@ function ProductCard({
             {p.pack_size}
           </span>
         )}
-      </div>
+      </Link>
       <div className="flex flex-1 flex-col gap-1 px-1.5 pb-1 pt-3">
-        <span className="line-clamp-2 text-sm font-semibold leading-snug">
+        <Link
+          to="/product/$id"
+          params={{ id: p.id }}
+          className="line-clamp-2 text-sm font-semibold leading-snug hover:text-primary hover:underline"
+        >
           {bn ? p.name_bn : p.name_en}
-        </span>
+        </Link>
         {p.brand && (
           <span className="truncate text-[11px] uppercase tracking-wide text-muted-foreground">
             {p.brand}
           </span>
         )}
+
         <div className="mt-auto flex items-end justify-between gap-2 pt-2">
           <span className="font-display text-lg font-extrabold leading-none text-primary">
             {money(Number(p.price), lang)}
