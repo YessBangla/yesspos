@@ -690,10 +690,8 @@ function ShopPage() {
           <span className="flex max-w-full items-center gap-3 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 
             <LangToggle className="bg-card" />
-            <Link to="/corporate" className="flex items-center gap-1 font-semibold hover:underline">
-              <Home className="size-3.5" />
-              {bn ? "মূল ওয়েবসাইট" : "Main site"}
-            </Link>
+
+
 
 
             <a href="tel:16710" className="flex items-center gap-1 hover:underline">
@@ -848,13 +846,6 @@ function ShopPage() {
 
         {/* ---- Portal menu ---- */}
         <nav className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 pb-2 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <Link
-            to="/corporate"
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-3 py-1.5 font-medium hover:bg-muted"
-          >
-            <Home className="size-4 text-primary" />
-            {bn ? "কর্পোরেট সাইট" : "Corporate site"}
-          </Link>
 
 
           <button
