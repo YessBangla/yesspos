@@ -729,10 +729,12 @@ function ShopPage() {
             <label htmlFor="shop-search" className="sr-only">
               {bn ? "পণ্য খুঁজুন" : "Search products"}
             </label>
+            <div className="flex h-12 items-center gap-2 rounded-xl border border-border bg-card pl-3 pr-1.5 shadow-sm transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
             <Search
               aria-hidden="true"
-              className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              className="size-4 shrink-0 text-muted-foreground"
             />
+
             <Input
               id="shop-search"
               type="search"
