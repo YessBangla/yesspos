@@ -183,6 +183,11 @@
 }
 
 /* Auto-fit content areas: wide tables scroll inside their panel, text wraps */
+.app-fit {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 .app-fit :where(table) {
   width: 100%;
 }
@@ -192,9 +197,16 @@
   overflow-x: auto;
 }
 
-.app-fit :where(h1, h2, h3, p, span, td, th, label) {
+.app-fit :where(h1, h2, h3, p, span, td, th, label, a, li, button) {
   overflow-wrap: anywhere;
 }
+
+/* Form controls never push a column wider than the screen */
+.app-fit :where(input, select, textarea) {
+  max-width: 100%;
+}
+
+
 
 
 @utility surface-panel {
