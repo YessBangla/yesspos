@@ -21,7 +21,6 @@ export function CustomerAccountMenu({ compact = false }: { compact?: boolean }) 
   const { lang } = useI18n();
   const bn = lang === "bn";
   const { user, isCustomer, name, phone } = useCustomerSession();
-  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -35,20 +34,20 @@ export function CustomerAccountMenu({ compact = false }: { compact?: boolean }) 
 
   if (!user || !isCustomer) {
     return (
-      <>
-        <Button
-          variant={compact ? "ghost" : "outline"}
-          size={compact ? "sm" : "default"}
-          className={compact ? "h-8 px-2 text-xs" : "h-11 rounded-full"}
-          onClick={() => setOpen(true)}
-        >
+      <Button
+        asChild
+        variant={compact ? "ghost" : "outline"}
+        size={compact ? "sm" : "default"}
+        className={compact ? "h-8 px-2 text-xs" : "h-11 rounded-full border-border px-5 font-semibold"}
+      >
+        <Link to="/signin">
           <UserIcon className="mr-1 size-4" />
           {bn ? "লগইন" : "Sign in"}
-        </Button>
-        <CustomerAuthDialog open={open} onOpenChange={setOpen} />
-      </>
+        </Link>
+      </Button>
     );
   }
+
 
   return (
     <DropdownMenu>
