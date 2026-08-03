@@ -702,9 +702,13 @@ function ShopPage() {
             <Link to="/my-orders" className="hover:underline">
               {bn ? "আমার অ্যাকাউন্ট" : "My account"}
             </Link>
+            <Link to="/corporate" className="font-medium hover:underline">
+              {bn ? "কর্পোরেট" : "Corporate"}
+            </Link>
             <Link to="/auth" className="hidden hover:underline sm:inline">
               {bn ? "স্টাফ লগইন" : "Staff login"}
             </Link>
+
           </span>
         </div>
       </div>
