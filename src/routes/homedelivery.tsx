@@ -847,7 +847,7 @@ function ShopPage() {
         </div>
 
         {/* ---- Portal menu ---- */}
-        <nav className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 pb-2 text-sm">
+        <nav className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 pb-2 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Link
             to="/"
             className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-3 py-1.5 font-medium hover:bg-muted"
@@ -1073,7 +1073,7 @@ function ShopPage() {
 
           <nav
             aria-label={bn ? "ক্যাটাগরি ফিল্টার" : "Category filters"}
-            className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden"
+            className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden"
           >
             <CatChip
               active={!cat}
@@ -1662,7 +1662,7 @@ function ShopPage() {
                         aria-pressed={form.payment === m.id}
                         onClick={() => setForm({ ...form, payment: m.id })}
                         className={cn(
-                          "min-h-11 rounded-full border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          "min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                           form.payment === m.id
                             ? "border-primary bg-primary/10 font-semibold text-primary"
                             : "border-border",
@@ -1911,7 +1911,7 @@ function CatChip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "min-h-11 rounded-full border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         active
           ? "border-primary bg-primary/10 font-semibold text-primary"
           : "border-border text-muted-foreground",
