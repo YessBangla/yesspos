@@ -643,7 +643,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Button>
           </div>
         </header>
-        <main className="min-w-0 flex-1">
+        <main className="app-fit min-w-0 flex-1 overflow-x-hidden">
           {(() => {
             const current = allItems.find((n) => pathname.startsWith(n.to));
             if (me.isLoading) return <div className="p-6 text-sm text-muted-foreground">…</div>;
