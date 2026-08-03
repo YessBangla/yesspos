@@ -183,6 +183,11 @@
 }
 
 /* Auto-fit content areas: wide tables scroll inside their panel, text wraps */
+.app-fit {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 .app-fit :where(table) {
   width: 100%;
 }
@@ -192,9 +197,24 @@
   overflow-x: auto;
 }
 
-.app-fit :where(h1, h2, h3, p, span, td, th, label) {
+.app-fit :where(h1, h2, h3, p, span, td, th, label, a, li, button) {
   overflow-wrap: anywhere;
 }
+
+/* Fluid page gutters + width caps so every section fits any screen */
+.app-fit :where([class*="max-w-"]) {
+  max-width: min(100%, var(--tw-max-width, 100%));
+}
+
+.app-fit :where(input, select, textarea) {
+  max-width: 100%;
+}
+
+/* Media keeps its aspect while never overflowing its column */
+.app-fit :where(img, video) {
+  object-fit: cover;
+}
+
 
 
 @utility surface-panel {
