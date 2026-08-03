@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { ArrowLeft, LogOut, MapPin, Package, Plus, ShoppingBasket, Star, Trash2 } from "lucide-react";
@@ -12,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { money, num, useI18n } from "@/lib/i18n";
 import { isValidPhone, normalizePhone, useCustomerSession } from "@/lib/customer-auth";
-import { CustomerAuthDialog } from "@/components/CustomerAccountMenu";
 
 const SITE = "https://yesspos.lovable.app";
 
@@ -55,13 +54,8 @@ function MyAccountPage() {
   const { tab } = Route.useSearch();
   const navigate = Route.useNavigate();
   const qc = useQueryClient();
-  const [authOpen, setAuthOpen] = useState(false);
   const [form, setForm] = useState(emptyAddress);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (!loading && !user) setAuthOpen(true);
-  }, [loading, user]);
 
   const signedIn = !!user && isCustomer;
 
@@ -167,10 +161,9 @@ function MyAccountPage() {
             <p className="text-sm text-muted-foreground">
               {bn ? "অর্ডার ও ঠিকানা দেখতে লগইন করুন।" : "Sign in to see your orders and saved addresses."}
             </p>
-            <Button className="mt-4" onClick={() => setAuthOpen(true)}>
-              {bn ? "লগইন / রেজিস্টার" : "Sign in / Register"}
+            <Button asChild className="mt-4">
+              <Link to="/signin">{bn ? "লগইন / রেজিস্টার" : "Sign in / Register"}</Link>
             </Button>
-            <CustomerAuthDialog open={authOpen} onOpenChange={setAuthOpen} />
           </div>
         ) : (
           <>

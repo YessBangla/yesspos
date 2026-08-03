@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, BellRing, PackageSearch, RotateCcw, ShoppingBasket, Truck } from "lucide-react";
 import { toast } from "sonner";
@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { money, num, useI18n } from "@/lib/i18n";
 import { useCustomerSession } from "@/lib/customer-auth";
-import { CustomerAuthDialog } from "@/components/CustomerAccountMenu";
 import { useShopCart } from "@/lib/shop-cart";
 import { LangToggle } from "@/components/LangToggle";
 import { OrderActions } from "@/components/OrderActions";
@@ -55,12 +54,7 @@ function MyOrdersPage() {
   const bn = lang === "bn";
   const { user, isCustomer, loading } = useCustomerSession();
   const cart = useShopCart();
-  const [authOpen, setAuthOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!loading && !user) setAuthOpen(true);
-  }, [loading, user]);
 
   const signedIn = !!user && isCustomer;
 
@@ -171,10 +165,9 @@ function MyOrdersPage() {
             <p className="text-sm text-muted-foreground">
               {bn ? "অর্ডার দেখতে লগইন করুন।" : "Sign in to see your orders."}
             </p>
-            <Button className="mt-4" onClick={() => setAuthOpen(true)}>
-              {bn ? "লগইন / রেজিস্টার" : "Sign in / Register"}
+            <Button asChild className="mt-4">
+              <Link to="/signin">{bn ? "লগইন / রেজিস্টার" : "Sign in / Register"}</Link>
             </Button>
-            <CustomerAuthDialog open={authOpen} onOpenChange={setAuthOpen} />
           </div>
         ) : (
           <div className="mt-5 space-y-3">
