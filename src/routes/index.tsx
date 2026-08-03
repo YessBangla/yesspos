@@ -13,7 +13,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   BadgePercent,
+  Building2,
   Check,
+  ChevronDown,
+  Home,
+  LayoutGrid,
+  LifeBuoy,
+  ShieldCheck,
   Clock,
   CloudUpload,
   Loader2,
@@ -673,42 +679,51 @@ function ShopPage() {
     toast.success(bn ? "কার্টে যোগ হয়েছে" : "Added to cart");
   };
 
+  const [megaOpen, setMegaOpen] = useState(false);
+  const catImage = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of products.data ?? []) {
+      if (p.image_url && p.category_id && !m.has(p.category_id)) m.set(p.category_id, p.image_url);
+    }
+    return m;
+  }, [products.data]);
+
+  const menuItemClass =
+    "flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
+
   return (
     <main className="storefront min-h-screen bg-background pb-28 lg:pb-10">
       {/* ---- Top utility bar ---- */}
-      <div className="bg-primary text-primary-foreground">
-        <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-1.5 text-xs">
-          <span className="flex min-w-0 items-center gap-1.5">
-            <Truck className="size-3.5 shrink-0" />
-            <span className="truncate">
-              {bn
-                ? "ঢাকায় ১ ঘণ্টায় ডেলিভারি · ৳১০০০+ অর্ডারে ফ্রি"
-                : "1-hour delivery in Dhaka · Free above ৳1000"}
+      <div className="bg-foreground text-background">
+        <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-1.5 text-[11px] sm:text-xs">
+          <span className="flex min-w-0 items-center gap-4 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="size-3.5 shrink-0" />
+              {bn ? "১০০% তাজা ও যাচাইকৃত পণ্য" : "100% fresh, checked products"}
+            </span>
+            <span className="hidden items-center gap-1.5 sm:flex">
+              <Truck className="size-3.5 shrink-0" />
+              {bn ? "ঢাকায় ১ ঘণ্টায় ডেলিভারি" : "1-hour delivery in Dhaka"}
+            </span>
+            <span className="hidden items-center gap-1.5 md:flex">
+              <BadgePercent className="size-3.5 shrink-0" />
+              {bn ? "৳১০০০+ অর্ডারে ফ্রি ডেলিভারি" : "Free delivery above ৳1000"}
             </span>
           </span>
-          <span className="flex max-w-full items-center gap-3 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-
-            <LangToggle className="bg-card" />
-
-
-
-
-            <a href="tel:16710" className="flex items-center gap-1 hover:underline">
-              <Phone className="size-3.5" /> 16710
+          <span className="flex items-center gap-3 whitespace-nowrap">
+            <LangToggle className="bg-background text-foreground" />
+            <a href="tel:16710" className="flex items-center gap-1 font-semibold hover:underline">
+              <Phone className="size-3.5" /> {bn ? "হটলাইন ১৬৭১০" : "Hotline 16710"}
             </a>
-            <Link to="/track" className="hover:underline">
+            <Link to="/track" className="hidden hover:underline sm:inline">
               {bn ? "অর্ডার ট্র্যাক" : "Track order"}
             </Link>
-            <Link to="/my-orders" className="hover:underline">
-              {bn ? "আমার অ্যাকাউন্ট" : "My account"}
-            </Link>
-            <Link to="/corporate" className="font-medium hover:underline">
+            <Link to="/corporate" className="hidden hover:underline md:inline">
               {bn ? "কর্পোরেট" : "Corporate"}
             </Link>
-            <Link to="/auth" className="hidden hover:underline sm:inline">
+            <Link to="/auth" className="hidden hover:underline lg:inline">
               {bn ? "স্টাফ লগইন" : "Staff login"}
             </Link>
-
           </span>
         </div>
       </div>
@@ -867,50 +882,112 @@ function ShopPage() {
         </div>
 
         {/* ---- Portal menu ---- */}
-        <nav className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 pb-2 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-
-
-          <button
-            type="button"
-            className="whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted"
-            onClick={() => {
-              setCat("");
-              setQuery("");
-              setLimit(PAGE);
-            }}
-          >
-            {bn ? "সব পণ্য" : "All products"}
-          </button>
-          {(categories.data ?? []).slice(0, 10).map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className={cn(
-                "whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted",
-                cat === c.id && "bg-primary/10 font-semibold text-primary",
+        <div className="border-t border-border">
+          <div className="mx-auto flex max-w-7xl items-center gap-1 px-2 py-1.5 text-sm">
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                aria-expanded={megaOpen}
+                onClick={() => setMegaOpen((o) => !o)}
+                className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 font-semibold text-primary-foreground"
+              >
+                <LayoutGrid className="size-4" />
+                <span className="hidden sm:inline">{bn ? "সব ক্যাটাগরি" : "All categories"}</span>
+                <ChevronDown className={cn("size-4 transition-transform", megaOpen && "rotate-180")} />
+              </button>
+              {megaOpen && (
+                <>
+                  <button
+                    type="button"
+                    aria-label={bn ? "বন্ধ করুন" : "Close"}
+                    className="fixed inset-0 z-30 cursor-default"
+                    onClick={() => setMegaOpen(false)}
+                  />
+                  <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-[min(92vw,720px)] rounded-2xl border border-border bg-popover p-3 shadow-xl">
+                    <div className="grid gap-1 sm:grid-cols-3">
+                      {(categories.data ?? []).map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setCat(c.id);
+                            setLimit(PAGE);
+                            setMegaOpen(false);
+                          }}
+                          className={cn(
+                            "flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-muted",
+                            cat === c.id && "bg-primary/10 font-semibold text-primary",
+                          )}
+                        >
+                          <span className="truncate">{bn ? c.name_bn : c.name_en}</span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {num(catCounts.get(c.id) ?? 0, lang)}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
-              onClick={() => {
-                setCat(c.id);
-                setLimit(PAGE);
-              }}
+            </div>
+
+            <nav
+              aria-label={bn ? "প্রধান মেনু" : "Main menu"}
+              className="flex flex-1 items-center gap-0.5 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {bn ? c.name_bn : c.name_en}
-            </button>
-          ))}
-          <Link
-            to="/track"
-            className="ml-auto whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted"
-          >
-            {bn ? "অর্ডার ট্র্যাক" : "Track order"}
-          </Link>
-          <Link
-            to="/my-account"
-            search={{ tab: "orders" }}
-            className="whitespace-nowrap rounded-full px-3 py-1.5 hover:bg-muted sm:hidden"
-          >
-            {bn ? "অ্যাকাউন্ট" : "Account"}
-          </Link>
-        </nav>
+              <button
+                type="button"
+                onClick={() => {
+                  setCat("");
+                  setQuery("");
+                  setLimit(PAGE);
+                }}
+                className={cn(
+                  menuItemClass,
+                  !cat && !query.trim() && "bg-primary/10 text-primary",
+                )}
+              >
+                <Home className="size-4" />
+                {bn ? "হোম" : "Home"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCat("");
+                  setLimit(PAGE);
+                }}
+                className={menuItemClass}
+              >
+                <ShoppingBasket className="size-4" />
+                {bn ? "সব পণ্য" : "All products"}
+              </button>
+              <Link to="/track" className={menuItemClass}>
+                <Truck className="size-4" />
+                {bn ? "অর্ডার ট্র্যাক" : "Track order"}
+              </Link>
+              <Link to="/my-orders" className={menuItemClass}>
+                <ShoppingBag className="size-4" />
+                {bn ? "আমার অর্ডার" : "My orders"}
+              </Link>
+              <Link to="/corporate" className={menuItemClass}>
+                <Building2 className="size-4" />
+                {bn ? "কর্পোরেট" : "Corporate"}
+              </Link>
+              <a href="tel:16710" className={menuItemClass}>
+                <LifeBuoy className="size-4" />
+                {bn ? "সহায়তা" : "Support"}
+              </a>
+            </nav>
+
+            <a
+              href="tel:16710"
+              className="hidden shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 font-semibold text-primary lg:flex"
+            >
+              <Phone className="size-4" />
+              {bn ? "হটলাইন ১৬৭১০" : "Hotline 16710"}
+            </a>
+          </div>
+        </div>
 
         {!online && (
           <div className="flex items-center justify-center gap-2 bg-warning/20 py-1 text-xs">
@@ -1082,6 +1159,63 @@ function ShopPage() {
                 title={bn ? "২৪/৭ সাপোর্ট" : "24/7 support"}
                 sub={bn ? "কল করুন ১৬৭১০" : "Call 16710"}
               />
+            </div>
+          </section>
+
+          {/* ---- Category showcase ---- */}
+          <section className="mt-8">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <h2 className="font-display text-xl font-extrabold">
+                  {bn ? "ক্যাটাগরি" : "Categories"}
+                </h2>
+                <span className="mt-1 block h-1 w-10 rounded-full bg-primary" />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setCat("");
+                  setLimit(PAGE);
+                }}
+                className="text-sm font-semibold text-primary hover:underline"
+              >
+                {bn ? "সব দেখুন" : "See all"}
+              </button>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+              {(categories.data ?? []).slice(0, 12).map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    setCat(c.id);
+                    setLimit(PAGE);
+                  }}
+                  className={cn(
+                    "shop-card flex flex-col items-center gap-2 p-3 text-center transition-colors hover:border-primary/40",
+                    cat === c.id && "border-primary/60 bg-primary/5",
+                  )}
+                >
+                  <span className="flex size-14 items-center justify-center overflow-hidden rounded-2xl bg-muted">
+                    {catImage.get(c.id) ? (
+                      <img
+                        src={catImage.get(c.id)}
+                        alt=""
+                        loading="lazy"
+                        className="size-full object-contain p-1"
+                      />
+                    ) : (
+                      <ShoppingBasket className="size-6 text-primary" />
+                    )}
+                  </span>
+                  <span className="text-xs font-semibold leading-tight">
+                    {bn ? c.name_bn : c.name_en}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {num(catCounts.get(c.id) ?? 0, lang)} {bn ? "পণ্য" : "items"}
+                  </span>
+                </button>
+              ))}
             </div>
           </section>
 
