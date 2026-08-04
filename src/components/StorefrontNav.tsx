@@ -215,18 +215,34 @@ export function StorefrontNav({
           </SheetContent>
         </Sheet>
 
-        {/* Desktop: mega menu — opens on hover and on tap */}
+        {/* Desktop: mega menu — opens on hover, tap and keyboard */}
         <div
           className="relative hidden shrink-0 lg:block"
           onMouseEnter={openMega}
           onMouseLeave={scheduleClose}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && megaOpen) {
+              setMegaOpen(false);
+              megaBtnRef.current?.focus();
+            }
+          }}
         >
           <button
+            ref={megaBtnRef}
             type="button"
+            id="mega-trigger"
             aria-expanded={megaOpen}
-            aria-haspopup="true"
+            aria-haspopup="menu"
+            aria-controls="mega-menu"
             onClick={() => setMegaOpen((o) => !o)}
-            className="flex min-h-12 items-center gap-2 rounded-t-xl bg-primary px-4 font-semibold text-primary-foreground"
+            onKeyDown={(e) => {
+              if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openMega();
+                window.setTimeout(() => focusItem(0), 0);
+              }
+            }}
+            className="flex min-h-12 items-center gap-2 rounded-t-xl bg-primary px-4 font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             <LayoutGrid className="size-4" />
             <span>{bn ? "সব ক্যাটাগরি" : "All categories"}</span>
@@ -236,14 +252,20 @@ export function StorefrontNav({
             <>
               <button
                 type="button"
-                aria-label={bn ? "বন্ধ করুন" : "Close"}
+                tabIndex={-1}
+                aria-hidden="true"
                 className="fixed inset-0 z-30 cursor-default"
                 onClick={() => setMegaOpen(false)}
               />
               <div
+                id="mega-menu"
+                ref={megaRef}
+                role="menu"
+                aria-labelledby="mega-trigger"
                 className="absolute left-0 top-full z-40 w-[min(92vw,780px)] origin-top-left animate-scale-in rounded-2xl rounded-tl-none border border-border bg-popover p-3 shadow-xl"
                 onMouseEnter={openMega}
                 onMouseLeave={scheduleClose}
+                onKeyDown={onMegaKeyDown}
               >
                 <div className="mb-2 h-1 w-12 rounded-full bg-primary/30 lg:hidden" />
                 <div className="grid gap-1 sm:grid-cols-3">
@@ -254,13 +276,16 @@ export function StorefrontNav({
                       <Link
                         key={c.id}
                         {...catLink(c)}
+                        role="menuitem"
+                        data-mega-item=""
                         onClick={() => setMegaOpen(false)}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "group flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm transition-all duration-150 hover:bg-muted hover:shadow-sm",
+                          "group flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm transition-all duration-150 hover:bg-muted hover:shadow-sm focus-visible:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                           active && "bg-primary/10 ring-1 ring-primary/30",
                         )}
                       >
+
                         <span
                           className={cn(
                             "grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition-transform duration-150 group-hover:scale-105",
