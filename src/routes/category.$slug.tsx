@@ -6,7 +6,7 @@
  * cart so the basket stays in sync with the homepage.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ChevronRight,
