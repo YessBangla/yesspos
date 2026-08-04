@@ -16,6 +16,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { registerServiceWorker } from "@/lib/pwa";
 import { CareChat } from "@/components/CareChat";
+import { CartAccountSync } from "@/lib/cart-sync";
 
 /** Staff dashboard routes where the public Care chat is hidden. */
 const DASHBOARD_PATHS = [
@@ -161,6 +162,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
         <AuthSync />
+        <CartAccountSync />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
         {showCare && <CareChat />}

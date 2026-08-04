@@ -1,14 +1,26 @@
 /**
  * Touch-friendly cart drawer shared by the storefront header and menu bar.
  *
- * Step 1 shows every line with large +/- controls, the area-based delivery
- * charge and a checkout button. Step 2 is an in-drawer express checkout with
- * the full pricing calculation, so shoppers can finish an order without
- * leaving the page. Orders placed while offline are queued and replayed.
+ * Step 1 shows every line with large +/- controls, live stock limits, a promo
+ * code field, the area-based delivery charge, a delivery date/time window
+ * picker and a checkout button. Step 2 is an in-drawer express checkout with
+ * the full pricing calculation. Orders placed while offline are queued and the
+ * queue status (pending / retrying / failed) is shown with a retry button.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, CheckCircle2, Minus, Plus, ShoppingBasket, Trash2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  BadgePercent,
+  CheckCircle2,
+  Loader2,
+  Minus,
+  Plus,
+  ShoppingBasket,
+  Trash2,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -17,9 +29,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DeliveryAreaPicker } from "@/components/DeliveryAreaPicker";
+import { DeliverySlotPicker, type SlotChoice } from "@/components/DeliverySlotPicker";
+import { CheckoutQueueStatus } from "@/components/CheckoutQueueStatus";
 import { useDeliveryArea } from "@/lib/delivery-area";
-import { deliveryFeeFor, useShopCart } from "@/lib/shop-cart";
+import { applyStockLimits, clampQty, deliveryFeeFor, useShopCart } from "@/lib/shop-cart";
 import { queueOrder } from "@/lib/delivery-queue";
+import { applyCoupon } from "@/lib/coupon";
+import { slotLabel, slotText } from "@/lib/slots";
 import { supabase } from "@/integrations/supabase/client";
 import { money, num, useI18n } from "@/lib/i18n";
 
@@ -47,14 +63,102 @@ export function CartDrawer({
   const bn = lang === "bn";
   const cart = useShopCart();
   const { area } = useDeliveryArea();
-  const fee = deliveryFeeFor(cart.subtotal, area.fee);
-  const total = cart.subtotal + fee;
 
   const [step, setStep] = useState<"cart" | "checkout">("cart");
   const [form, setForm] = useState({ name: "", phone: "", address: "", note: "" });
   const [errs, setErrs] = useState<Record<string, string>>({});
   const [placing, setPlacing] = useState(false);
   const [placed, setPlaced] = useState<number | null>(null);
+  const [slot, setSlot] = useState<SlotChoice>(null);
+  const [code, setCode] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponMsg, setCouponMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [checkingCoupon, setCheckingCoupon] = useState(false);
+
+  const ids = cart.lines.map((l) => l.id).sort().join(",");
+
+  // --- live stock for the products in the cart ---
+  const stock = useQuery({
+    queryKey: ["cart-stock", ids],
+    enabled: open && ids.length > 0,
+    staleTime: 15_000,
+    refetchInterval: open ? 60_000 : false,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id,stock,is_active")
+        .in("id", ids.split(","));
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      for (const p of data ?? []) map[p.id] = p.is_active === false ? 0 : Number(p.stock ?? 0);
+      return map;
+    },
+  });
+
+  useEffect(() => {
+    if (!stock.data) return;
+    const adjusted = applyStockLimits(stock.data);
+    if (adjusted.length === 0) return;
+    const first = adjusted[0];
+    const name = bn ? first.line.name_bn : first.line.name_en;
+    toast.warning(
+      first.to === 0
+        ? bn
+          ? `"${name}" এখন স্টকে নেই — কার্ট থেকে সরানো হয়েছে`
+          : `"${name}" is out of stock and was removed`
+        : bn
+          ? `"${name}" শুধু ${num(first.to, lang)}টি পাওয়া যাচ্ছে`
+          : `Only ${first.to} of "${name}" available`,
+    );
+  }, [stock.data, bn, lang]);
+
+  const stockFor = (id: string) => stock.data?.[id];
+
+  // --- pricing ---
+  const fee = deliveryFeeFor(cart.subtotal, area.fee);
+  const discount = useMemo(
+    () => (coupon ? Math.min(coupon.discount, cart.subtotal) : 0),
+    [coupon, cart.subtotal],
+  );
+  const total = Math.max(0, cart.subtotal - discount) + fee;
+
+  // Re-validate a live coupon whenever the cart value changes.
+  useEffect(() => {
+    if (!coupon) return;
+    if (cart.subtotal <= 0) {
+      setCoupon(null);
+      setCouponMsg(null);
+      return;
+    }
+    let cancelled = false;
+    void applyCoupon(coupon.code, cart.subtotal, bn).then((r) => {
+      if (cancelled) return;
+      if (r.ok) setCoupon({ code: r.code, discount: r.discount });
+      else {
+        setCoupon(null);
+        setCouponMsg({ ok: false, text: r.message });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart.subtotal]);
+
+  async function submitCoupon() {
+    if (!code.trim()) return;
+    setCheckingCoupon(true);
+    try {
+      const r = await applyCoupon(code, cart.subtotal, bn);
+      setCouponMsg({ ok: r.ok, text: r.message });
+      if (r.ok) {
+        setCoupon({ code: r.code, discount: r.discount });
+        setCode("");
+      } else setCoupon(null);
+    } finally {
+      setCheckingCoupon(false);
+    }
+  }
 
   // Reopening the drawer always starts on the cart list.
   useEffect(() => {
@@ -88,16 +192,20 @@ export function CartDrawer({
       return;
     }
 
+    const hasSlot = !!slot?.slotId;
     const orderRow = {
       customer_name: parsed.data.name,
       customer_phone: parsed.data.phone,
       address: parsed.data.address,
       area: bn ? area.bn : area.en,
       note: parsed.data.note || null,
-      slot: bn ? area.eta_bn : area.eta_en,
+      slot: hasSlot ? slotLabel(slot!.day, slot!.slotId, bn) : bn ? area.eta_bn : area.eta_en,
+      slot_date: hasSlot ? slot!.day : null,
+      slot_id: hasSlot ? slot!.slotId : null,
       payment_method: "cod",
       subtotal: cart.subtotal,
-      discount: 0,
+      discount,
+      coupon_code: coupon?.code ?? null,
       delivery_fee: fee,
       total,
     };
@@ -135,6 +243,7 @@ export function CartDrawer({
       if (itemErr) throw itemErr;
 
       cart.clear();
+      setCoupon(null);
       setPlaced(Number(data.order_no));
       toast.success(bn ? "অর্ডার নিশ্চিত হয়েছে" : "Order confirmed");
     } catch {
@@ -151,15 +260,78 @@ export function CartDrawer({
     }
   }
 
+  const couponBox = (
+    <div className="space-y-1.5">
+      {coupon ? (
+        <div className="flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-xs">
+          <BadgePercent className="size-3.5 text-primary" />
+          <span className="font-bold text-primary">{coupon.code}</span>
+          <span className="text-muted-foreground">
+            −{money(discount, lang)}
+          </span>
+          <button
+            type="button"
+            aria-label={bn ? "কুপন সরান" : "Remove coupon"}
+            onClick={() => {
+              setCoupon(null);
+              setCouponMsg(null);
+            }}
+            className="ml-auto grid size-6 place-items-center rounded-full hover:bg-background"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <Input
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void submitCoupon();
+              }
+            }}
+            placeholder={bn ? "প্রোমো কোড" : "Promo code"}
+            aria-label={bn ? "প্রোমো কোড" : "Promo code"}
+            className="h-10 rounded-full text-sm uppercase"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 shrink-0 rounded-full"
+            disabled={checkingCoupon || !code.trim() || cart.subtotal <= 0}
+            onClick={() => void submitCoupon()}
+          >
+            {checkingCoupon ? <Loader2 className="size-4 animate-spin" /> : bn ? "প্রয়োগ" : "Apply"}
+          </Button>
+        </div>
+      )}
+      {couponMsg && !coupon && (
+        <p className="text-xs font-medium text-destructive">{couponMsg.text}</p>
+      )}
+    </div>
+  );
+
   const summary = (
     <div className="space-y-2 text-sm">
       <div className="flex items-center justify-between gap-2">
         <span className="text-muted-foreground">{bn ? "ডেলিভারি এরিয়া" : "Delivery area"}</span>
         <DeliveryAreaPicker className="h-9" />
       </div>
+      <DeliverySlotPicker value={slot} onChange={setSlot} />
+      {couponBox}
       <Line label={bn ? "সাবটোটাল" : "Subtotal"} value={money(cart.subtotal, lang)} />
+      {discount > 0 && (
+        <Line
+          label={`${bn ? "ছাড়" : "Discount"} · ${coupon?.code ?? ""}`}
+          value={`− ${money(discount, lang)}`}
+        />
+      )}
       <Line
-        label={`${bn ? "ডেলিভারি" : "Delivery"} · ${bn ? area.eta_bn : area.eta_en}`}
+        label={`${bn ? "ডেলিভারি" : "Delivery"} · ${
+          slot?.slotId ? slotText(slot.slotId, bn) : bn ? area.eta_bn : area.eta_en
+        }`}
         value={fee === 0 ? (bn ? "ফ্রি" : "Free") : money(fee, lang)}
       />
       <Line label={bn ? "সর্বমোট" : "Total"} value={money(total, lang)} bold />
@@ -213,7 +385,7 @@ export function CartDrawer({
         </SheetHeader>
 
         {placed !== null ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 overflow-y-auto p-6 text-center">
             <CheckCircle2 className="size-12 text-primary" />
             <p className="text-lg font-bold">
               {placed > 0
@@ -229,6 +401,9 @@ export function CartDrawer({
                 ? "আমাদের টিম শীঘ্রই কল করে অর্ডার নিশ্চিত করবে।"
                 : "Our team will call you shortly to confirm."}
             </p>
+            <div className="w-full text-left">
+              <CheckoutQueueStatus />
+            </div>
             <Button
               className="mt-2 w-full rounded-full"
               onClick={() => onOpenChange(false)}
@@ -240,51 +415,72 @@ export function CartDrawer({
         ) : step === "cart" ? (
           <>
             <div className="flex-1 divide-y divide-border overflow-y-auto">
-              {cart.lines.map((l) => (
-                <div key={l.id} className="flex items-center gap-3 p-3">
-                  {l.image_url ? (
-                    <img
-                      src={l.image_url}
-                      alt=""
-                      loading="lazy"
-                      className="size-14 shrink-0 rounded-xl object-cover"
-                    />
-                  ) : (
-                    <span className="size-14 shrink-0 rounded-xl bg-muted" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{bn ? l.name_bn : l.name_en}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {l.pack_size ? `${l.pack_size} · ` : ""}
-                      {money(l.price, lang)}
-                    </p>
-                    <div className="mt-1.5 flex items-center gap-2">
-                      <button
-                        type="button"
-                        aria-label={bn ? "কমান" : "Decrease"}
-                        onClick={() => cart.setQty(l.id, l.qty - 1)}
-                        className="grid size-9 place-items-center rounded-full border border-border hover:bg-muted"
-                      >
-                        {l.qty <= 1 ? <Trash2 className="size-4" /> : <Minus className="size-4" />}
-                      </button>
-                      <span className="min-w-6 text-center text-sm font-bold">
-                        {num(l.qty, lang)}
-                      </span>
-                      <button
-                        type="button"
-                        aria-label={bn ? "বাড়ান" : "Increase"}
-                        onClick={() => cart.setQty(l.id, l.qty + 1)}
-                        className="grid size-9 place-items-center rounded-full border border-border hover:bg-muted"
-                      >
-                        <Plus className="size-4" />
-                      </button>
-                      <span className="ml-auto text-sm font-bold text-primary">
-                        {money(l.price * l.qty, lang)}
-                      </span>
+              {cart.lines.map((l) => {
+                const max = stockFor(l.id);
+                const atMax = clampQty(l.qty + 1, max ?? l.stock) === l.qty;
+                return (
+                  <div key={l.id} className="flex items-center gap-3 p-3">
+                    {l.image_url ? (
+                      <img
+                        src={l.image_url}
+                        alt=""
+                        loading="lazy"
+                        className="size-14 shrink-0 rounded-xl object-cover"
+                      />
+                    ) : (
+                      <span className="size-14 shrink-0 rounded-xl bg-muted" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{bn ? l.name_bn : l.name_en}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {l.pack_size ? `${l.pack_size} · ` : ""}
+                        {money(l.price, lang)}
+                      </p>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <button
+                          type="button"
+                          aria-label={bn ? "কমান" : "Decrease"}
+                          onClick={() => cart.setQty(l.id, l.qty - 1)}
+                          className="grid size-9 place-items-center rounded-full border border-border hover:bg-muted"
+                        >
+                          {l.qty <= 1 ? <Trash2 className="size-4" /> : <Minus className="size-4" />}
+                        </button>
+                        <span className="min-w-6 text-center text-sm font-bold">
+                          {num(l.qty, lang)}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label={bn ? "বাড়ান" : "Increase"}
+                          disabled={atMax}
+                          onClick={() => {
+                            const next = clampQty(l.qty + 1, max ?? l.stock);
+                            if (next === l.qty) {
+                              toast.warning(
+                                bn
+                                  ? `আর যোগ করা যাবে না — স্টকে ${num(l.qty, lang)}টি আছে`
+                                  : `No more available — only ${l.qty} in stock`,
+                              );
+                              return;
+                            }
+                            cart.setQty(l.id, next);
+                          }}
+                          className="grid size-9 place-items-center rounded-full border border-border hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <Plus className="size-4" />
+                        </button>
+                        <span className="ml-auto text-sm font-bold text-primary">
+                          {money(l.price * l.qty, lang)}
+                        </span>
+                      </div>
+                      {typeof max === "number" && max > 0 && max <= 5 && (
+                        <p className="mt-1 text-[11px] font-medium text-amber-600">
+                          {bn ? `স্টকে মাত্র ${num(max, lang)}টি` : `Only ${max} left in stock`}
+                        </p>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {cart.lines.length === 0 && (
                 <div className="px-6 py-14 text-center">
                   <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
@@ -295,9 +491,12 @@ export function CartDrawer({
                   </p>
                 </div>
               )}
+              <div className="p-3">
+                <CheckoutQueueStatus />
+              </div>
             </div>
 
-            <div className="space-y-2 border-t border-border bg-muted/40 p-4">
+            <div className="max-h-[62vh] space-y-2 overflow-y-auto border-t border-border bg-muted/40 p-4">
               {summary}
               {onCheckout ? (
                 <Button
@@ -328,7 +527,7 @@ export function CartDrawer({
                     className="w-full rounded-full font-semibold"
                   >
                     <Link to="/" search={{ checkout: true }} onClick={() => onOpenChange(false)}>
-                      {bn ? "সময় বেছে নিয়ে চেকআউট" : "Checkout with delivery slot"}
+                      {bn ? "সম্পূর্ণ চেকআউট পেজ" : "Full checkout page"}
                     </Link>
                   </Button>
                 </>
@@ -387,6 +586,7 @@ export function CartDrawer({
                 onChange={(v) => setForm((f) => ({ ...f, note: v }))}
               />
               <div className="rounded-2xl border border-border bg-muted/40 p-3">{summary}</div>
+              <CheckoutQueueStatus />
               <p className="text-xs text-muted-foreground">
                 {bn
                   ? "পেমেন্ট: ক্যাশ অন ডেলিভারি"
