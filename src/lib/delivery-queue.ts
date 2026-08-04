@@ -3,8 +3,9 @@
  *
  * Online-shop checkouts placed while the browser is offline (or that fail
  * mid-flight) are stored in IndexedDB with the full payload, then replayed
- * with retry/backoff as soon as the connection returns. Nothing is lost and
- * the shopper always sees the queue status.
+ * with retry/backoff as soon as the connection returns. Every entry carries a
+ * live step — pending → sending → done / failed — so the checkout UI can show
+ * accurate progress and mark steps completed once the order lands.
  */
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,6 +13,8 @@ const DB_NAME = "yesspos-delivery";
 const STORE = "pending-orders";
 const VERSION = 1;
 const MAX_ATTEMPTS = 6;
+/** How long a completed entry stays visible in the status board. */
+const DONE_TTL_MS = 10 * 60 * 1000;
 
 export type QueuedItem = {
   product_id: string;
@@ -21,6 +24,8 @@ export type QueuedItem = {
   line_total: number;
 };
 
+export type QueueStep = "pending" | "sending" | "done" | "failed";
+
 export type QueuedOrder = {
   id: string;
   createdAt: string;
@@ -29,6 +34,12 @@ export type QueuedOrder = {
   attempts: number;
   nextTryAt: string;
   lastError: string | null;
+  /** Live checkout step for this entry. */
+  status?: QueueStep;
+  /** Order number assigned by the backend once the replay succeeded. */
+  orderNo?: number | null;
+  /** Timestamp the entry reached `done`; used to auto-clear the card. */
+  doneAt?: string | null;
 };
 
 export function isQueueSupported() {
@@ -69,6 +80,9 @@ export async function queueOrder(order: Record<string, unknown>, items: QueuedIt
     attempts: 0,
     nextTryAt: new Date().toISOString(),
     lastError: null,
+    status: "pending",
+    orderNo: null,
+    doneAt: null,
   };
   await tx("readwrite", (s) => s.add(entry));
   notify();
@@ -79,7 +93,16 @@ export async function listQueuedOrders(): Promise<QueuedOrder[]> {
   if (!isQueueSupported()) return [];
   try {
     const rows = await tx<QueuedOrder[]>("readonly", (s) => s.getAll() as IDBRequest<QueuedOrder[]>);
-    return rows.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    const now = Date.now();
+    const fresh = rows.filter(
+      (r) => !(r.status === "done" && r.doneAt && now - new Date(r.doneAt).getTime() > DONE_TTL_MS),
+    );
+    if (fresh.length !== rows.length) {
+      await Promise.all(
+        rows.filter((r) => !fresh.includes(r)).map((r) => remove(r.id).catch(() => undefined)),
+      );
+    }
+    return fresh.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   } catch {
     return [];
   }
@@ -95,6 +118,35 @@ async function remove(id: string) {
 
 export async function dropQueuedOrder(id: string) {
   await remove(id);
+  notify();
+}
+
+/**
+ * Refresh the payment / session details on a queued order before a retry, so
+ * the replay always uses the latest payment method and customer session.
+ */
+export async function updateQueuedOrder(id: string, patch: Record<string, unknown>) {
+  const rows = await listQueuedOrders();
+  const entry = rows.find((r) => r.id === id);
+  if (!entry) return;
+  await put({
+    ...entry,
+    order: { ...entry.order, ...patch },
+    status: entry.status === "failed" ? "pending" : (entry.status ?? "pending"),
+    attempts: 0,
+    nextTryAt: new Date().toISOString(),
+    lastError: null,
+  });
+  notify();
+}
+
+/** Apply a payment patch to every entry still waiting to be sent. */
+export async function updatePendingPayment(patch: Record<string, unknown>) {
+  const rows = await listQueuedOrders();
+  for (const r of rows) {
+    if (r.status === "done") continue;
+    await put({ ...r, order: { ...r.order, ...patch } });
+  }
   notify();
 }
 
@@ -115,11 +167,15 @@ export async function syncQueuedOrders(force = false): Promise<SyncResult> {
     const now = Date.now();
 
     for (const entry of pending) {
+      if (entry.status === "done") continue;
       if (entry.attempts >= MAX_ATTEMPTS) {
         result.blocked += 1;
         continue;
       }
       if (!force && new Date(entry.nextTryAt).getTime() > now) continue;
+
+      await put({ ...entry, status: "sending" });
+      notify();
 
       try {
         const { data, error } = await supabase
@@ -134,7 +190,13 @@ export async function syncQueuedOrders(force = false): Promise<SyncResult> {
         const { error: itemErr } = await supabase.from("delivery_order_items").insert(items);
         if (itemErr) throw itemErr;
 
-        await remove(entry.id);
+        await put({
+          ...entry,
+          status: "done",
+          orderNo: Number(data.order_no),
+          doneAt: new Date().toISOString(),
+          lastError: null,
+        });
         result.synced += 1;
         result.placed.push(Number(data.order_no));
       } catch (e) {
@@ -142,6 +204,7 @@ export async function syncQueuedOrders(force = false): Promise<SyncResult> {
         await put({
           ...entry,
           attempts,
+          status: "failed",
           // exponential backoff: 5s, 10s, 20s … capped at 5 minutes
           nextTryAt: new Date(Date.now() + Math.min(5000 * 2 ** (attempts - 1), 300_000)).toISOString(),
           lastError: e instanceof Error ? e.message : "Sync failed",
