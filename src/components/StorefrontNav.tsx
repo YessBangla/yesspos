@@ -24,6 +24,8 @@ import {
   LayoutGrid,
   Leaf,
   LifeBuoy,
+  PiggyBank,
+
   Menu,
   Milk,
   PawPrint,
