@@ -133,24 +133,17 @@ function MyOrdersPage() {
   }
 
   return (
-    <main className="min-h-screen bg-muted/30">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="size-4" />
-            {bn ? "দোকানে ফিরুন" : "Back to shop"}
-          </Link>
-          <div className="ml-auto flex items-center gap-2">
-            <LangToggle />
-            <span className="gradient-brand grid size-8 place-items-center rounded-xl text-primary-foreground">
-              <ShoppingBasket className="size-4" />
-            </span>
-          </div>
-        </div>
-      </header>
+    <main className="storefront min-h-screen bg-muted/30">
+      <StorefrontHeader />
+      <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 pt-3">
+        <Link
+          to="/"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          {bn ? "দোকানে ফিরুন" : "Back to shop"}
+        </Link>
+      </div>
 
       <div className="mx-auto max-w-5xl px-4 py-6">
         <h1 className="font-display text-2xl font-bold">{bn ? "আমার অর্ডার" : "My orders"}</h1>
