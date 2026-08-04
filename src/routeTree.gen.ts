@@ -20,6 +20,7 @@ import { Route as MyOrdersRouteImport } from './routes/my-orders'
 import { Route as MyAccountRouteImport } from './routes/my-account'
 import { Route as HomedeliveryRouteImport } from './routes/homedelivery'
 import { Route as CorporateRouteImport } from './routes/corporate'
+import { Route as BudgetRouteImport } from './routes/budget'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -120,6 +121,11 @@ const HomedeliveryRoute = HomedeliveryRouteImport.update({
 const CorporateRoute = CorporateRouteImport.update({
   id: '/corporate',
   path: '/corporate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BudgetRoute = BudgetRouteImport.update({
+  id: '/budget',
+  path: '/budget',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -366,6 +372,7 @@ const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/budget': typeof BudgetRoute
   '/corporate': typeof CorporateRoute
   '/homedelivery': typeof HomedeliveryRoute
   '/my-account': typeof MyAccountRoute
@@ -424,6 +431,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/budget': typeof BudgetRoute
   '/corporate': typeof CorporateRoute
   '/homedelivery': typeof HomedeliveryRoute
   '/my-account': typeof MyAccountRoute
@@ -484,6 +492,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/budget': typeof BudgetRoute
   '/corporate': typeof CorporateRoute
   '/homedelivery': typeof HomedeliveryRoute
   '/my-account': typeof MyAccountRoute
@@ -544,6 +553,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/budget'
     | '/corporate'
     | '/homedelivery'
     | '/my-account'
@@ -602,6 +612,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/budget'
     | '/corporate'
     | '/homedelivery'
     | '/my-account'
@@ -661,6 +672,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/budget'
     | '/corporate'
     | '/homedelivery'
     | '/my-account'
@@ -721,6 +733,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BudgetRoute: typeof BudgetRoute
   CorporateRoute: typeof CorporateRoute
   HomedeliveryRoute: typeof HomedeliveryRoute
   MyAccountRoute: typeof MyAccountRoute
@@ -813,6 +826,13 @@ declare module '@tanstack/react-router' {
       path: '/corporate'
       fullPath: '/corporate'
       preLoaderRoute: typeof CorporateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/budget': {
+      id: '/budget'
+      path: '/budget'
+      fullPath: '/budget'
+      preLoaderRoute: typeof BudgetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1235,6 +1255,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  BudgetRoute: BudgetRoute,
   CorporateRoute: CorporateRoute,
   HomedeliveryRoute: HomedeliveryRoute,
   MyAccountRoute: MyAccountRoute,
