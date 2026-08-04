@@ -50,6 +50,8 @@ type NavLink = { to?: string; href?: string; icon: LucideIcon; bn: string; en: s
 const LINKS: NavLink[] = [
   { to: "/", icon: Home, bn: "হোম", en: "Home" },
   { to: "/shop", icon: ShoppingBasket, bn: "স্টোর", en: "Store" },
+  { to: "/budget", icon: PiggyBank, bn: "বাজেট বাজার", en: "Budget planner" },
+
   { to: "/track", icon: Truck, bn: "অর্ডার ট্র্যাক", en: "Track order" },
   { to: "/my-orders", icon: ShoppingBag, bn: "আমার অর্ডার", en: "My orders" },
   { href: "tel:16710", icon: LifeBuoy, bn: "সহায়তা", en: "Support" },
