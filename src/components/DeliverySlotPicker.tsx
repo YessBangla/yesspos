@@ -56,7 +56,7 @@ export function DeliverySlotPicker({
             key={k}
             type="button"
             aria-pressed={k === day}
-            onClick={() => onChange(null) || onChange({ day: k, slotId: "" })}
+            onClick={() => onChange({ day: k, slotId: "" })}
             className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
               k === day
                 ? "border-primary bg-primary text-primary-foreground"
