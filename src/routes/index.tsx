@@ -1082,7 +1082,7 @@ function ShopPage() {
                 {bn ? "সব দেখুন" : "See all"}
               </button>
             </div>
-            <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+            <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 xl:grid-cols-6">
               {(categories.data ?? []).slice(0, 12).map((c) => (
                 <Link
                   key={c.id}
@@ -1102,8 +1102,10 @@ function ShopPage() {
                       <ShoppingBasket className="size-6 text-primary" />
                     )}
                   </span>
-                  <span className="text-sm font-bold leading-tight">{c.name_bn}</span>
-                  <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <span className="line-clamp-2 w-full text-sm font-bold leading-tight">
+                    {c.name_bn}
+                  </span>
+                  <span className="line-clamp-1 w-full text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                     {c.name_en}
                   </span>
                 </Link>
