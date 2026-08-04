@@ -9,10 +9,27 @@ export type ShopLine = {
   pack_size: string | null;
   image_url: string | null;
   qty: number;
+  /** Last known sellable stock; used to cap quantities in the cart. */
+  stock?: number | null;
 };
 
 const KEY = "shop-cart-v1";
 const EVENT = "shop-cart-change";
+
+/** Broadcast whenever the cart changes — listened to by badges and sync. */
+export const CART_EVENT = EVENT;
+
+/** Hard cap per line when a product has no stock information. */
+export const MAX_PER_LINE = 20;
+
+export function readCart(): ShopLine[] {
+  return read();
+}
+
+/** Overwrite the whole cart (used by cross-device sync). */
+export function writeCart(lines: ShopLine[]) {
+  write(lines);
+}
 
 function read(): ShopLine[] {
   if (typeof window === "undefined") return [];
@@ -61,8 +78,10 @@ export function useShopCart() {
       const current = read();
       const found = current.find((l) => l.id === p.id);
       const next = found
-        ? current.map((l) => (l.id === p.id ? { ...l, qty: Math.min(l.qty + qty, 999) } : l))
-        : [...current, { ...p, qty }];
+        ? current.map((l) =>
+            l.id === p.id ? { ...l, ...p, qty: clampQty(l.qty + qty, p.stock) } : l,
+          )
+        : [...current, { ...p, qty: clampQty(qty, p.stock) }];
       update(next);
     },
     [update],
@@ -71,7 +90,7 @@ export function useShopCart() {
   const setQty = useCallback(
     (id: string, qty: number) => {
       const next = read()
-        .map((l) => (l.id === id ? { ...l, qty } : l))
+        .map((l) => (l.id === id ? { ...l, qty: clampQty(qty, l.stock) } : l))
         .filter((l) => l.qty > 0);
       update(next);
     },
@@ -84,6 +103,12 @@ export function useShopCart() {
   const count = lines.reduce((s, l) => s + l.qty, 0);
 
   return { lines, add, setQty, clear, subtotal, count };
+}
+
+/** Clamp a requested quantity to the sellable stock (or the global cap). */
+export function clampQty(qty: number, stock?: number | null) {
+  const limit = typeof stock === "number" && stock >= 0 ? Math.min(stock, 999) : MAX_PER_LINE;
+  return Math.max(0, Math.min(Math.round(qty), limit));
 }
 
 /** Free delivery above ৳1000, otherwise the selected area's base fee. */
