@@ -805,7 +805,6 @@ function ShopPage() {
               <span className="hidden h-9 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground sm:inline-flex">
                 {bn ? "খুঁজুন" : "Search"}
               </span>
-
             </div>
             <span id="shop-search-hint" className="sr-only">
               {bn
@@ -873,7 +872,6 @@ function ShopPage() {
             <LangToggle />
             <CustomerAccountMenu />
           </div>
-
 
           <Button
             className="h-12 shrink-0 rounded-full px-5 font-semibold"
@@ -1108,7 +1106,6 @@ function ShopPage() {
                   <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                     {c.name_en}
                   </span>
-
                 </Link>
               ))}
             </div>

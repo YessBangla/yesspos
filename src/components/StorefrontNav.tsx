@@ -59,7 +59,8 @@ export function StorefrontNav({
     params: { slug: slugify(c.name_en) },
   });
 
-  const isActive = (l: NavLink) => !!l.to && (l.to === "/" ? pathname === "/" : pathname.startsWith(l.to));
+  const isActive = (l: NavLink) =>
+    !!l.to && (l.to === "/" ? pathname === "/" : pathname.startsWith(l.to));
 
   const desktopItem = (l: NavLink, active: boolean) =>
     cn(

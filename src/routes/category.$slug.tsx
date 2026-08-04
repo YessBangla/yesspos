@@ -186,7 +186,7 @@ function CategoryPage() {
 
           <form
             role="search"
-            className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-card pl-3 pr-1.5 shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"
+            className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-muted/40 pl-4 pr-1.5 shadow-sm focus-within:border-primary focus-within:bg-card focus-within:ring-2 focus-within:ring-primary/15"
             onSubmit={(e) => {
               e.preventDefault();
               navigate({
@@ -227,7 +227,7 @@ function CategoryPage() {
             )}
             <button
               type="submit"
-              className="hidden h-9 shrink-0 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground sm:inline-flex"
+              className="hidden h-9 shrink-0 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground sm:inline-flex"
             >
               {bn ? "খুঁজুন" : "Search"}
             </button>
