@@ -378,7 +378,14 @@ function CategoryPage() {
         )}
 
         {/* Grid */}
-        {notReady ? (
+        <div
+          id="cat-results"
+          role="region"
+          aria-live="polite"
+          aria-busy={notReady || searching}
+          aria-label={bn ? "পণ্যের ফলাফল" : "Product results"}
+        >
+        {notReady || searching ? (
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {Array.from({ length: 10 }).map((_, i) => (
               <div key={i} className="shop-card h-64 animate-pulse bg-muted/40" />
@@ -396,13 +403,43 @@ function CategoryPage() {
           </div>
         ) : visible.length === 0 ? (
           <div className="shop-card mt-8 p-8 text-center">
-            <p className="font-semibold">{bn ? "কোনো পণ্য মেলেনি" : "No products matched"}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {bn ? "অন্য শব্দ দিয়ে খুঁজে দেখুন" : "Try a different search term"}
+            <Search className="mx-auto size-8 text-muted-foreground" />
+            <p className="mt-3 font-semibold">
+              {debounced.trim()
+                ? bn
+                  ? `“${debounced.trim()}” — কোনো পণ্য মেলেনি`
+                  : `No products matched “${debounced.trim()}”`
+                : bn
+                  ? "এই ফিল্টারে কোনো পণ্য নেই"
+                  : "No products in this filter"}
             </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {bn
+                ? "বানান দেখে নিন বা ফিল্টার মুছে সব পণ্য দেখুন"
+                : "Check the spelling or clear the filters to see everything"}
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {(debounced.trim() || search.brand) && (
+                <Button
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={() => {
+                    setQuery("");
+                    setDebounced("");
+                    navigate({ search: (prev: CatSearch) => ({ ...prev, q: undefined, brand: undefined }) });
+                  }}
+                >
+                  {bn ? "ফিল্টার মুছুন" : "Clear filters"}
+                </Button>
+              )}
+              <Button asChild className="rounded-full">
+                <Link to="/">{bn ? "সব পণ্য দেখুন" : "Browse all products"}</Link>
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+
             {visible.map((p) => {
               const qty = cart.lines.find((l) => l.id === p.id)?.qty ?? 0;
               return (
