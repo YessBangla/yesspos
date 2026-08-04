@@ -83,6 +83,22 @@ function readPlan(): Plan {
   }
 }
 
+/** A reusable budget setup: period, amount and the item list. */
+type Template = { id: string; name: string; period: Period; budget: number; lines: PlanLine[] };
+
+const TKEY = "bazar-budget-templates-v1";
+
+function readTemplates(): Template[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(TKEY);
+    const arr = raw ? (JSON.parse(raw) as Template[]) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
 function BudgetPage() {
   const { lang } = useI18n();
   const bn = lang === "bn";
@@ -91,8 +107,44 @@ function BudgetPage() {
   const [plan, setPlan] = useState<Plan>({ period: "weekly", budget: DEFAULTS.weekly, lines: [] });
   const [term, setTerm] = useState("");
   const [debounced, setDebounced] = useState("");
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [tplName, setTplName] = useState("");
 
   useEffect(() => setPlan(readPlan()), []);
+  useEffect(() => setTemplates(readTemplates()), []);
+
+  function persistTemplates(next: Template[]) {
+    setTemplates(next);
+    try {
+      localStorage.setItem(TKEY, JSON.stringify(next));
+    } catch {
+      /* storage blocked — templates stay in memory */
+    }
+  }
+
+  function saveTemplate() {
+    if (plan.lines.length === 0) {
+      toast.error(bn ? "আগে তালিকায় পণ্য যোগ করুন" : "Add products to the list first");
+      return;
+    }
+    const name =
+      tplName.trim() ||
+      `${plan.period === "daily" ? (bn ? "দৈনিক" : "Daily") : plan.period === "weekly" ? (bn ? "সাপ্তাহিক" : "Weekly") : bn ? "মাসিক" : "Monthly"} · ${money(plan.budget, lang)}`;
+    persistTemplates([
+      { id: crypto.randomUUID(), name, period: plan.period, budget: plan.budget, lines: plan.lines },
+      ...templates,
+    ]);
+    setTplName("");
+    toast.success(bn ? "টেমপ্লেট সংরক্ষিত হয়েছে" : "Template saved");
+  }
+
+  function applyTemplate(t: Template) {
+    setPlan({ period: t.period, budget: t.budget, lines: t.lines.map((l) => ({ ...l })) });
+    toast.success(
+      bn ? `"${t.name}" থেকে নতুন তালিকা তৈরি হয়েছে` : `New list generated from "${t.name}"`,
+    );
+  }
+
   useEffect(() => {
     try {
       localStorage.setItem(KEY, JSON.stringify(plan));
