@@ -233,16 +233,17 @@ export function CartDrawer({
     }
 
     const hasSlot = !!slot?.slotId;
+    const slotName = hasSlot ? slotLabel(slot!.day, slot!.slotId, bn) : bn ? area.eta_bn : area.eta_en;
     const orderRow = {
       customer_name: parsed.data.name,
       customer_phone: parsed.data.phone,
       address: parsed.data.address,
       area: bn ? area.bn : area.en,
       note: parsed.data.note || null,
-      slot: hasSlot ? slotLabel(slot!.day, slot!.slotId, bn) : bn ? area.eta_bn : area.eta_en,
+      slot: slotName,
       slot_date: hasSlot ? slot!.day : null,
       slot_id: hasSlot ? slot!.slotId : null,
-      payment_method: "cod",
+      payment_method: payment,
       subtotal: cart.subtotal,
       discount,
       coupon_code: coupon?.code ?? null,
@@ -256,16 +257,46 @@ export function CartDrawer({
       quantity: l.qty,
       line_total: l.price * l.qty,
     }));
+    const snapshotBase = {
+      name: parsed.data.name,
+      phone: parsed.data.phone,
+      address: parsed.data.address,
+      area: bn ? area.bn : area.en,
+      slot: slotName,
+      paymentMethod: payment,
+      paymentLabel: paymentLabel(payment, bn),
+      subtotal: cart.subtotal,
+      discount,
+      couponCode: coupon?.code ?? null,
+      deliveryFee: fee,
+      total,
+      lines: cart.lines.map((l) => ({
+        name: bn ? l.name_bn : l.name_en,
+        qty: l.qty,
+        price: l.price,
+        line_total: l.price * l.qty,
+      })),
+      createdAt: new Date().toISOString(),
+    };
+
+    function finish(orderNo: number | null, queueId: string | null) {
+      saveOrderSnapshot({ ...snapshotBase, orderNo, queueId });
+      cart.clear();
+      setCoupon(null);
+      setPlaced(orderNo ?? 0);
+      onOpenChange(false);
+      void navigate({ to: "/order-confirmed" });
+    }
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
-      await queueOrder(orderRow, items);
-      cart.clear();
-      setPlaced(0);
+      const entry = await queueOrder(orderRow, items);
       toast.success(
         bn
           ? "অফলাইন — অনলাইনে এলে অর্ডার স্বয়ংক্রিয়ভাবে যাবে"
           : "Offline — your order will be sent automatically when you reconnect",
       );
+      setAnnounce(bn ? "অর্ডার সারিতে রাখা হয়েছে" : "Order queued");
+      finish(null, entry.id);
       return;
     }
 
@@ -282,22 +313,22 @@ export function CartDrawer({
         .insert(items.map((i) => ({ ...i, order_id: data.id })));
       if (itemErr) throw itemErr;
 
-      cart.clear();
-      setCoupon(null);
-      setPlaced(Number(data.order_no));
       toast.success(bn ? "অর্ডার নিশ্চিত হয়েছে" : "Order confirmed");
+      setAnnounce(bn ? "অর্ডার নিশ্চিত হয়েছে" : "Order confirmed");
+      finish(Number(data.order_no), null);
     } catch {
-      await queueOrder(orderRow, items);
-      cart.clear();
-      setPlaced(0);
+      const entry = await queueOrder(orderRow, items);
       toast.warning(
         bn
           ? "নেটওয়ার্ক সমস্যা — অর্ডার সারিতে রাখা হয়েছে"
           : "Network issue — your order was queued and will retry",
       );
+      setAnnounce(bn ? "অর্ডার সারিতে রাখা হয়েছে" : "Order queued");
+      finish(null, entry.id);
     } finally {
       setPlacing(false);
     }
+
   }
 
   const couponBox = (
