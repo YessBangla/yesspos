@@ -15,6 +15,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as OrderConfirmedRouteImport } from './routes/order-confirmed'
 import { Route as MyOrdersRouteImport } from './routes/my-orders'
 import { Route as MyAccountRouteImport } from './routes/my-account'
 import { Route as HomedeliveryRouteImport } from './routes/homedelivery'
@@ -94,6 +95,11 @@ const ShopRoute = ShopRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderConfirmedRoute = OrderConfirmedRouteImport.update({
+  id: '/order-confirmed',
+  path: '/order-confirmed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MyOrdersRoute = MyOrdersRouteImport.update({
@@ -364,6 +370,7 @@ export interface FileRoutesByFullPath {
   '/homedelivery': typeof HomedeliveryRoute
   '/my-account': typeof MyAccountRoute
   '/my-orders': typeof MyOrdersRoute
+  '/order-confirmed': typeof OrderConfirmedRoute
   '/privacy': typeof PrivacyRoute
   '/shop': typeof ShopRoute
   '/signin': typeof SigninRoute
@@ -421,6 +428,7 @@ export interface FileRoutesByTo {
   '/homedelivery': typeof HomedeliveryRoute
   '/my-account': typeof MyAccountRoute
   '/my-orders': typeof MyOrdersRoute
+  '/order-confirmed': typeof OrderConfirmedRoute
   '/privacy': typeof PrivacyRoute
   '/shop': typeof ShopRoute
   '/signin': typeof SigninRoute
@@ -480,6 +488,7 @@ export interface FileRoutesById {
   '/homedelivery': typeof HomedeliveryRoute
   '/my-account': typeof MyAccountRoute
   '/my-orders': typeof MyOrdersRoute
+  '/order-confirmed': typeof OrderConfirmedRoute
   '/privacy': typeof PrivacyRoute
   '/shop': typeof ShopRoute
   '/signin': typeof SigninRoute
@@ -539,6 +548,7 @@ export interface FileRouteTypes {
     | '/homedelivery'
     | '/my-account'
     | '/my-orders'
+    | '/order-confirmed'
     | '/privacy'
     | '/shop'
     | '/signin'
@@ -596,6 +606,7 @@ export interface FileRouteTypes {
     | '/homedelivery'
     | '/my-account'
     | '/my-orders'
+    | '/order-confirmed'
     | '/privacy'
     | '/shop'
     | '/signin'
@@ -654,6 +665,7 @@ export interface FileRouteTypes {
     | '/homedelivery'
     | '/my-account'
     | '/my-orders'
+    | '/order-confirmed'
     | '/privacy'
     | '/shop'
     | '/signin'
@@ -713,6 +725,7 @@ export interface RootRouteChildren {
   HomedeliveryRoute: typeof HomedeliveryRoute
   MyAccountRoute: typeof MyAccountRoute
   MyOrdersRoute: typeof MyOrdersRoute
+  OrderConfirmedRoute: typeof OrderConfirmedRoute
   PrivacyRoute: typeof PrivacyRoute
   ShopRoute: typeof ShopRoute
   SigninRoute: typeof SigninRoute
@@ -765,6 +778,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-confirmed': {
+      id: '/order-confirmed'
+      path: '/order-confirmed'
+      fullPath: '/order-confirmed'
+      preLoaderRoute: typeof OrderConfirmedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my-orders': {
@@ -1219,6 +1239,7 @@ const rootRouteChildren: RootRouteChildren = {
   HomedeliveryRoute: HomedeliveryRoute,
   MyAccountRoute: MyAccountRoute,
   MyOrdersRoute: MyOrdersRoute,
+  OrderConfirmedRoute: OrderConfirmedRoute,
   PrivacyRoute: PrivacyRoute,
   ShopRoute: ShopRoute,
   SigninRoute: SigninRoute,

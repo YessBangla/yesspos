@@ -56,8 +56,12 @@ function OrderConfirmedPage() {
     };
     check();
     void syncQueuedOrders();
-    return subscribeQueue(check);
+    const unsub = subscribeQueue(check);
+    return () => {
+      unsub();
+    };
   }, [snap?.queueId]);
+
 
   const orderNo = snap?.orderNo ?? liveOrderNo;
   const queued = !orderNo;
