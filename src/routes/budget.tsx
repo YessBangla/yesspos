@@ -334,6 +334,86 @@ function BudgetPage() {
         </div>
       </header>
 
+      {/* Recurring templates */}
+      <section
+        aria-label={bn ? "বাজেট টেমপ্লেট" : "Budget templates"}
+        className="mt-4 rounded-3xl border border-border bg-card p-5"
+      >
+        <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
+          <BookmarkPlus className="size-4 text-primary" />
+          {bn ? "নিয়মিত বাজেট টেমপ্লেট" : "Recurring budget templates"}
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {bn
+            ? "একই বাজেট সেটআপ সংরক্ষণ করুন — পরে এক ক্লিকে নতুন তালিকা তৈরি হবে।"
+            : "Save this setup once and regenerate the same list any day, week or month."}
+        </p>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Input
+            value={tplName}
+            onChange={(e) => setTplName(e.target.value)}
+            maxLength={40}
+            placeholder={bn ? "টেমপ্লেটের নাম" : "Template name"}
+            aria-label={bn ? "টেমপ্লেটের নাম" : "Template name"}
+            className="h-11 max-w-xs rounded-full text-base"
+          />
+          <Button type="button" variant="outline" className="h-11 rounded-full" onClick={saveTemplate}>
+            <BookmarkPlus className="mr-1.5 size-4" />
+            {bn ? "টেমপ্লেট হিসেবে সংরক্ষণ" : "Save as template"}
+          </Button>
+        </div>
+
+        {templates.length > 0 && (
+          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+            {templates.map((t) => (
+              <li
+                key={t.id}
+                className="flex items-center gap-2 rounded-2xl border border-border bg-muted/30 p-3"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold">{t.name}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {t.period === "daily"
+                      ? bn
+                        ? "দৈনিক"
+                        : "Daily"
+                      : t.period === "weekly"
+                        ? bn
+                          ? "সাপ্তাহিক"
+                          : "Weekly"
+                        : bn
+                          ? "মাসিক"
+                          : "Monthly"}{" "}
+                    · {money(t.budget, lang)} · {num(t.lines.length, lang)}
+                  </span>
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={() => applyTemplate(t)}
+                >
+                  <RotateCcw className="mr-1 size-3.5" />
+                  {bn ? "ব্যবহার" : "Use"}
+                </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  aria-label={bn ? "টেমপ্লেট মুছুন" : "Delete template"}
+                  onClick={() => persistTemplates(templates.filter((x) => x.id !== t.id))}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+
+
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         {/* Product picker */}
         <section aria-label={bn ? "পণ্য যোগ করুন" : "Add products"}>
