@@ -23,6 +23,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
+import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedStockTransfersRouteImport } from './routes/_authenticated/stock-transfers'
 import { Route as AuthenticatedStockCountRouteImport } from './routes/_authenticated/stock-count'
@@ -132,6 +133,11 @@ const IndexRoute = IndexRouteImport.update({
 const ProductIdRoute = ProductIdRouteImport.update({
   id: '/product/$id',
   path: '/product/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CategorySlugRoute = CategorySlugRouteImport.update({
+  id: '/category/$slug',
+  path: '/category/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
@@ -405,6 +411,7 @@ export interface FileRoutesByFullPath {
   '/stock-count': typeof AuthenticatedStockCountRoute
   '/stock-transfers': typeof AuthenticatedStockTransfersRoute
   '/users': typeof AuthenticatedUsersRoute
+  '/category/$slug': typeof CategorySlugRoute
   '/product/$id': typeof ProductIdRoute
 }
 export interface FileRoutesByTo {
@@ -461,6 +468,7 @@ export interface FileRoutesByTo {
   '/stock-count': typeof AuthenticatedStockCountRoute
   '/stock-transfers': typeof AuthenticatedStockTransfersRoute
   '/users': typeof AuthenticatedUsersRoute
+  '/category/$slug': typeof CategorySlugRoute
   '/product/$id': typeof ProductIdRoute
 }
 export interface FileRoutesById {
@@ -519,6 +527,7 @@ export interface FileRoutesById {
   '/_authenticated/stock-count': typeof AuthenticatedStockCountRoute
   '/_authenticated/stock-transfers': typeof AuthenticatedStockTransfersRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
+  '/category/$slug': typeof CategorySlugRoute
   '/product/$id': typeof ProductIdRoute
 }
 export interface FileRouteTypes {
@@ -577,6 +586,7 @@ export interface FileRouteTypes {
     | '/stock-count'
     | '/stock-transfers'
     | '/users'
+    | '/category/$slug'
     | '/product/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -633,6 +643,7 @@ export interface FileRouteTypes {
     | '/stock-count'
     | '/stock-transfers'
     | '/users'
+    | '/category/$slug'
     | '/product/$id'
   id:
     | '__root__'
@@ -690,6 +701,7 @@ export interface FileRouteTypes {
     | '/_authenticated/stock-count'
     | '/_authenticated/stock-transfers'
     | '/_authenticated/users'
+    | '/category/$slug'
     | '/product/$id'
   fileRoutesById: FileRoutesById
 }
@@ -707,6 +719,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   TrackRoute: typeof TrackRoute
+  CategorySlugRoute: typeof CategorySlugRoute
   ProductIdRoute: typeof ProductIdRoute
 }
 
@@ -808,6 +821,13 @@ declare module '@tanstack/react-router' {
       path: '/product/$id'
       fullPath: '/product/$id'
       preLoaderRoute: typeof ProductIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/category/$slug': {
+      id: '/category/$slug'
+      path: '/category/$slug'
+      fullPath: '/category/$slug'
+      preLoaderRoute: typeof CategorySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/users': {
@@ -1205,18 +1225,9 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   TrackRoute: TrackRoute,
+  CategorySlugRoute: CategorySlugRoute,
   ProductIdRoute: ProductIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
