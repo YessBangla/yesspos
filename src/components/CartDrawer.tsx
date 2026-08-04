@@ -110,15 +110,16 @@ export function CartDrawer({
     if (adjusted.length === 0) return;
     const first = adjusted[0];
     const name = bn ? first.line.name_bn : first.line.name_en;
-    toast.warning(
+    const msg =
       first.to === 0
         ? bn
           ? `"${name}" এখন স্টকে নেই — কার্ট থেকে সরানো হয়েছে`
           : `"${name}" is out of stock and was removed`
         : bn
           ? `"${name}" শুধু ${num(first.to, lang)}টি পাওয়া যাচ্ছে`
-          : `Only ${first.to} of "${name}" available`,
-    );
+          : `Only ${first.to} of "${name}" available`;
+    toast.warning(msg);
+    setAnnounce(msg);
   }, [stock.data, bn, lang]);
 
   const stockFor = (id: string) => stock.data?.[id];
@@ -130,6 +131,26 @@ export function CartDrawer({
     [coupon, cart.subtotal],
   );
   const total = Math.max(0, cart.subtotal - discount) + fee;
+
+  // Announce every recalculated total so keyboard/screen-reader users follow along.
+  useEffect(() => {
+    if (!open || cart.lines.length === 0) return;
+    setAnnounce(
+      bn
+        ? `সর্বমোট হালনাগাদ: ${money(total, lang)}, ${num(cart.count, lang)}টি পণ্য`
+        : `Total updated: ${money(total, lang)} for ${cart.count} item(s)`,
+    );
+  }, [total, cart.count, open, bn, lang, cart.lines.length]);
+
+  // Announce the delivery window whenever it changes.
+  useEffect(() => {
+    if (!slot?.slotId) return;
+    setAnnounce(
+      bn
+        ? `ডেলিভারি সময় নির্বাচিত: ${slotLabel(slot.day, slot.slotId, true)}`
+        : `Delivery slot selected: ${slotLabel(slot.day, slot.slotId, false)}`,
+    );
+  }, [slot, bn]);
 
   // Re-validate a live coupon whenever the cart value changes.
   useEffect(() => {
@@ -146,6 +167,7 @@ export function CartDrawer({
       else {
         setCoupon(null);
         setCouponMsg({ ok: false, text: r.message });
+        setAnnounce(r.message);
       }
     });
     return () => {
@@ -163,11 +185,20 @@ export function CartDrawer({
       if (r.ok) {
         setCoupon({ code: r.code, discount: r.discount });
         setCode("");
-      } else setCoupon(null);
+        setAnnounce(
+          bn
+            ? `${r.code} প্রয়োগ হয়েছে — ছাড় ${money(r.discount, lang)}`
+            : `${r.code} applied — ${money(r.discount, lang)} off`,
+        );
+      } else {
+        setCoupon(null);
+        setAnnounce(r.message);
+      }
     } finally {
       setCheckingCoupon(false);
     }
   }
+
 
   // Reopening the drawer always starts on the cart list.
   useEffect(() => {
