@@ -124,8 +124,7 @@ export function applyStockLimits(stockById: Record<string, number>) {
     if (qty !== l.qty) adjusted.push({ line: l, from: l.qty, to: qty });
     if (qty > 0) next.push({ ...l, stock, qty });
   }
-  if (adjusted.length > 0) write(next);
-  else write(next.length === current.length ? next : next);
+  if (JSON.stringify(next) !== JSON.stringify(current)) write(next);
   return adjusted;
 }
 
