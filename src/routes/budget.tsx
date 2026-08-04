@@ -2,10 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  BookmarkPlus,
   CalendarDays,
   Minus,
   Plus,
   PiggyBank,
+  RotateCcw,
   Search,
   ShoppingBasket,
   Trash2,
@@ -16,6 +18,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { StorefrontHeader } from "@/components/StorefrontHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { money, num, useI18n } from "@/lib/i18n";
 import { useShopCart } from "@/lib/shop-cart";
