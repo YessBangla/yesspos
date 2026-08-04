@@ -700,13 +700,10 @@ export function CartDrawer({
                 value={form.note}
                 onChange={(v) => setForm((f) => ({ ...f, note: v }))}
               />
+              {paymentBox}
               <div className="rounded-2xl border border-border bg-muted/40 p-3">{summary}</div>
-              <CheckoutQueueStatus />
-              <p className="text-xs text-muted-foreground">
-                {bn
-                  ? "পেমেন্ট: ক্যাশ অন ডেলিভারি"
-                  : "Payment: cash on delivery"}
-              </p>
+              <CheckoutQueueStatus paymentPatch={{ payment_method: payment }} />
+
             </form>
             <div className="border-t border-border bg-muted/40 p-4">
               <Button
