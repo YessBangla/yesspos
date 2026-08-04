@@ -802,9 +802,10 @@ function ShopPage() {
                   {bn ? "মুছুন" : "Clear"}
                 </button>
               )}
-              <span className="hidden h-9 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground sm:inline-flex">
+              <span className="hidden h-9 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground sm:inline-flex">
                 {bn ? "খুঁজুন" : "Search"}
               </span>
+
             </div>
             <span id="shop-search-hint" className="sr-only">
               {bn
