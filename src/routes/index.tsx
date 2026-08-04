@@ -23,7 +23,6 @@ import {
   Clock,
   CloudUpload,
   Loader2,
-  MapPin,
   Minus,
   Phone,
   Plus,
