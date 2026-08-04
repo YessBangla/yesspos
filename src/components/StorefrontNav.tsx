@@ -7,6 +7,7 @@
  * the same links collapse into a touch-friendly hamburger sheet.
  */
 import { useRef, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Apple,
@@ -128,7 +129,7 @@ export function StorefrontNav({
     if (items.length === 0) return;
     items[(i + items.length) % items.length]?.focus();
   };
-  const onMegaKeyDown = (e: React.KeyboardEvent) => {
+  const onMegaKeyDown = (e: ReactKeyboardEvent) => {
     const items = megaItems();
     const idx = items.indexOf(document.activeElement as HTMLElement);
     if (e.key === "ArrowDown" || e.key === "ArrowRight") {
