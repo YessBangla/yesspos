@@ -12,6 +12,7 @@ export type ShopLine = {
 };
 
 const KEY = "shop-cart-v1";
+const EVENT = "shop-cart-change";
 
 function read(): ShopLine[] {
   if (typeof window === "undefined") return [];
@@ -30,19 +31,30 @@ function write(lines: ShopLine[]) {
   } catch {
     /* storage full or blocked — cart stays in memory */
   }
+  window.dispatchEvent(new Event(EVENT));
 }
 
 export function useShopCart() {
   const [lines, setLines] = useState<ShopLine[]>([]);
 
+  // Hydrate from localStorage after mount and keep every mounted cart view
+  // (header badge, drawer, product page) in sync across tabs and components.
   useEffect(() => {
-    setLines(read());
+    const sync = () => setLines(read());
+    sync();
+    window.addEventListener(EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
 
   const update = useCallback((next: ShopLine[]) => {
     setLines(next);
     write(next);
   }, []);
+
 
   const add = useCallback(
     (p: Omit<ShopLine, "qty">, qty = 1) => {
