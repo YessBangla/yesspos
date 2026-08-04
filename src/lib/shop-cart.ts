@@ -105,6 +105,30 @@ export function useShopCart() {
   return { lines, add, setQty, clear, subtotal, count };
 }
 
+/**
+ * Refresh the stored stock for each line from live data and trim any line that
+ * now exceeds what is sellable. Returns the products that had to be reduced or
+ * removed so the UI can tell the shopper.
+ */
+export function applyStockLimits(stockById: Record<string, number>) {
+  const current = read();
+  const adjusted: { line: ShopLine; from: number; to: number }[] = [];
+  const next: ShopLine[] = [];
+  for (const l of current) {
+    const stock = stockById[l.id];
+    if (stock === undefined) {
+      next.push(l);
+      continue;
+    }
+    const qty = clampQty(l.qty, stock);
+    if (qty !== l.qty) adjusted.push({ line: l, from: l.qty, to: qty });
+    if (qty > 0) next.push({ ...l, stock, qty });
+  }
+  if (adjusted.length > 0) write(next);
+  else write(next.length === current.length ? next : next);
+  return adjusted;
+}
+
 /** Clamp a requested quantity to the sellable stock (or the global cap). */
 export function clampQty(qty: number, stock?: number | null) {
   const limit = typeof stock === "number" && stock >= 0 ? Math.min(stock, 999) : MAX_PER_LINE;
