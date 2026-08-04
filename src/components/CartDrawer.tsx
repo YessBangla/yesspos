@@ -74,6 +74,7 @@ export function CartDrawer({
   const [placing, setPlacing] = useState(false);
   const [placed, setPlaced] = useState<number | null>(null);
   const [slot, setSlot] = useState<SlotChoice>(null);
+  const [addressId, setAddressId] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null);
   const [couponMsg, setCouponMsg] = useState<{ ok: boolean; text: string } | null>(null);
