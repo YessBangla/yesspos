@@ -172,9 +172,26 @@ function OrderConfirmedPage() {
         </Card>
       </section>
 
+      {orderNo && (
+        <div className="mt-4">
+          <OrderTimeline orderNo={orderNo} phone={snap.phone} />
+        </div>
+      )}
+
       <div className="mt-4">
         <CheckoutQueueStatus />
       </div>
+
+      <Button
+        variant="outline"
+        size="lg"
+        className="mt-4 w-full rounded-full"
+        onClick={() => downloadReceipt({ ...snap, orderNo }, bn)}
+      >
+        <Download className="mr-1.5 size-4" />
+        {bn ? "রসিদ ডাউনলোড (PDF)" : "Download PDF receipt"}
+      </Button>
+
 
       <div className="mt-5 flex flex-wrap gap-2">
         <Button asChild size="lg" className="flex-1 rounded-full">
