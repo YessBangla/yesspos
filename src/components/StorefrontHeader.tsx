@@ -24,7 +24,7 @@ export function StorefrontHeader() {
   const bn = lang === "bn";
   const cart = useShopCart();
   const navigate = useNavigate();
-  const { sc } = useSiteContent();
+  const { text: sc } = useSiteContent();
   const [query, setQuery] = useState("");
 
   const categories = useQuery({
