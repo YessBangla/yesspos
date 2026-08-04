@@ -215,9 +215,11 @@ function ShopPage() {
   const altSlots = useMemo(() => slots.filter((x) => x.bookable).slice(0, 3), [slots]);
   const [errors, setErrors] = useState<string[]>([]);
   const [fieldErrs, setFieldErrs] = useState<Record<string, string>>({});
-  const [placedInfo, setPlacedInfo] = useState<{ phone: string; slot: string; total: number } | null>(
-    null,
-  );
+  const [placedInfo, setPlacedInfo] = useState<{
+    phone: string;
+    slot: string;
+    total: number;
+  } | null>(null);
   const [queued, setQueued] = useState<QueuedOrder[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [placing, setPlacing] = useState(false);
@@ -264,7 +266,6 @@ function ShopPage() {
     setSort(search.sort ?? "relevance");
     setCheckout(!!search.checkout);
   }, [search.q, search.cat, search.sort, search.checkout]);
-
 
   const refreshQueue = useCallback(async () => setQueued(await listQueuedOrders()), []);
 
@@ -448,7 +449,6 @@ function ShopPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cart.subtotal, bn]);
 
-
   const slotLabel = useMemo(() => {
     if (!slotTime) return "";
     const t = TIME_SLOTS.find((x) => x.id === slotTime);
@@ -512,7 +512,6 @@ function ShopPage() {
     return [];
   }
 
-
   async function placeOrder() {
     const { ok, found, fields, parsed } = validate();
     setErrors(found);
@@ -523,7 +522,6 @@ function ShopPage() {
       toast.error(found[0] ?? (bn ? "তথ্য ঠিক করুন" : "Please fix the highlighted fields"));
       return;
     }
-
 
     const orderRow = {
       user_id: user && isCustomer ? user.id : null,
@@ -749,67 +747,64 @@ function ShopPage() {
               {bn ? "পণ্য খুঁজুন" : "Search products"}
             </label>
             <div className="flex h-12 items-center gap-2 rounded-xl border border-border bg-card pl-3 pr-1.5 shadow-sm transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
-            <Search
-              aria-hidden="true"
-              className="size-4 shrink-0 text-muted-foreground"
-            />
+              <Search aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
 
-            <Input
-              id="shop-search"
-              type="search"
-              role="combobox"
-              aria-expanded={sugOpen && suggestions.length > 0}
-              aria-controls="shop-search-suggestions"
-              aria-autocomplete="list"
-              aria-activedescendant={
-                sugIdx >= 0 && suggestions[sugIdx] ? `sug-${suggestions[sugIdx].id}` : undefined
-              }
-              aria-describedby="shop-search-hint"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setLimit(PAGE);
-                setSugOpen(true);
-                setSugIdx(-1);
-              }}
-              onFocus={() => setSugOpen(true)}
-              onBlur={() => window.setTimeout(() => setSugOpen(false), 120)}
-              onKeyDown={(e) => {
-                if (!suggestions.length) return;
-                if (e.key === "ArrowDown") {
-                  e.preventDefault();
-                  setSugOpen(true);
-                  setSugIdx((i) => (i + 1) % suggestions.length);
-                } else if (e.key === "ArrowUp") {
-                  e.preventDefault();
-                  setSugIdx((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
-                } else if (e.key === "Enter" && sugIdx >= 0) {
-                  e.preventDefault();
-                  pickSuggestion(suggestions[sugIdx]);
-                } else if (e.key === "Escape") {
-                  setSugOpen(false);
-                  setSugIdx(-1);
+              <Input
+                id="shop-search"
+                type="search"
+                role="combobox"
+                aria-expanded={sugOpen && suggestions.length > 0}
+                aria-controls="shop-search-suggestions"
+                aria-autocomplete="list"
+                aria-activedescendant={
+                  sugIdx >= 0 && suggestions[sugIdx] ? `sug-${suggestions[sugIdx].id}` : undefined
                 }
-              }}
-              maxLength={60}
-              placeholder={bn ? "চাল, তেল, ডিম… খুঁজুন" : "Search rice, oil, eggs…"}
-              className="h-10 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => {
-                  setQuery("");
+                aria-describedby="shop-search-hint"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
                   setLimit(PAGE);
+                  setSugOpen(true);
+                  setSugIdx(-1);
                 }}
-                className="shrink-0 rounded-md px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
-              >
-                {bn ? "মুছুন" : "Clear"}
-              </button>
-            )}
-            <span className="hidden h-9 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground sm:inline-flex">
-              {bn ? "খুঁজুন" : "Search"}
-            </span>
+                onFocus={() => setSugOpen(true)}
+                onBlur={() => window.setTimeout(() => setSugOpen(false), 120)}
+                onKeyDown={(e) => {
+                  if (!suggestions.length) return;
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setSugOpen(true);
+                    setSugIdx((i) => (i + 1) % suggestions.length);
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setSugIdx((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+                  } else if (e.key === "Enter" && sugIdx >= 0) {
+                    e.preventDefault();
+                    pickSuggestion(suggestions[sugIdx]);
+                  } else if (e.key === "Escape") {
+                    setSugOpen(false);
+                    setSugIdx(-1);
+                  }
+                }}
+                maxLength={60}
+                placeholder={bn ? "চাল, তেল, ডিম… খুঁজুন" : "Search rice, oil, eggs…"}
+                className="h-10 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery("");
+                    setLimit(PAGE);
+                  }}
+                  className="shrink-0 rounded-md px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+                >
+                  {bn ? "মুছুন" : "Clear"}
+                </button>
+              )}
+              <span className="hidden h-9 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground sm:inline-flex">
+                {bn ? "খুঁজুন" : "Search"}
+              </span>
             </div>
             <span id="shop-search-hint" className="sr-only">
               {bn
@@ -819,7 +814,6 @@ function ShopPage() {
             <p aria-live="polite" className="sr-only">
               {`${visible.length} ${bn ? "পণ্য পাওয়া গেছে" : "products found"}`}
             </p>
-
 
             {sugOpen && suggestions.length > 0 && (
               <ul
@@ -863,7 +857,6 @@ function ShopPage() {
                 ))}
               </ul>
             )}
-
           </div>
 
           <div className="hidden shrink-0 items-center gap-2 sm:flex">
@@ -878,12 +871,14 @@ function ShopPage() {
             <span className="hidden sm:inline">{num(cart.count, lang)} · </span>
             {money(cart.subtotal, lang)}
           </Button>
-
         </div>
 
         {/* ---- Portal menu (shared, responsive) ---- */}
-        <StorefrontNav categories={categories.data ?? []} counts={catCounts} activeCategoryId={cat} />
-
+        <StorefrontNav
+          categories={categories.data ?? []}
+          counts={catCounts}
+          activeCategoryId={cat}
+        />
 
         {!online && (
           <div className="flex items-center justify-center gap-2 bg-warning/20 py-1 text-xs">
@@ -939,7 +934,6 @@ function ShopPage() {
         {/* ---- Category sidebar ---- */}
         <aside className="hidden lg:block">
           <div className="shop-card sticky top-28 mt-6 max-h-[calc(100vh-9rem)] overflow-y-auto p-3">
-
             <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {bn ? "ক্যাটাগরি" : "Categories"}
             </p>
@@ -1106,7 +1100,6 @@ function ShopPage() {
                   </span>
                 </Link>
               ))}
-
             </div>
           </section>
 
@@ -1114,11 +1107,7 @@ function ShopPage() {
             aria-label={bn ? "ক্যাটাগরি ফিল্টার" : "Category filters"}
             className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden"
           >
-            <CatChip
-              active={!cat}
-              onClick={() => setCat("")}
-              label={bn ? "সব" : "All"}
-            />
+            <CatChip active={!cat} onClick={() => setCat("")} label={bn ? "সব" : "All"} />
             {(categories.data ?? []).map((c) => (
               <CatChip
                 key={c.id}
@@ -1139,7 +1128,9 @@ function ShopPage() {
               </p>
               <h2 className="font-display text-2xl font-extrabold">
                 {activeCat
-                  ? (bn ? activeCat.name_bn : activeCat.name_en)
+                  ? bn
+                    ? activeCat.name_bn
+                    : activeCat.name_en
                   : query.trim()
                     ? `“${query.trim()}”`
                     : bn
@@ -1227,7 +1218,6 @@ function ShopPage() {
             ))}
           </ul>
 
-
           {products.isLoading && <p className="py-10 text-center text-muted-foreground">…</p>}
           {!products.isLoading && visible.length === 0 && (
             <p className="py-12 text-center text-sm text-muted-foreground">
@@ -1297,7 +1287,6 @@ function ShopPage() {
             </div>
           </div>
         </aside>
-
       </div>
 
       <footer className="mt-12 border-t border-border bg-card pb-24 lg:pb-0">
@@ -1442,7 +1431,10 @@ function ShopPage() {
             </div>
 
             {/* ---- Step indicator ---- */}
-            <ol className="flex items-center gap-2" aria-label={bn ? "চেকআউট ধাপ" : "Checkout steps"}>
+            <ol
+              className="flex items-center gap-2"
+              aria-label={bn ? "চেকআউট ধাপ" : "Checkout steps"}
+            >
               {STEPS.map((s, i) => (
                 <li key={s.id} className="flex flex-1 items-center gap-2">
                   <button
@@ -1663,7 +1655,9 @@ function ShopPage() {
                   {chosenSlot && !chosenSlot.bookable && altSlots.length > 0 && (
                     <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
                       <p className="font-semibold">
-                        {bn ? "এই স্লটটি এখন নেওয়া যাচ্ছে না — বিকল্প:" : "That slot is unavailable — alternatives:"}
+                        {bn
+                          ? "এই স্লটটি এখন নেওয়া যাচ্ছে না — বিকল্প:"
+                          : "That slot is unavailable — alternatives:"}
                       </p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {altSlots.map((a) => (
@@ -1930,7 +1924,6 @@ function ShopPage() {
           </div>
         </div>
       )}
-
     </main>
   );
 }
@@ -1956,7 +1949,6 @@ function CatChip({
           : "border-border text-muted-foreground",
       )}
     >
-
       {label}
     </button>
   );
@@ -2058,13 +2050,11 @@ function ProductCard({
               </Button>
             </div>
           )}
-
         </div>
       </div>
     </div>
   );
 }
-
 
 function CartRow({
   l,
@@ -2120,10 +2110,8 @@ function CartRow({
           <Plus className="size-3" aria-hidden="true" />
         </Button>
       </div>
-
     </div>
   );
-
 }
 
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
@@ -2216,7 +2204,6 @@ function StatusPreview({ bn }: { bn: boolean }) {
   );
 }
 
-
 function SideCat({
   label,
   count,
@@ -2240,7 +2227,6 @@ function SideCat({
           : "text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
     >
-
       <span className="truncate">{label}</span>
       <span
         className={cn(
@@ -2266,5 +2252,4 @@ function Perk({ icon: Icon, title, sub }: { icon: LucideIcon; title: string; sub
       </div>
     </div>
   );
-
 }

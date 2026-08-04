@@ -193,7 +193,8 @@ export function StorefrontNav({
               {...catLink(c)}
               className={cn(
                 "flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-border px-3 text-xs font-medium text-muted-foreground",
-                activeCategoryId === c.id && "border-primary bg-primary/10 font-semibold text-primary",
+                activeCategoryId === c.id &&
+                  "border-primary bg-primary/10 font-semibold text-primary",
               )}
             >
               {bn ? c.name_bn : c.name_en}

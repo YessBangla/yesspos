@@ -8,7 +8,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Minus, Phone, Plus, Search, ShoppingBag, ShoppingBasket } from "lucide-react";
+import {
+  ChevronRight,
+  Minus,
+  Phone,
+  Plus,
+  Search,
+  ShoppingBag,
+  ShoppingBasket,
+} from "lucide-react";
 import { z } from "zod";
 import { BrandLogo } from "@/components/BrandLogo";
 import { LangToggle } from "@/components/LangToggle";
@@ -181,7 +189,9 @@ function CategoryPage() {
             className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-card pl-3 pr-1.5 shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"
             onSubmit={(e) => {
               e.preventDefault();
-              navigate({ search: (prev: CatSearch) => ({ ...prev, q: query.trim() || undefined }) });
+              navigate({
+                search: (prev: CatSearch) => ({ ...prev, q: query.trim() || undefined }),
+              });
             }}
           >
             <Search aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
@@ -246,7 +256,10 @@ function CategoryPage() {
 
       <div className="mx-auto max-w-7xl px-3 py-6 sm:px-4">
         {/* Breadcrumb */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-muted-foreground">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-1 text-xs text-muted-foreground"
+        >
           <Link to="/" className="hover:text-primary hover:underline">
             {bn ? "হোম" : "Home"}
           </Link>
