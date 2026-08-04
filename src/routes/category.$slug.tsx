@@ -96,6 +96,21 @@ function CategoryPage() {
   const { text: sc } = useSiteContent();
   const cart = useShopCart();
   const [query, setQuery] = useState(search.q ?? "");
+  // Debounced term keeps typing smooth and drives the "searching…" state.
+  const [debounced, setDebounced] = useState(search.q ?? "");
+  const searching = query.trim() !== debounced.trim();
+
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setDebounced(query);
+      navigate({
+        replace: true,
+        search: (prev: CatSearch) => ({ ...prev, q: query.trim() || undefined }),
+      });
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [query, navigate]);
+
 
   const categories = useQuery({
     queryKey: ["shop-categories"],
