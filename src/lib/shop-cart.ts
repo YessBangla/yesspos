@@ -74,8 +74,8 @@ export function useShopCart() {
   return { lines, add, setQty, clear, subtotal, count };
 }
 
-/** Free delivery above ৳1000, otherwise a flat fee. */
-export function deliveryFeeFor(subtotal: number) {
+/** Free delivery above ৳1000, otherwise the selected area's base fee. */
+export function deliveryFeeFor(subtotal: number, baseFee = 60) {
   if (subtotal <= 0) return 0;
-  return subtotal >= 1000 ? 0 : 60;
+  return subtotal >= 1000 ? 0 : baseFee;
 }

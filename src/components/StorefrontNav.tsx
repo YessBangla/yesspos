@@ -3,25 +3,41 @@
  *
  * Layout mirrors a classic Bangladeshi e-commerce portal bar: a solid
  * "All categories" pill on the left, icon menu links with an underlined
- * active tab in the middle and the hotline on the right. On mobile the same
- * links collapse into a touch-friendly hamburger sheet.
+ * active tab in the middle and the hotline plus cart on the right. On mobile
+ * the same links collapse into a touch-friendly hamburger sheet.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  Building2,
+  Apple,
+  Baby,
+  Beef,
   ChevronDown,
+  Cookie,
+  CupSoda,
+  Croissant,
+  Drumstick,
+  Egg,
+  Fish,
   Home,
   LayoutGrid,
+  Leaf,
   LifeBuoy,
   Menu,
+  Milk,
+  PawPrint,
   Phone,
+  Pill,
   ShoppingBag,
   ShoppingBasket,
+  Sparkles,
   Truck,
+  Wheat,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { CartDrawer } from "@/components/CartDrawer";
+import { useShopCart } from "@/lib/shop-cart";
 import { num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { slugify } from "@/lib/category-slug";
@@ -35,24 +51,54 @@ const LINKS: NavLink[] = [
   { to: "/shop", icon: ShoppingBasket, bn: "স্টোর", en: "Store" },
   { to: "/track", icon: Truck, bn: "অর্ডার ট্র্যাক", en: "Track order" },
   { to: "/my-orders", icon: ShoppingBag, bn: "আমার অর্ডার", en: "My orders" },
-  { to: "/corporate", icon: Building2, bn: "কর্পোরেট", en: "Corporate" },
   { href: "tel:16710", icon: LifeBuoy, bn: "সহায়তা", en: "Support" },
 ];
+
+/** Keyword → icon so every category row in the menu carries a visual cue. */
+const ICON_RULES: [RegExp, LucideIcon][] = [
+  [/rice|grain|chal|atta|flour|dal|lentil/i, Wheat],
+  [/oil|spice|masala|salt|sugar/i, Leaf],
+  [/fruit|vegetable|veg|shak|shobji/i, Apple],
+  [/meat|beef|mutton/i, Beef],
+  [/chicken|poultry/i, Drumstick],
+  [/fish|seafood/i, Fish],
+  [/egg/i, Egg],
+  [/milk|dairy|cheese|yogurt/i, Milk],
+  [/tea|coffee|drink|juice|beverage/i, CupSoda],
+  [/snack|chips|biscuit|chocolate|candy/i, Cookie],
+  [/bread|bakery|cake/i, Croissant],
+  [/baby|child|kids/i, Baby],
+  [/health|medicine|pharma|care/i, Pill],
+  [/pet|dog|cat/i, PawPrint],
+  [/clean|home|household|beauty|cosmetic/i, Sparkles],
+];
+
+function iconFor(c: NavCategory): LucideIcon {
+  const hay = `${c.name_en} ${c.name_bn}`;
+  for (const [re, icon] of ICON_RULES) if (re.test(hay)) return icon;
+  return ShoppingBasket;
+}
 
 export function StorefrontNav({
   categories,
   counts,
   activeCategoryId,
+  onCheckout,
 }: {
   categories: NavCategory[];
   counts?: Map<string, number>;
   activeCategoryId?: string;
+  /** Optional host-provided checkout handler (homepage opens its own flow). */
+  onCheckout?: () => void;
 }) {
   const { lang } = useI18n();
   const bn = lang === "bn";
   const [megaOpen, setMegaOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const closeTimer = useRef<number | null>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const cart = useShopCart();
 
   const catLink = (c: NavCategory) => ({
     to: "/category/$slug" as const,
@@ -62,7 +108,16 @@ export function StorefrontNav({
   const isActive = (l: NavLink) =>
     !!l.to && (l.to === "/" ? pathname === "/" : pathname.startsWith(l.to));
 
-  const desktopItem = (l: NavLink, active: boolean) =>
+  const openMega = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    setMegaOpen(true);
+  };
+  const scheduleClose = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setMegaOpen(false), 160);
+  };
+
+  const desktopItem = (active: boolean) =>
     cn(
       "relative flex min-h-12 items-center gap-1.5 whitespace-nowrap px-3 text-sm font-medium transition-colors",
       "after:absolute after:inset-x-2 after:bottom-0 after:h-[3px] after:rounded-full after:bg-primary after:transition-transform after:duration-200",
@@ -115,32 +170,39 @@ export function StorefrontNav({
               })}
             </nav>
             <div className="border-t border-border p-2">
-              <p className="px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              <p className="flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                <LayoutGrid className="size-3.5" />
                 {bn ? "সব ক্যাটাগরি" : "All categories"}
               </p>
               <ul className="flex flex-col gap-0.5">
-                {categories.map((c) => (
-                  <li key={c.id}>
-                    <Link
-                      {...catLink(c)}
-                      onClick={() => setSheetOpen(false)}
-                      className={cn(
-                        "flex min-h-11 items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm hover:bg-muted",
-                        activeCategoryId === c.id && "bg-primary/10 font-semibold text-primary",
-                      )}
-                    >
-                      <span className="min-w-0 truncate">
-                        <span className="block truncate font-medium">{c.name_bn}</span>
-                        <span className="block truncate text-[11px] text-muted-foreground">
-                          {c.name_en}
+                {categories.map((c) => {
+                  const Icon = iconFor(c);
+                  return (
+                    <li key={c.id}>
+                      <Link
+                        {...catLink(c)}
+                        onClick={() => setSheetOpen(false)}
+                        className={cn(
+                          "flex min-h-11 items-center gap-2.5 rounded-xl px-3 py-2 text-sm hover:bg-muted",
+                          activeCategoryId === c.id && "bg-primary/10 font-semibold text-primary",
+                        )}
+                      >
+                        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                          <Icon className="size-4" />
                         </span>
-                      </span>
-                      <span className="shrink-0 text-[11px] text-muted-foreground">
-                        {num(counts?.get(c.id) ?? 0, lang)}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
+                        <span className="min-w-0 flex-1 truncate">
+                          <span className="block truncate font-medium">{c.name_bn}</span>
+                          <span className="block truncate text-[11px] text-muted-foreground">
+                            {c.name_en}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-[11px] text-muted-foreground">
+                          {num(counts?.get(c.id) ?? 0, lang)}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
             <a
@@ -153,11 +215,16 @@ export function StorefrontNav({
           </SheetContent>
         </Sheet>
 
-        {/* Desktop: mega menu */}
-        <div className="relative hidden shrink-0 lg:block">
+        {/* Desktop: mega menu — opens on hover and on tap */}
+        <div
+          className="relative hidden shrink-0 lg:block"
+          onMouseEnter={openMega}
+          onMouseLeave={scheduleClose}
+        >
           <button
             type="button"
             aria-expanded={megaOpen}
+            aria-haspopup="true"
             onClick={() => setMegaOpen((o) => !o)}
             className="flex min-h-12 items-center gap-2 rounded-t-xl bg-primary px-4 font-semibold text-primary-foreground"
           >
@@ -173,29 +240,54 @@ export function StorefrontNav({
                 className="fixed inset-0 z-30 cursor-default"
                 onClick={() => setMegaOpen(false)}
               />
-              <div className="absolute left-0 top-full z-40 w-[min(92vw,760px)] rounded-2xl rounded-tl-none border border-border bg-popover p-3 shadow-xl">
+              <div
+                className="absolute left-0 top-full z-40 w-[min(92vw,780px)] origin-top-left animate-scale-in rounded-2xl rounded-tl-none border border-border bg-popover p-3 shadow-xl"
+                onMouseEnter={openMega}
+                onMouseLeave={scheduleClose}
+              >
+                <div className="mb-2 h-1 w-12 rounded-full bg-primary/30 lg:hidden" />
                 <div className="grid gap-1 sm:grid-cols-3">
-                  {categories.map((c) => (
-                    <Link
-                      key={c.id}
-                      {...catLink(c)}
-                      onClick={() => setMegaOpen(false)}
-                      className={cn(
-                        "flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm hover:bg-muted",
-                        activeCategoryId === c.id && "bg-primary/10 text-primary",
-                      )}
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate font-semibold">{c.name_bn}</span>
-                        <span className="block truncate text-[11px] text-muted-foreground">
-                          {c.name_en}
+                  {categories.map((c) => {
+                    const Icon = iconFor(c);
+                    const active = activeCategoryId === c.id;
+                    return (
+                      <Link
+                        key={c.id}
+                        {...catLink(c)}
+                        onClick={() => setMegaOpen(false)}
+                        aria-current={active ? "page" : undefined}
+                        className={cn(
+                          "group flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm transition-all duration-150 hover:bg-muted hover:shadow-sm",
+                          active && "bg-primary/10 ring-1 ring-primary/30",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition-transform duration-150 group-hover:scale-105",
+                            active && "bg-primary text-primary-foreground",
+                          )}
+                        >
+                          <Icon className="size-4" />
                         </span>
-                      </span>
-                      <span className="shrink-0 text-[11px] text-muted-foreground">
-                        {num(counts?.get(c.id) ?? 0, lang)}
-                      </span>
-                    </Link>
-                  ))}
+                        <span className="min-w-0 flex-1">
+                          <span
+                            className={cn(
+                              "block truncate font-semibold",
+                              active && "text-primary",
+                            )}
+                          >
+                            {c.name_bn}
+                          </span>
+                          <span className="block truncate text-[11px] text-muted-foreground">
+                            {c.name_en}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-[11px] text-muted-foreground">
+                          {num(counts?.get(c.id) ?? 0, lang)}
+                        </span>
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             </>
@@ -215,11 +307,11 @@ export function StorefrontNav({
               </>
             );
             return l.to ? (
-              <Link key={l.bn} to={l.to} className={desktopItem(l, active)}>
+              <Link key={l.bn} to={l.to} className={desktopItem(active)}>
                 {body}
               </Link>
             ) : (
-              <a key={l.bn} href={l.href} className={desktopItem(l, false)}>
+              <a key={l.bn} href={l.href} className={desktopItem(false)}>
                 {body}
               </a>
             );
@@ -228,19 +320,23 @@ export function StorefrontNav({
 
         {/* Mobile: quick category strip keeps browsing one tap away */}
         <div className="flex flex-1 items-center gap-1.5 overflow-x-auto py-1.5 pl-1 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {categories.slice(0, 12).map((c) => (
-            <Link
-              key={c.id}
-              {...catLink(c)}
-              className={cn(
-                "flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-border px-3 text-xs font-medium text-muted-foreground",
-                activeCategoryId === c.id &&
-                  "border-primary bg-primary/10 font-semibold text-primary",
-              )}
-            >
-              {bn ? c.name_bn : c.name_en}
-            </Link>
-          ))}
+          {categories.slice(0, 12).map((c) => {
+            const Icon = iconFor(c);
+            return (
+              <Link
+                key={c.id}
+                {...catLink(c)}
+                className={cn(
+                  "flex min-h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border px-3 text-xs font-medium text-muted-foreground",
+                  activeCategoryId === c.id &&
+                    "border-primary bg-primary/10 font-semibold text-primary",
+                )}
+              >
+                <Icon className="size-3.5" />
+                {bn ? c.name_bn : c.name_en}
+              </Link>
+            );
+          })}
         </div>
 
         <a
@@ -250,7 +346,24 @@ export function StorefrontNav({
           <Phone className="size-4" />
           {bn ? "হটলাইন ১৬৭১০" : "Hotline 16710"}
         </a>
+
+        <button
+          type="button"
+          onClick={() => setCartOpen(true)}
+          aria-label={bn ? "কার্ট দেখুন" : "Open cart"}
+          className="relative my-1.5 flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-border px-3 font-semibold text-foreground transition-colors hover:border-primary hover:text-primary"
+        >
+          <ShoppingBasket className="size-4" />
+          <span className="hidden text-sm sm:inline">{bn ? "কার্ট" : "Cart"}</span>
+          {cart.count > 0 && (
+            <span className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+              {num(cart.count, lang)}
+            </span>
+          )}
+        </button>
       </div>
+
+      <CartDrawer open={cartOpen} onOpenChange={setCartOpen} onCheckout={onCheckout} />
     </div>
   );
 }

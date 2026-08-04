@@ -23,7 +23,6 @@ import {
   Clock,
   CloudUpload,
   Loader2,
-  MapPin,
   Minus,
   Phone,
   Plus,
@@ -44,6 +43,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { deliveryFeeFor, useShopCart, type ShopLine } from "@/lib/shop-cart";
+import { useDeliveryArea } from "@/lib/delivery-area";
+import { DeliveryAreaPicker } from "@/components/DeliveryAreaPicker";
 import { applyCoupon } from "@/lib/coupon";
 import { money, num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -186,6 +187,7 @@ function ShopPage() {
   const bn = lang === "bn";
   const { text: sc } = useSiteContent();
   const cart = useShopCart();
+  const { area } = useDeliveryArea();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const [query, setQuery] = useState(search.q ?? "");
@@ -412,7 +414,7 @@ function ShopPage() {
 
   const shown = visible.slice(0, limit);
 
-  const fee = deliveryFeeFor(cart.subtotal);
+  const fee = deliveryFeeFor(cart.subtotal, area.fee);
   const discount = Math.min(coupon?.discount ?? 0, cart.subtotal);
   const total = Math.max(cart.subtotal - discount + fee, 0);
 
@@ -746,7 +748,16 @@ function ShopPage() {
             <label htmlFor="shop-search" className="sr-only">
               {bn ? "পণ্য খুঁজুন" : "Search products"}
             </label>
-            <div className="flex h-12 items-center gap-2 rounded-full border border-border bg-muted/40 pl-4 pr-1.5 shadow-sm transition-colors focus-within:border-primary focus-within:bg-card focus-within:ring-2 focus-within:ring-primary/15">
+            <form
+              role="search"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setSugOpen(false);
+                setSugIdx(-1);
+                setLimit(PAGE);
+                document.getElementById("shop-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="flex h-12 items-center gap-2 rounded-full border border-border bg-muted/40 pl-4 pr-1.5 shadow-sm transition-colors focus-within:border-primary focus-within:bg-card focus-within:ring-2 focus-within:ring-primary/15">
               <Search aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
 
               <Input
@@ -802,10 +813,13 @@ function ShopPage() {
                   {bn ? "মুছুন" : "Clear"}
                 </button>
               )}
-              <span className="hidden h-9 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground sm:inline-flex">
-                {bn ? "খুঁজুন" : "Search"}
-              </span>
-            </div>
+              <button
+                type="submit"
+                className="hidden h-9 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground sm:inline-flex"
+              >
+                {activeCat ? (bn ? "এই ক্যাটাগরিতে খুঁজুন" : "Search here") : bn ? "খুঁজুন" : "Search"}
+              </button>
+            </form>
             <span id="shop-search-hint" className="sr-only">
               {bn
                 ? "লিখুন, তারপর তীর চিহ্ন দিয়ে সাজেশন বেছে নিন এবং এন্টার চাপুন"
@@ -859,14 +873,8 @@ function ShopPage() {
             )}
           </div>
 
-          {/* Delivery area chip — mirrors the reference portal header */}
-          <span className="hidden h-11 shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 text-xs font-medium text-muted-foreground xl:flex">
-            <MapPin className="size-3.5 text-primary" />
-            {bn ? "ডেলিভারি:" : "Deliver to:"}
-            <span className="font-semibold text-foreground">
-              {sc("shop.delivery_area", bn ? "ঢাকা সিটি" : "Dhaka city")}
-            </span>
-          </span>
+          {/* Delivery area chip — pick a zone to update charge and ETA */}
+          <DeliveryAreaPicker className="hidden xl:flex" />
 
           <div className="hidden shrink-0 items-center gap-2 sm:flex">
             <LangToggle />
@@ -888,6 +896,7 @@ function ShopPage() {
           categories={categories.data ?? []}
           counts={catCounts}
           activeCategoryId={cat}
+          onCheckout={() => setCheckout(true)}
         />
 
         {!online && (
@@ -1212,6 +1221,7 @@ function ShopPage() {
           </div>
 
           <ul
+            id="shop-results"
             aria-label={bn ? "পণ্যের তালিকা" : "Product list"}
             className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4"
           >
