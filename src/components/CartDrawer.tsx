@@ -77,6 +77,12 @@ export function CartDrawer({
   const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null);
   const [couponMsg, setCouponMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [checkingCoupon, setCheckingCoupon] = useState(false);
+  const [payment, setPayment] = useState<CheckoutPaymentId>("cod");
+  /** Polite screen-reader announcements for every cart/checkout change. */
+  const [announce, setAnnounce] = useState("");
+  const navigate = useNavigate();
+
+
 
   const ids = cart.lines.map((l) => l.id).sort().join(",");
 
