@@ -6,7 +6,7 @@
  * cart so the basket stays in sync with the homepage.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ChevronRight,
@@ -15,6 +15,7 @@ import {
   Plus,
   Search,
   ShoppingBag,
+  Loader2,
   ShoppingBasket,
 } from "lucide-react";
 import { z } from "zod";
@@ -96,6 +97,21 @@ function CategoryPage() {
   const { text: sc } = useSiteContent();
   const cart = useShopCart();
   const [query, setQuery] = useState(search.q ?? "");
+  // Debounced term keeps typing smooth and drives the "searching…" state.
+  const [debounced, setDebounced] = useState(search.q ?? "");
+  const searching = query.trim() !== debounced.trim();
+
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setDebounced(query);
+      navigate({
+        replace: true,
+        search: (prev: CatSearch) => ({ ...prev, q: query.trim() || undefined }),
+      });
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [query, navigate]);
+
 
   const categories = useQuery({
     queryKey: ["shop-categories"],
@@ -150,11 +166,12 @@ function CategoryPage() {
 
   const sort = search.sort ?? "relevance";
   const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const term = debounced.trim();
+    const q = term.toLowerCase();
     const list = inCategory.filter(
       (p) =>
         (!search.brand || p.brand === search.brand) &&
-        (!q || p.name_en.toLowerCase().includes(q) || p.name_bn.includes(query.trim())),
+        (!q || p.name_en.toLowerCase().includes(q) || p.name_bn.includes(term)),
     );
     const sorted = [...list];
     if (sort === "price_asc") sorted.sort((a, b) => Number(a.price) - Number(b.price));
@@ -162,7 +179,8 @@ function CategoryPage() {
     if (sort === "name_asc") sorted.sort((a, b) => a.name_en.localeCompare(b.name_en));
     if (sort === "name_desc") sorted.sort((a, b) => b.name_en.localeCompare(a.name_en));
     return sorted;
-  }, [inCategory, query, search.brand, sort]);
+  }, [inCategory, debounced, search.brand, sort]);
+
 
   const notReady = categories.isLoading || products.isLoading;
   const missing = !notReady && !category;
@@ -189,12 +207,20 @@ function CategoryPage() {
             className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-muted/40 pl-4 pr-1.5 shadow-sm focus-within:border-primary focus-within:bg-card focus-within:ring-2 focus-within:ring-primary/15"
             onSubmit={(e) => {
               e.preventDefault();
+              setDebounced(query);
               navigate({
                 search: (prev: CatSearch) => ({ ...prev, q: query.trim() || undefined }),
               });
             }}
           >
-            <Search aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+            {searching ? (
+              <Loader2
+                aria-hidden="true"
+                className="size-4 shrink-0 animate-spin text-primary"
+              />
+            ) : (
+              <Search aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+            )}
             <label htmlFor="cat-search" className="sr-only">
               {bn ? "এই ক্যাটাগরিতে খুঁজুন" : "Search in this category"}
             </label>
@@ -203,7 +229,13 @@ function CategoryPage() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setQuery("");
+              }}
               maxLength={60}
+              role="searchbox"
+              aria-busy={searching}
+              aria-controls="cat-results"
               placeholder={
                 category
                   ? `${bn ? category.name_bn : category.name_en} — ${bn ? "খুঁজুন" : "search"}`
@@ -213,6 +245,7 @@ function CategoryPage() {
               }
               className="h-10 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0"
             />
+
             {query && (
               <button
                 type="button"
@@ -345,7 +378,14 @@ function CategoryPage() {
         )}
 
         {/* Grid */}
-        {notReady ? (
+        <div
+          id="cat-results"
+          role="region"
+          aria-live="polite"
+          aria-busy={notReady || searching}
+          aria-label={bn ? "পণ্যের ফলাফল" : "Product results"}
+        >
+        {notReady || searching ? (
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {Array.from({ length: 10 }).map((_, i) => (
               <div key={i} className="shop-card h-64 animate-pulse bg-muted/40" />
@@ -363,13 +403,43 @@ function CategoryPage() {
           </div>
         ) : visible.length === 0 ? (
           <div className="shop-card mt-8 p-8 text-center">
-            <p className="font-semibold">{bn ? "কোনো পণ্য মেলেনি" : "No products matched"}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {bn ? "অন্য শব্দ দিয়ে খুঁজে দেখুন" : "Try a different search term"}
+            <Search className="mx-auto size-8 text-muted-foreground" />
+            <p className="mt-3 font-semibold">
+              {debounced.trim()
+                ? bn
+                  ? `“${debounced.trim()}” — কোনো পণ্য মেলেনি`
+                  : `No products matched “${debounced.trim()}”`
+                : bn
+                  ? "এই ফিল্টারে কোনো পণ্য নেই"
+                  : "No products in this filter"}
             </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {bn
+                ? "বানান দেখে নিন বা ফিল্টার মুছে সব পণ্য দেখুন"
+                : "Check the spelling or clear the filters to see everything"}
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {(debounced.trim() || search.brand) && (
+                <Button
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={() => {
+                    setQuery("");
+                    setDebounced("");
+                    navigate({ search: (prev: CatSearch) => ({ ...prev, q: undefined, brand: undefined }) });
+                  }}
+                >
+                  {bn ? "ফিল্টার মুছুন" : "Clear filters"}
+                </Button>
+              )}
+              <Button asChild className="rounded-full">
+                <Link to="/">{bn ? "সব পণ্য দেখুন" : "Browse all products"}</Link>
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+
             {visible.map((p) => {
               const qty = cart.lines.find((l) => l.id === p.id)?.qty ?? 0;
               return (
@@ -465,6 +535,8 @@ function CategoryPage() {
             })}
           </div>
         )}
+        </div>
+
 
         {/* Other categories */}
         {(categories.data ?? []).length > 1 && (

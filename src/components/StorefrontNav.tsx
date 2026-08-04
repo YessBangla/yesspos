@@ -7,6 +7,7 @@
  * the same links collapse into a touch-friendly hamburger sheet.
  */
 import { useRef, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Apple,
@@ -97,6 +98,9 @@ export function StorefrontNav({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const closeTimer = useRef<number | null>(null);
+  const megaRef = useRef<HTMLDivElement | null>(null);
+  const megaBtnRef = useRef<HTMLButtonElement | null>(null);
+
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const cart = useShopCart();
 
@@ -116,6 +120,36 @@ export function StorefrontNav({
     if (closeTimer.current) window.clearTimeout(closeTimer.current);
     closeTimer.current = window.setTimeout(() => setMegaOpen(false), 160);
   };
+
+  /** Roving keyboard focus inside the mega menu. */
+  const megaItems = () =>
+    Array.from(megaRef.current?.querySelectorAll<HTMLElement>("[data-mega-item]") ?? []);
+  const focusItem = (i: number) => {
+    const items = megaItems();
+    if (items.length === 0) return;
+    items[(i + items.length) % items.length]?.focus();
+  };
+  const onMegaKeyDown = (e: ReactKeyboardEvent) => {
+    const items = megaItems();
+    const idx = items.indexOf(document.activeElement as HTMLElement);
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+      e.preventDefault();
+      focusItem(idx + 1);
+    } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      focusItem(idx - 1);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      focusItem(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      focusItem(items.length - 1);
+    } else if (e.key === "Tab") {
+      setMegaOpen(false);
+    }
+  };
+
+
 
   const desktopItem = (active: boolean) =>
     cn(
@@ -215,18 +249,34 @@ export function StorefrontNav({
           </SheetContent>
         </Sheet>
 
-        {/* Desktop: mega menu — opens on hover and on tap */}
+        {/* Desktop: mega menu — opens on hover, tap and keyboard */}
         <div
           className="relative hidden shrink-0 lg:block"
           onMouseEnter={openMega}
           onMouseLeave={scheduleClose}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && megaOpen) {
+              setMegaOpen(false);
+              megaBtnRef.current?.focus();
+            }
+          }}
         >
           <button
+            ref={megaBtnRef}
             type="button"
+            id="mega-trigger"
             aria-expanded={megaOpen}
-            aria-haspopup="true"
+            aria-haspopup="menu"
+            aria-controls="mega-menu"
             onClick={() => setMegaOpen((o) => !o)}
-            className="flex min-h-12 items-center gap-2 rounded-t-xl bg-primary px-4 font-semibold text-primary-foreground"
+            onKeyDown={(e) => {
+              if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openMega();
+                window.setTimeout(() => focusItem(0), 0);
+              }
+            }}
+            className="flex min-h-12 items-center gap-2 rounded-t-xl bg-primary px-4 font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             <LayoutGrid className="size-4" />
             <span>{bn ? "সব ক্যাটাগরি" : "All categories"}</span>
@@ -236,14 +286,20 @@ export function StorefrontNav({
             <>
               <button
                 type="button"
-                aria-label={bn ? "বন্ধ করুন" : "Close"}
+                tabIndex={-1}
+                aria-hidden="true"
                 className="fixed inset-0 z-30 cursor-default"
                 onClick={() => setMegaOpen(false)}
               />
               <div
+                id="mega-menu"
+                ref={megaRef}
+                role="menu"
+                aria-labelledby="mega-trigger"
                 className="absolute left-0 top-full z-40 w-[min(92vw,780px)] origin-top-left animate-scale-in rounded-2xl rounded-tl-none border border-border bg-popover p-3 shadow-xl"
                 onMouseEnter={openMega}
                 onMouseLeave={scheduleClose}
+                onKeyDown={onMegaKeyDown}
               >
                 <div className="mb-2 h-1 w-12 rounded-full bg-primary/30 lg:hidden" />
                 <div className="grid gap-1 sm:grid-cols-3">
@@ -254,13 +310,16 @@ export function StorefrontNav({
                       <Link
                         key={c.id}
                         {...catLink(c)}
+                        role="menuitem"
+                        data-mega-item=""
                         onClick={() => setMegaOpen(false)}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "group flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm transition-all duration-150 hover:bg-muted hover:shadow-sm",
+                          "group flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm transition-all duration-150 hover:bg-muted hover:shadow-sm focus-visible:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                           active && "bg-primary/10 ring-1 ring-primary/30",
                         )}
                       >
+
                         <span
                           className={cn(
                             "grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition-transform duration-150 group-hover:scale-105",
