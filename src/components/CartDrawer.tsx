@@ -33,7 +33,10 @@ import { DeliverySlotPicker, type SlotChoice } from "@/components/DeliverySlotPi
 import { CheckoutQueueStatus } from "@/components/CheckoutQueueStatus";
 import { useDeliveryArea } from "@/lib/delivery-area";
 import { applyStockLimits, clampQty, deliveryFeeFor, useShopCart } from "@/lib/shop-cart";
-import { queueOrder } from "@/lib/delivery-queue";
+import { queueOrder, updatePendingPayment } from "@/lib/delivery-queue";
+import { CHECKOUT_PAYMENTS, paymentLabel, type CheckoutPaymentId } from "@/lib/checkout-payment";
+import { saveOrderSnapshot } from "@/lib/order-snapshot";
+
 import { applyCoupon } from "@/lib/coupon";
 import { slotLabel, slotText } from "@/lib/slots";
 import { supabase } from "@/integrations/supabase/client";
