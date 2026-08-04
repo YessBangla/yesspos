@@ -117,6 +117,36 @@ export function StorefrontNav({
     closeTimer.current = window.setTimeout(() => setMegaOpen(false), 160);
   };
 
+  /** Roving keyboard focus inside the mega menu. */
+  const megaItems = () =>
+    Array.from(megaRef.current?.querySelectorAll<HTMLElement>("[data-mega-item]") ?? []);
+  const focusItem = (i: number) => {
+    const items = megaItems();
+    if (items.length === 0) return;
+    items[(i + items.length) % items.length]?.focus();
+  };
+  const onMegaKeyDown = (e: React.KeyboardEvent) => {
+    const items = megaItems();
+    const idx = items.indexOf(document.activeElement as HTMLElement);
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+      e.preventDefault();
+      focusItem(idx + 1);
+    } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      focusItem(idx - 1);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      focusItem(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      focusItem(items.length - 1);
+    } else if (e.key === "Tab") {
+      setMegaOpen(false);
+    }
+  };
+
+
+
   const desktopItem = (active: boolean) =>
     cn(
       "relative flex min-h-12 items-center gap-1.5 whitespace-nowrap px-3 text-sm font-medium transition-colors",
