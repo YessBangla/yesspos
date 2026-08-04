@@ -2504,6 +2504,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_carts: {
+        Row: {
+          lines: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          lines?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          lines?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
