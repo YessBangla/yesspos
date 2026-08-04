@@ -8,7 +8,7 @@
  * queue status (pending / retrying / failed) is shown with a retry button.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
