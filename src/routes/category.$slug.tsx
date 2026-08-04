@@ -206,12 +206,20 @@ function CategoryPage() {
             className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-muted/40 pl-4 pr-1.5 shadow-sm focus-within:border-primary focus-within:bg-card focus-within:ring-2 focus-within:ring-primary/15"
             onSubmit={(e) => {
               e.preventDefault();
+              setDebounced(query);
               navigate({
                 search: (prev: CatSearch) => ({ ...prev, q: query.trim() || undefined }),
               });
             }}
           >
-            <Search aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+            {searching ? (
+              <Loader2
+                aria-hidden="true"
+                className="size-4 shrink-0 animate-spin text-primary"
+              />
+            ) : (
+              <Search aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+            )}
             <label htmlFor="cat-search" className="sr-only">
               {bn ? "এই ক্যাটাগরিতে খুঁজুন" : "Search in this category"}
             </label>
@@ -220,7 +228,13 @@ function CategoryPage() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setQuery("");
+              }}
               maxLength={60}
+              role="searchbox"
+              aria-busy={searching}
+              aria-controls="cat-results"
               placeholder={
                 category
                   ? `${bn ? category.name_bn : category.name_en} — ${bn ? "খুঁজুন" : "search"}`
@@ -230,6 +244,7 @@ function CategoryPage() {
               }
               className="h-10 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0"
             />
+
             {query && (
               <button
                 type="button"
