@@ -1080,17 +1080,11 @@ function ShopPage() {
             </div>
             <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
               {(categories.data ?? []).slice(0, 12).map((c) => (
-                <button
+                <Link
                   key={c.id}
-                  type="button"
-                  onClick={() => {
-                    setCat(c.id);
-                    setLimit(PAGE);
-                  }}
-                  className={cn(
-                    "shop-card flex flex-col items-center gap-2 p-3 text-center transition-colors hover:border-primary/40",
-                    cat === c.id && "border-primary/60 bg-primary/5",
-                  )}
+                  to="/category/$slug"
+                  params={{ slug: slugify(c.name_en) }}
+                  className="shop-card flex flex-col items-center gap-2 p-3 text-center transition-colors hover:border-primary/40"
                 >
                   <span className="flex size-14 items-center justify-center overflow-hidden rounded-2xl bg-muted">
                     {catImage.get(c.id) ? (
@@ -1110,8 +1104,9 @@ function ShopPage() {
                   <span className="text-[11px] text-muted-foreground">
                     {num(catCounts.get(c.id) ?? 0, lang)} {bn ? "পণ্য" : "items"}
                   </span>
-                </button>
+                </Link>
               ))}
+
             </div>
           </section>
 
