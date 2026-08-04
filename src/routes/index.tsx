@@ -860,9 +860,20 @@ function ShopPage() {
             )}
           </div>
 
+          {/* Delivery area chip — mirrors the reference portal header */}
+          <span className="hidden h-11 shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 text-xs font-medium text-muted-foreground xl:flex">
+            <MapPin className="size-3.5 text-primary" />
+            {bn ? "ডেলিভারি:" : "Deliver to:"}
+            <span className="font-semibold text-foreground">
+              {sc("shop.delivery_area", bn ? "ঢাকা সিটি" : "Dhaka city")}
+            </span>
+          </span>
+
           <div className="hidden shrink-0 items-center gap-2 sm:flex">
+            <LangToggle />
             <CustomerAccountMenu />
           </div>
+
 
           <Button
             className="h-12 shrink-0 rounded-full px-5 font-semibold"
