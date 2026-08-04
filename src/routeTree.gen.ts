@@ -15,10 +15,12 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as OrderConfirmedRouteImport } from './routes/order-confirmed'
 import { Route as MyOrdersRouteImport } from './routes/my-orders'
 import { Route as MyAccountRouteImport } from './routes/my-account'
 import { Route as HomedeliveryRouteImport } from './routes/homedelivery'
 import { Route as CorporateRouteImport } from './routes/corporate'
+import { Route as BudgetRouteImport } from './routes/budget'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -96,6 +98,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrderConfirmedRoute = OrderConfirmedRouteImport.update({
+  id: '/order-confirmed',
+  path: '/order-confirmed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MyOrdersRoute = MyOrdersRouteImport.update({
   id: '/my-orders',
   path: '/my-orders',
@@ -114,6 +121,11 @@ const HomedeliveryRoute = HomedeliveryRouteImport.update({
 const CorporateRoute = CorporateRouteImport.update({
   id: '/corporate',
   path: '/corporate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BudgetRoute = BudgetRouteImport.update({
+  id: '/budget',
+  path: '/budget',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -360,10 +372,12 @@ const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/budget': typeof BudgetRoute
   '/corporate': typeof CorporateRoute
   '/homedelivery': typeof HomedeliveryRoute
   '/my-account': typeof MyAccountRoute
   '/my-orders': typeof MyOrdersRoute
+  '/order-confirmed': typeof OrderConfirmedRoute
   '/privacy': typeof PrivacyRoute
   '/shop': typeof ShopRoute
   '/signin': typeof SigninRoute
@@ -417,10 +431,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/budget': typeof BudgetRoute
   '/corporate': typeof CorporateRoute
   '/homedelivery': typeof HomedeliveryRoute
   '/my-account': typeof MyAccountRoute
   '/my-orders': typeof MyOrdersRoute
+  '/order-confirmed': typeof OrderConfirmedRoute
   '/privacy': typeof PrivacyRoute
   '/shop': typeof ShopRoute
   '/signin': typeof SigninRoute
@@ -476,10 +492,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/budget': typeof BudgetRoute
   '/corporate': typeof CorporateRoute
   '/homedelivery': typeof HomedeliveryRoute
   '/my-account': typeof MyAccountRoute
   '/my-orders': typeof MyOrdersRoute
+  '/order-confirmed': typeof OrderConfirmedRoute
   '/privacy': typeof PrivacyRoute
   '/shop': typeof ShopRoute
   '/signin': typeof SigninRoute
@@ -535,10 +553,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/budget'
     | '/corporate'
     | '/homedelivery'
     | '/my-account'
     | '/my-orders'
+    | '/order-confirmed'
     | '/privacy'
     | '/shop'
     | '/signin'
@@ -592,10 +612,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/budget'
     | '/corporate'
     | '/homedelivery'
     | '/my-account'
     | '/my-orders'
+    | '/order-confirmed'
     | '/privacy'
     | '/shop'
     | '/signin'
@@ -650,10 +672,12 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/budget'
     | '/corporate'
     | '/homedelivery'
     | '/my-account'
     | '/my-orders'
+    | '/order-confirmed'
     | '/privacy'
     | '/shop'
     | '/signin'
@@ -709,10 +733,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BudgetRoute: typeof BudgetRoute
   CorporateRoute: typeof CorporateRoute
   HomedeliveryRoute: typeof HomedeliveryRoute
   MyAccountRoute: typeof MyAccountRoute
   MyOrdersRoute: typeof MyOrdersRoute
+  OrderConfirmedRoute: typeof OrderConfirmedRoute
   PrivacyRoute: typeof PrivacyRoute
   ShopRoute: typeof ShopRoute
   SigninRoute: typeof SigninRoute
@@ -767,6 +793,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/order-confirmed': {
+      id: '/order-confirmed'
+      path: '/order-confirmed'
+      fullPath: '/order-confirmed'
+      preLoaderRoute: typeof OrderConfirmedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/my-orders': {
       id: '/my-orders'
       path: '/my-orders'
@@ -793,6 +826,13 @@ declare module '@tanstack/react-router' {
       path: '/corporate'
       fullPath: '/corporate'
       preLoaderRoute: typeof CorporateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/budget': {
+      id: '/budget'
+      path: '/budget'
+      fullPath: '/budget'
+      preLoaderRoute: typeof BudgetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1215,10 +1255,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  BudgetRoute: BudgetRoute,
   CorporateRoute: CorporateRoute,
   HomedeliveryRoute: HomedeliveryRoute,
   MyAccountRoute: MyAccountRoute,
   MyOrdersRoute: MyOrdersRoute,
+  OrderConfirmedRoute: OrderConfirmedRoute,
   PrivacyRoute: PrivacyRoute,
   ShopRoute: ShopRoute,
   SigninRoute: SigninRoute,

@@ -8,7 +8,7 @@
  * queue status (pending / retrying / failed) is shown with a retry button.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -33,7 +33,10 @@ import { DeliverySlotPicker, type SlotChoice } from "@/components/DeliverySlotPi
 import { CheckoutQueueStatus } from "@/components/CheckoutQueueStatus";
 import { useDeliveryArea } from "@/lib/delivery-area";
 import { applyStockLimits, clampQty, deliveryFeeFor, useShopCart } from "@/lib/shop-cart";
-import { queueOrder } from "@/lib/delivery-queue";
+import { queueOrder, updatePendingPayment } from "@/lib/delivery-queue";
+import { CHECKOUT_PAYMENTS, paymentLabel, type CheckoutPaymentId } from "@/lib/checkout-payment";
+import { saveOrderSnapshot } from "@/lib/order-snapshot";
+
 import { applyCoupon } from "@/lib/coupon";
 import { slotLabel, slotText } from "@/lib/slots";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,6 +77,12 @@ export function CartDrawer({
   const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null);
   const [couponMsg, setCouponMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [checkingCoupon, setCheckingCoupon] = useState(false);
+  const [payment, setPayment] = useState<CheckoutPaymentId>("cod");
+  /** Polite screen-reader announcements for every cart/checkout change. */
+  const [announce, setAnnounce] = useState("");
+  const navigate = useNavigate();
+
+
 
   const ids = cart.lines.map((l) => l.id).sort().join(",");
 
@@ -101,15 +110,16 @@ export function CartDrawer({
     if (adjusted.length === 0) return;
     const first = adjusted[0];
     const name = bn ? first.line.name_bn : first.line.name_en;
-    toast.warning(
+    const msg =
       first.to === 0
         ? bn
           ? `"${name}" এখন স্টকে নেই — কার্ট থেকে সরানো হয়েছে`
           : `"${name}" is out of stock and was removed`
         : bn
           ? `"${name}" শুধু ${num(first.to, lang)}টি পাওয়া যাচ্ছে`
-          : `Only ${first.to} of "${name}" available`,
-    );
+          : `Only ${first.to} of "${name}" available`;
+    toast.warning(msg);
+    setAnnounce(msg);
   }, [stock.data, bn, lang]);
 
   const stockFor = (id: string) => stock.data?.[id];
@@ -121,6 +131,26 @@ export function CartDrawer({
     [coupon, cart.subtotal],
   );
   const total = Math.max(0, cart.subtotal - discount) + fee;
+
+  // Announce every recalculated total so keyboard/screen-reader users follow along.
+  useEffect(() => {
+    if (!open || cart.lines.length === 0) return;
+    setAnnounce(
+      bn
+        ? `সর্বমোট হালনাগাদ: ${money(total, lang)}, ${num(cart.count, lang)}টি পণ্য`
+        : `Total updated: ${money(total, lang)} for ${cart.count} item(s)`,
+    );
+  }, [total, cart.count, open, bn, lang, cart.lines.length]);
+
+  // Announce the delivery window whenever it changes.
+  useEffect(() => {
+    if (!slot?.slotId) return;
+    setAnnounce(
+      bn
+        ? `ডেলিভারি সময় নির্বাচিত: ${slotLabel(slot.day, slot.slotId, true)}`
+        : `Delivery slot selected: ${slotLabel(slot.day, slot.slotId, false)}`,
+    );
+  }, [slot, bn]);
 
   // Re-validate a live coupon whenever the cart value changes.
   useEffect(() => {
@@ -137,6 +167,7 @@ export function CartDrawer({
       else {
         setCoupon(null);
         setCouponMsg({ ok: false, text: r.message });
+        setAnnounce(r.message);
       }
     });
     return () => {
@@ -154,11 +185,20 @@ export function CartDrawer({
       if (r.ok) {
         setCoupon({ code: r.code, discount: r.discount });
         setCode("");
-      } else setCoupon(null);
+        setAnnounce(
+          bn
+            ? `${r.code} প্রয়োগ হয়েছে — ছাড় ${money(r.discount, lang)}`
+            : `${r.code} applied — ${money(r.discount, lang)} off`,
+        );
+      } else {
+        setCoupon(null);
+        setAnnounce(r.message);
+      }
     } finally {
       setCheckingCoupon(false);
     }
   }
+
 
   // Reopening the drawer always starts on the cart list.
   useEffect(() => {
@@ -193,16 +233,17 @@ export function CartDrawer({
     }
 
     const hasSlot = !!slot?.slotId;
+    const slotName = hasSlot ? slotLabel(slot!.day, slot!.slotId, bn) : bn ? area.eta_bn : area.eta_en;
     const orderRow = {
       customer_name: parsed.data.name,
       customer_phone: parsed.data.phone,
       address: parsed.data.address,
       area: bn ? area.bn : area.en,
       note: parsed.data.note || null,
-      slot: hasSlot ? slotLabel(slot!.day, slot!.slotId, bn) : bn ? area.eta_bn : area.eta_en,
+      slot: slotName,
       slot_date: hasSlot ? slot!.day : null,
       slot_id: hasSlot ? slot!.slotId : null,
-      payment_method: "cod",
+      payment_method: payment,
       subtotal: cart.subtotal,
       discount,
       coupon_code: coupon?.code ?? null,
@@ -216,16 +257,46 @@ export function CartDrawer({
       quantity: l.qty,
       line_total: l.price * l.qty,
     }));
+    const snapshotBase = {
+      name: parsed.data.name,
+      phone: parsed.data.phone,
+      address: parsed.data.address,
+      area: bn ? area.bn : area.en,
+      slot: slotName,
+      paymentMethod: payment,
+      paymentLabel: paymentLabel(payment, bn),
+      subtotal: cart.subtotal,
+      discount,
+      couponCode: coupon?.code ?? null,
+      deliveryFee: fee,
+      total,
+      lines: cart.lines.map((l) => ({
+        name: bn ? l.name_bn : l.name_en,
+        qty: l.qty,
+        price: l.price,
+        line_total: l.price * l.qty,
+      })),
+      createdAt: new Date().toISOString(),
+    };
+
+    function finish(orderNo: number | null, queueId: string | null) {
+      saveOrderSnapshot({ ...snapshotBase, orderNo, queueId });
+      cart.clear();
+      setCoupon(null);
+      setPlaced(orderNo ?? 0);
+      onOpenChange(false);
+      void navigate({ to: "/order-confirmed" });
+    }
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
-      await queueOrder(orderRow, items);
-      cart.clear();
-      setPlaced(0);
+      const entry = await queueOrder(orderRow, items);
       toast.success(
         bn
           ? "অফলাইন — অনলাইনে এলে অর্ডার স্বয়ংক্রিয়ভাবে যাবে"
           : "Offline — your order will be sent automatically when you reconnect",
       );
+      setAnnounce(bn ? "অর্ডার সারিতে রাখা হয়েছে" : "Order queued");
+      finish(null, entry.id);
       return;
     }
 
@@ -242,22 +313,22 @@ export function CartDrawer({
         .insert(items.map((i) => ({ ...i, order_id: data.id })));
       if (itemErr) throw itemErr;
 
-      cart.clear();
-      setCoupon(null);
-      setPlaced(Number(data.order_no));
       toast.success(bn ? "অর্ডার নিশ্চিত হয়েছে" : "Order confirmed");
+      setAnnounce(bn ? "অর্ডার নিশ্চিত হয়েছে" : "Order confirmed");
+      finish(Number(data.order_no), null);
     } catch {
-      await queueOrder(orderRow, items);
-      cart.clear();
-      setPlaced(0);
+      const entry = await queueOrder(orderRow, items);
       toast.warning(
         bn
           ? "নেটওয়ার্ক সমস্যা — অর্ডার সারিতে রাখা হয়েছে"
           : "Network issue — your order was queued and will retry",
       );
+      setAnnounce(bn ? "অর্ডার সারিতে রাখা হয়েছে" : "Order queued");
+      finish(null, entry.id);
     } finally {
       setPlacing(false);
     }
+
   }
 
   const couponBox = (
@@ -313,7 +384,46 @@ export function CartDrawer({
     </div>
   );
 
+  const paymentBox = (
+    <fieldset className="space-y-2">
+      <legend className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+        {bn ? "পেমেন্ট পদ্ধতি" : "Payment method"}
+      </legend>
+      <div className="grid grid-cols-2 gap-2">
+        {CHECKOUT_PAYMENTS.map((p) => (
+          <label
+            key={p.id}
+            className={`flex min-h-11 cursor-pointer items-start gap-2 rounded-2xl border p-3 text-xs transition ${
+              payment === p.id ? "border-primary bg-primary/10" : "border-border hover:bg-muted"
+            }`}
+          >
+            <input
+              type="radio"
+              name="checkout-payment"
+              value={p.id}
+              checked={payment === p.id}
+              onChange={() => {
+                setPayment(p.id);
+                setAnnounce(
+                  bn ? `পেমেন্ট পদ্ধতি: ${p.bn}` : `Payment method: ${p.en}`,
+                );
+                // Queued checkouts retry with the latest payment choice.
+                void updatePendingPayment({ payment_method: p.id });
+              }}
+              className="mt-0.5 size-4 accent-[hsl(var(--primary))]"
+            />
+            <span>
+              <span className="block font-semibold">{bn ? p.bn : p.en}</span>
+              <span className="block text-muted-foreground">{bn ? p.hintBn : p.hintEn}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+
   const summary = (
+
     <div className="space-y-2 text-sm">
       <div className="flex items-center justify-between gap-2">
         <span className="text-muted-foreground">{bn ? "ডেলিভারি এরিয়া" : "Delivery area"}</span>
@@ -352,7 +462,12 @@ export function CartDrawer({
         aria-label={bn ? "কার্ট ও চেকআউট" : "Cart and checkout"}
         className="flex w-[92vw] max-w-md flex-col gap-0 p-0"
       >
+        {/* Polite live region: promo applied, stock limits, slot and totals. */}
+        <p aria-live="polite" aria-atomic="true" className="sr-only">
+          {announce}
+        </p>
         <SheetHeader className="border-b border-border px-4 py-3 text-left">
+
           <SheetTitle className="flex items-center gap-2">
             {step === "checkout" && !placed && (
               <button
@@ -585,13 +700,10 @@ export function CartDrawer({
                 value={form.note}
                 onChange={(v) => setForm((f) => ({ ...f, note: v }))}
               />
+              {paymentBox}
               <div className="rounded-2xl border border-border bg-muted/40 p-3">{summary}</div>
-              <CheckoutQueueStatus />
-              <p className="text-xs text-muted-foreground">
-                {bn
-                  ? "পেমেন্ট: ক্যাশ অন ডেলিভারি"
-                  : "Payment: cash on delivery"}
-              </p>
+              <CheckoutQueueStatus paymentPatch={{ payment_method: payment }} />
+
             </form>
             <div className="border-t border-border bg-muted/40 p-4">
               <Button
