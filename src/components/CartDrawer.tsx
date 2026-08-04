@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DeliveryAreaPicker } from "@/components/DeliveryAreaPicker";
+import { SavedAddressPicker } from "@/components/SavedAddressPicker";
 import { DeliverySlotPicker, type SlotChoice } from "@/components/DeliverySlotPicker";
 import { CheckoutQueueStatus } from "@/components/CheckoutQueueStatus";
 import { useDeliveryArea } from "@/lib/delivery-area";
