@@ -548,6 +548,7 @@ function BudgetPage() {
           </div>
         </section>
       </div>
-    </main>
+      </main>
+    </div>
   );
 }
