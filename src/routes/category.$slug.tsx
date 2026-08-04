@@ -535,6 +535,8 @@ function CategoryPage() {
             })}
           </div>
         )}
+        </div>
+
 
         {/* Other categories */}
         {(categories.data ?? []).length > 1 && (
