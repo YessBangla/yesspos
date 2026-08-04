@@ -1,12 +1,13 @@
 /**
  * Storefront menu bar shared by the homepage and every category page.
  *
- * Desktop: "All categories" mega-menu + inline menu links.
- * Mobile: a hamburger sheet holding the same links and the full category list,
- * with touch-friendly (min 44px) rows.
+ * Layout mirrors a classic Bangladeshi e-commerce portal bar: a solid
+ * "All categories" pill on the left, icon menu links with an underlined
+ * active tab in the middle and the hotline on the right. On mobile the same
+ * links collapse into a touch-friendly hamburger sheet.
  */
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Building2,
   ChevronDown,
@@ -19,6 +20,7 @@ import {
   ShoppingBasket,
   Truck,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { num, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -26,8 +28,16 @@ import { slugify } from "@/lib/category-slug";
 
 export type NavCategory = { id: string; name_en: string; name_bn: string };
 
-const itemClass =
-  "flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
+type NavLink = { to?: string; href?: string; icon: LucideIcon; bn: string; en: string };
+
+const LINKS: NavLink[] = [
+  { to: "/", icon: Home, bn: "হোম", en: "Home" },
+  { to: "/shop", icon: ShoppingBasket, bn: "স্টোর", en: "Store" },
+  { to: "/track", icon: Truck, bn: "অর্ডার ট্র্যাক", en: "Track order" },
+  { to: "/my-orders", icon: ShoppingBag, bn: "আমার অর্ডার", en: "My orders" },
+  { to: "/corporate", icon: Building2, bn: "কর্পোরেট", en: "Corporate" },
+  { href: "tel:16710", icon: LifeBuoy, bn: "সহায়তা", en: "Support" },
+];
 
 export function StorefrontNav({
   categories,
@@ -42,49 +52,32 @@ export function StorefrontNav({
   const bn = lang === "bn";
   const [megaOpen, setMegaOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const catLink = (c: NavCategory) => ({
     to: "/category/$slug" as const,
     params: { slug: slugify(c.name_en) },
   });
 
-  const links = (
-    <>
-      <Link to="/" className={itemClass}>
-        <Home className="size-4" />
-        {bn ? "হোম" : "Home"}
-      </Link>
-      <Link to="/" search={{}} className={itemClass}>
-        <ShoppingBasket className="size-4" />
-        {bn ? "সব পণ্য" : "All products"}
-      </Link>
-      <Link to="/track" className={itemClass}>
-        <Truck className="size-4" />
-        {bn ? "অর্ডার ট্র্যাক" : "Track order"}
-      </Link>
-      <Link to="/my-orders" className={itemClass}>
-        <ShoppingBag className="size-4" />
-        {bn ? "আমার অর্ডার" : "My orders"}
-      </Link>
-      <Link to="/corporate" className={itemClass}>
-        <Building2 className="size-4" />
-        {bn ? "কর্পোরেট" : "Corporate"}
-      </Link>
-      <a href="tel:16710" className={itemClass}>
-        <LifeBuoy className="size-4" />
-        {bn ? "সহায়তা" : "Support"}
-      </a>
-    </>
-  );
+  const isActive = (l: NavLink) => !!l.to && (l.to === "/" ? pathname === "/" : pathname.startsWith(l.to));
+
+  const desktopItem = (l: NavLink, active: boolean) =>
+    cn(
+      "relative flex min-h-12 items-center gap-1.5 whitespace-nowrap px-3 text-sm font-medium transition-colors",
+      "after:absolute after:inset-x-2 after:bottom-0 after:h-[3px] after:rounded-full after:bg-primary after:transition-transform after:duration-200",
+      active
+        ? "text-primary after:scale-x-100"
+        : "text-muted-foreground hover:text-primary after:scale-x-0",
+    );
 
   return (
-    <div className="border-t border-border">
-      <div className="mx-auto flex max-w-7xl items-center gap-1 px-2 py-1.5 text-sm">
+    <div className="border-t border-border bg-card">
+      <div className="mx-auto flex max-w-7xl items-center gap-1 px-2 text-sm sm:px-3">
         {/* Mobile: hamburger */}
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger
             aria-label={bn ? "মেনু" : "Menu"}
-            className="flex min-h-11 items-center gap-2 rounded-lg bg-primary px-3 py-2 font-semibold text-primary-foreground lg:hidden"
+            className="my-1.5 flex min-h-11 items-center gap-2 rounded-xl bg-primary px-3 py-2 font-semibold text-primary-foreground lg:hidden"
           >
             <Menu className="size-4" />
             <span className="text-sm">{bn ? "মেনু" : "Menu"}</span>
@@ -98,7 +91,27 @@ export function StorefrontNav({
               className="flex flex-col gap-0.5 p-2"
               onClick={() => setSheetOpen(false)}
             >
-              {links}
+              {LINKS.map((l) => {
+                const cls = cn(
+                  "flex min-h-11 items-center gap-2.5 rounded-xl px-3 py-2 font-medium",
+                  isActive(l) ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted",
+                );
+                const body = (
+                  <>
+                    <l.icon className="size-4 shrink-0" />
+                    {bn ? l.bn : l.en}
+                  </>
+                );
+                return l.to ? (
+                  <Link key={l.bn} to={l.to} className={cls}>
+                    {body}
+                  </Link>
+                ) : (
+                  <a key={l.bn} href={l.href} className={cls}>
+                    {body}
+                  </a>
+                );
+              })}
             </nav>
             <div className="border-t border-border p-2">
               <p className="px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
@@ -111,12 +124,17 @@ export function StorefrontNav({
                       {...catLink(c)}
                       onClick={() => setSheetOpen(false)}
                       className={cn(
-                        "flex min-h-11 items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted",
+                        "flex min-h-11 items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm hover:bg-muted",
                         activeCategoryId === c.id && "bg-primary/10 font-semibold text-primary",
                       )}
                     >
-                      <span className="truncate">{bn ? c.name_bn : c.name_en}</span>
-                      <span className="text-[11px] text-muted-foreground">
+                      <span className="min-w-0 truncate">
+                        <span className="block truncate font-medium">{c.name_bn}</span>
+                        <span className="block truncate text-[11px] text-muted-foreground">
+                          {c.name_en}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-[11px] text-muted-foreground">
                         {num(counts?.get(c.id) ?? 0, lang)}
                       </span>
                     </Link>
@@ -126,7 +144,7 @@ export function StorefrontNav({
             </div>
             <a
               href="tel:16710"
-              className="m-2 flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary/10 px-3 font-semibold text-primary"
+              className="m-2 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary/10 px-3 font-semibold text-primary"
             >
               <Phone className="size-4" />
               {bn ? "হটলাইন ১৬৭১০" : "Hotline 16710"}
@@ -140,7 +158,7 @@ export function StorefrontNav({
             type="button"
             aria-expanded={megaOpen}
             onClick={() => setMegaOpen((o) => !o)}
-            className="flex min-h-11 items-center gap-2 rounded-lg bg-primary px-3 py-2 font-semibold text-primary-foreground"
+            className="flex min-h-12 items-center gap-2 rounded-t-xl bg-primary px-4 font-semibold text-primary-foreground"
           >
             <LayoutGrid className="size-4" />
             <span>{bn ? "সব ক্যাটাগরি" : "All categories"}</span>
@@ -154,7 +172,7 @@ export function StorefrontNav({
                 className="fixed inset-0 z-30 cursor-default"
                 onClick={() => setMegaOpen(false)}
               />
-              <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-[min(92vw,720px)] rounded-2xl border border-border bg-popover p-3 shadow-xl">
+              <div className="absolute left-0 top-full z-40 w-[min(92vw,760px)] rounded-2xl rounded-tl-none border border-border bg-popover p-3 shadow-xl">
                 <div className="grid gap-1 sm:grid-cols-3">
                   {categories.map((c) => (
                     <Link
@@ -162,12 +180,17 @@ export function StorefrontNav({
                       {...catLink(c)}
                       onClick={() => setMegaOpen(false)}
                       className={cn(
-                        "flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-muted",
-                        activeCategoryId === c.id && "bg-primary/10 font-semibold text-primary",
+                        "flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm hover:bg-muted",
+                        activeCategoryId === c.id && "bg-primary/10 text-primary",
                       )}
                     >
-                      <span className="truncate">{bn ? c.name_bn : c.name_en}</span>
-                      <span className="text-[11px] text-muted-foreground">
+                      <span className="min-w-0">
+                        <span className="block truncate font-semibold">{c.name_bn}</span>
+                        <span className="block truncate text-[11px] text-muted-foreground">
+                          {c.name_en}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-[11px] text-muted-foreground">
                         {num(counts?.get(c.id) ?? 0, lang)}
                       </span>
                     </Link>
@@ -180,14 +203,31 @@ export function StorefrontNav({
 
         <nav
           aria-label={bn ? "প্রধান মেনু" : "Main menu"}
-          className="hidden flex-1 items-center gap-0.5 overflow-x-auto px-1 lg:flex [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="hidden flex-1 items-center gap-0.5 overflow-x-auto pl-2 lg:flex [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {links}
+          {LINKS.map((l) => {
+            const active = isActive(l);
+            const body = (
+              <>
+                <l.icon className="size-4" />
+                {bn ? l.bn : l.en}
+              </>
+            );
+            return l.to ? (
+              <Link key={l.bn} to={l.to} className={desktopItem(l, active)}>
+                {body}
+              </Link>
+            ) : (
+              <a key={l.bn} href={l.href} className={desktopItem(l, false)}>
+                {body}
+              </a>
+            );
+          })}
         </nav>
 
         {/* Mobile: quick category strip keeps browsing one tap away */}
-        <div className="flex flex-1 items-center gap-1.5 overflow-x-auto px-1 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {categories.slice(0, 10).map((c) => (
+        <div className="flex flex-1 items-center gap-1.5 overflow-x-auto py-1.5 pl-1 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {categories.slice(0, 12).map((c) => (
             <Link
               key={c.id}
               {...catLink(c)}
@@ -204,7 +244,7 @@ export function StorefrontNav({
 
         <a
           href="tel:16710"
-          className="hidden shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 font-semibold text-primary lg:flex"
+          className="hidden shrink-0 items-center gap-1.5 px-3 text-sm font-semibold text-primary lg:flex"
         >
           <Phone className="size-4" />
           {bn ? "হটলাইন ১৬৭১০" : "Hotline 16710"}
