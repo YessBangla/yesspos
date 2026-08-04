@@ -384,7 +384,46 @@ export function CartDrawer({
     </div>
   );
 
+  const paymentBox = (
+    <fieldset className="space-y-2">
+      <legend className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+        {bn ? "পেমেন্ট পদ্ধতি" : "Payment method"}
+      </legend>
+      <div className="grid grid-cols-2 gap-2">
+        {CHECKOUT_PAYMENTS.map((p) => (
+          <label
+            key={p.id}
+            className={`flex min-h-11 cursor-pointer items-start gap-2 rounded-2xl border p-3 text-xs transition ${
+              payment === p.id ? "border-primary bg-primary/10" : "border-border hover:bg-muted"
+            }`}
+          >
+            <input
+              type="radio"
+              name="checkout-payment"
+              value={p.id}
+              checked={payment === p.id}
+              onChange={() => {
+                setPayment(p.id);
+                setAnnounce(
+                  bn ? `পেমেন্ট পদ্ধতি: ${p.bn}` : `Payment method: ${p.en}`,
+                );
+                // Queued checkouts retry with the latest payment choice.
+                void updatePendingPayment({ payment_method: p.id });
+              }}
+              className="mt-0.5 size-4 accent-[hsl(var(--primary))]"
+            />
+            <span>
+              <span className="block font-semibold">{bn ? p.bn : p.en}</span>
+              <span className="block text-muted-foreground">{bn ? p.hintBn : p.hintEn}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+
   const summary = (
+
     <div className="space-y-2 text-sm">
       <div className="flex items-center justify-between gap-2">
         <span className="text-muted-foreground">{bn ? "ডেলিভারি এরিয়া" : "Delivery area"}</span>
