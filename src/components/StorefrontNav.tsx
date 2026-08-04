@@ -97,6 +97,9 @@ export function StorefrontNav({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const closeTimer = useRef<number | null>(null);
+  const megaRef = useRef<HTMLDivElement | null>(null);
+  const megaBtnRef = useRef<HTMLButtonElement | null>(null);
+
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const cart = useShopCart();
 
