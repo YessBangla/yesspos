@@ -23,6 +23,7 @@ import {
   Clock,
   CloudUpload,
   Loader2,
+  MapPin,
   Minus,
   Phone,
   Plus,
@@ -709,7 +710,6 @@ function ShopPage() {
             </span>
           </span>
           <span className="flex items-center gap-3 whitespace-nowrap">
-            <LangToggle className="bg-background text-foreground" />
             <a href="tel:16710" className="flex items-center gap-1 font-semibold hover:underline">
               <Phone className="size-3.5" /> {bn ? "হটলাইন ১৬৭১০" : "Hotline 16710"}
             </a>
