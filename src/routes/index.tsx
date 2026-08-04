@@ -1090,26 +1090,25 @@ function ShopPage() {
                   key={c.id}
                   to="/category/$slug"
                   params={{ slug: slugify(c.name_en) }}
-                  className="shop-card flex flex-col items-center gap-2 p-3 text-center transition-colors hover:border-primary/40"
+                  className="shop-card flex flex-col items-center gap-2 rounded-2xl p-4 text-center transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
                 >
-                  <span className="flex size-14 items-center justify-center overflow-hidden rounded-2xl bg-muted">
+                  <span className="flex size-16 items-center justify-center overflow-hidden rounded-2xl bg-primary/5">
                     {catImage.get(c.id) ? (
                       <img
                         src={catImage.get(c.id)}
                         alt=""
                         loading="lazy"
-                        className="size-full object-contain p-1"
+                        className="size-full object-contain p-1.5"
                       />
                     ) : (
                       <ShoppingBasket className="size-6 text-primary" />
                     )}
                   </span>
-                  <span className="text-xs font-semibold leading-tight">
-                    {bn ? c.name_bn : c.name_en}
+                  <span className="text-sm font-bold leading-tight">{c.name_bn}</span>
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    {c.name_en}
                   </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {num(catCounts.get(c.id) ?? 0, lang)} {bn ? "পণ্য" : "items"}
-                  </span>
+
                 </Link>
               ))}
             </div>
