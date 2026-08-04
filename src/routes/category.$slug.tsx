@@ -275,7 +275,7 @@ function CategoryPage() {
               value={sort}
               onChange={(e) =>
                 navigate({
-                  search: (prev) => ({
+                  search: (prev: CatSearch) => ({
                     ...prev,
                     sort: e.target.value === "relevance" ? undefined : (e.target.value as SortKey),
                   }),
