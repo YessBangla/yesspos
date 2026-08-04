@@ -462,7 +462,12 @@ export function CartDrawer({
         aria-label={bn ? "কার্ট ও চেকআউট" : "Cart and checkout"}
         className="flex w-[92vw] max-w-md flex-col gap-0 p-0"
       >
+        {/* Polite live region: promo applied, stock limits, slot and totals. */}
+        <p aria-live="polite" aria-atomic="true" className="sr-only">
+          {announce}
+        </p>
         <SheetHeader className="border-b border-border px-4 py-3 text-left">
+
           <SheetTitle className="flex items-center gap-2">
             {step === "checkout" && !placed && (
               <button
