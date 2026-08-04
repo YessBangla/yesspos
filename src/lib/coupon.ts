@@ -48,7 +48,7 @@ export async function applyCoupon(
 ): Promise<CouponResult> {
   const trimmed = code.trim().toUpperCase();
   if (!trimmed) {
-    return { ok: false, code: "", discount: 0, reason: "empty", message: messageFor("", bn) };
+    return { ok: false, code: "", discount: 0, reason: "empty", message: messageFor("empty", bn) };
   }
   const { data, error } = await supabase.rpc("validate_coupon", {
     _code: trimmed,
