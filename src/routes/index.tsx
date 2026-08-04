@@ -23,6 +23,7 @@ import {
   Clock,
   CloudUpload,
   Loader2,
+  MapPin,
   Minus,
   Phone,
   Plus,
@@ -709,7 +710,6 @@ function ShopPage() {
             </span>
           </span>
           <span className="flex items-center gap-3 whitespace-nowrap">
-            <LangToggle className="bg-background text-foreground" />
             <a href="tel:16710" className="flex items-center gap-1 font-semibold hover:underline">
               <Phone className="size-3.5" /> {bn ? "হটলাইন ১৬৭১০" : "Hotline 16710"}
             </a>
@@ -746,7 +746,7 @@ function ShopPage() {
             <label htmlFor="shop-search" className="sr-only">
               {bn ? "পণ্য খুঁজুন" : "Search products"}
             </label>
-            <div className="flex h-12 items-center gap-2 rounded-xl border border-border bg-card pl-3 pr-1.5 shadow-sm transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
+            <div className="flex h-12 items-center gap-2 rounded-full border border-border bg-muted/40 pl-4 pr-1.5 shadow-sm transition-colors focus-within:border-primary focus-within:bg-card focus-within:ring-2 focus-within:ring-primary/15">
               <Search aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
 
               <Input
@@ -802,7 +802,7 @@ function ShopPage() {
                   {bn ? "মুছুন" : "Clear"}
                 </button>
               )}
-              <span className="hidden h-9 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground sm:inline-flex">
+              <span className="hidden h-9 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground sm:inline-flex">
                 {bn ? "খুঁজুন" : "Search"}
               </span>
             </div>
@@ -859,7 +859,17 @@ function ShopPage() {
             )}
           </div>
 
+          {/* Delivery area chip — mirrors the reference portal header */}
+          <span className="hidden h-11 shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 text-xs font-medium text-muted-foreground xl:flex">
+            <MapPin className="size-3.5 text-primary" />
+            {bn ? "ডেলিভারি:" : "Deliver to:"}
+            <span className="font-semibold text-foreground">
+              {sc("shop.delivery_area", bn ? "ঢাকা সিটি" : "Dhaka city")}
+            </span>
+          </span>
+
           <div className="hidden shrink-0 items-center gap-2 sm:flex">
+            <LangToggle />
             <CustomerAccountMenu />
           </div>
 
@@ -1072,31 +1082,31 @@ function ShopPage() {
                 {bn ? "সব দেখুন" : "See all"}
               </button>
             </div>
-            <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+            <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 xl:grid-cols-6">
               {(categories.data ?? []).slice(0, 12).map((c) => (
                 <Link
                   key={c.id}
                   to="/category/$slug"
                   params={{ slug: slugify(c.name_en) }}
-                  className="shop-card flex flex-col items-center gap-2 p-3 text-center transition-colors hover:border-primary/40"
+                  className="shop-card flex flex-col items-center gap-2 rounded-2xl p-4 text-center transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
                 >
-                  <span className="flex size-14 items-center justify-center overflow-hidden rounded-2xl bg-muted">
+                  <span className="flex size-16 items-center justify-center overflow-hidden rounded-2xl bg-primary/5">
                     {catImage.get(c.id) ? (
                       <img
                         src={catImage.get(c.id)}
                         alt=""
                         loading="lazy"
-                        className="size-full object-contain p-1"
+                        className="size-full object-contain p-1.5"
                       />
                     ) : (
                       <ShoppingBasket className="size-6 text-primary" />
                     )}
                   </span>
-                  <span className="text-xs font-semibold leading-tight">
-                    {bn ? c.name_bn : c.name_en}
+                  <span className="line-clamp-2 w-full text-sm font-bold leading-tight">
+                    {c.name_bn}
                   </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {num(catCounts.get(c.id) ?? 0, lang)} {bn ? "পণ্য" : "items"}
+                  <span className="line-clamp-1 w-full text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    {c.name_en}
                   </span>
                 </Link>
               ))}
