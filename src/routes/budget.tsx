@@ -238,7 +238,9 @@ function BudgetPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8">
+    <div className="storefront min-h-screen bg-background">
+      <StorefrontHeader />
+      <main className="mx-auto w-full max-w-5xl px-4 py-8">
       <header className="rounded-3xl border border-border bg-card p-6">
         <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-primary">
           <PiggyBank className="size-4" />
