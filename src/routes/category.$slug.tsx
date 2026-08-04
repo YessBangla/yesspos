@@ -165,11 +165,12 @@ function CategoryPage() {
 
   const sort = search.sort ?? "relevance";
   const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const term = debounced.trim();
+    const q = term.toLowerCase();
     const list = inCategory.filter(
       (p) =>
         (!search.brand || p.brand === search.brand) &&
-        (!q || p.name_en.toLowerCase().includes(q) || p.name_bn.includes(query.trim())),
+        (!q || p.name_en.toLowerCase().includes(q) || p.name_bn.includes(term)),
     );
     const sorted = [...list];
     if (sort === "price_asc") sorted.sort((a, b) => Number(a.price) - Number(b.price));
@@ -177,7 +178,8 @@ function CategoryPage() {
     if (sort === "name_asc") sorted.sort((a, b) => a.name_en.localeCompare(b.name_en));
     if (sort === "name_desc") sorted.sort((a, b) => b.name_en.localeCompare(a.name_en));
     return sorted;
-  }, [inCategory, query, search.brand, sort]);
+  }, [inCategory, debounced, search.brand, sort]);
+
 
   const notReady = categories.isLoading || products.isLoading;
   const missing = !notReady && !category;
