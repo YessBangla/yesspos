@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Clock3, MapPin, PackageCheck, Truck, Wallet } from "lucide-react";
+import { CheckCircle2, Clock3, Download, MapPin, PackageCheck, Truck, Wallet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { CheckoutQueueStatus } from "@/components/CheckoutQueueStatus";
+import { OrderTimeline } from "@/components/OrderTimeline";
 import { money, num, useI18n } from "@/lib/i18n";
 import { readOrderSnapshot, type OrderSnapshot } from "@/lib/order-snapshot";
+import { downloadReceipt } from "@/lib/receipt-pdf";
 import { paymentLabel } from "@/lib/checkout-payment";
 import { listQueuedOrders, subscribeQueue, syncQueuedOrders } from "@/lib/delivery-queue";
 
