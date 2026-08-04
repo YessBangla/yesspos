@@ -5,7 +5,7 @@
  * ("sub-category") chips, sorting and add-to-cart — reusing the storefront
  * cart so the basket stays in sync with the homepage.
  */
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Minus, Phone, Plus, Search, ShoppingBag, ShoppingBasket } from "lucide-react";
@@ -33,6 +33,8 @@ const searchSchema = z.object({
   brand: z.string().trim().max(60).optional(),
   sort: z.enum(SORTS).optional(),
 });
+
+type CatSearch = z.infer<typeof searchSchema>;
 
 type P = {
   id: string;
@@ -179,7 +181,7 @@ function CategoryPage() {
             className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-card pl-3 pr-1.5 shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"
             onSubmit={(e) => {
               e.preventDefault();
-              navigate({ search: (prev) => ({ ...prev, q: query.trim() || undefined }) });
+              navigate({ search: (prev: CatSearch) => ({ ...prev, q: query.trim() || undefined }) });
             }}
           >
             <Search aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
@@ -206,7 +208,7 @@ function CategoryPage() {
                 type="button"
                 onClick={() => {
                   setQuery("");
-                  navigate({ search: (prev) => ({ ...prev, q: undefined }) });
+                  navigate({ search: (prev: CatSearch) => ({ ...prev, q: undefined }) });
                 }}
                 className="shrink-0 rounded-md px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
               >
@@ -299,7 +301,7 @@ function CategoryPage() {
             <Link
               to="/category/$slug"
               params={{ slug }}
-              search={(prev) => ({ ...prev, brand: undefined })}
+              search={(prev: CatSearch) => ({ ...prev, brand: undefined })}
               className={cn(
                 "flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full border px-4 text-sm",
                 !search.brand
@@ -314,7 +316,7 @@ function CategoryPage() {
                 key={b}
                 to="/category/$slug"
                 params={{ slug }}
-                search={(prev) => ({ ...prev, brand: b })}
+                search={(prev: CatSearch) => ({ ...prev, brand: b })}
                 className={cn(
                   "flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-sm",
                   search.brand === b
