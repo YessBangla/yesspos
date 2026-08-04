@@ -15,6 +15,7 @@ import {
   Plus,
   Search,
   ShoppingBag,
+  Loader2,
   ShoppingBasket,
 } from "lucide-react";
 import { z } from "zod";
