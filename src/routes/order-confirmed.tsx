@@ -200,6 +200,9 @@ function OrderConfirmedPage() {
         <Button asChild size="lg" variant="outline" className="flex-1 rounded-full">
           <Link to="/track">{bn ? "অর্ডার ট্র্যাক করুন" : "Track order"}</Link>
         </Button>
+        <Button asChild size="lg" variant="ghost" className="flex-1 rounded-full">
+          <Link to="/my-orders">{bn ? "আমার অর্ডার" : "Order history"}</Link>
+        </Button>
       </div>
     </main>
   );
