@@ -661,6 +661,28 @@ export function CartDrawer({
                 void placeOrder();
               }}
             >
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span className="text-muted-foreground">
+                  {bn ? "ডেলিভারি এরিয়া" : "Delivery area"}
+                </span>
+                <DeliveryAreaPicker className="h-9" />
+              </div>
+              <SavedAddressPicker
+                selectedId={addressId}
+                onSelect={(a) => {
+                  setAddressId(a.id);
+                  setForm((f) => ({
+                    ...f,
+                    name: a.full_name || f.name,
+                    phone: a.phone || f.phone,
+                    address: a.address,
+                    note: a.note ?? f.note,
+                  }));
+                  setAnnounce(
+                    bn ? `ঠিকানা নির্বাচিত: ${a.label}` : `Address selected: ${a.label}`,
+                  );
+                }}
+              />
               <Field
                 id="dc-name"
                 label={bn ? "আপনার নাম" : "Your name"}
