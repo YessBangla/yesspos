@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money, num, useI18n } from "@/lib/i18n";
 import { useCustomerSession } from "@/lib/customer-auth";
 import { useShopCart } from "@/lib/shop-cart";
-import { LangToggle } from "@/components/LangToggle";
+import { StorefrontHeader } from "@/components/StorefrontHeader";
 import { OrderActions } from "@/components/OrderActions";
 
 const SITE = "https://yesspos.lovable.app";
