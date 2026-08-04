@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Clock3, MapPin, PackageCheck, Truck, Wallet } from "lucide-react";
+import { CheckCircle2, Clock3, Download, MapPin, PackageCheck, Truck, Wallet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { CheckoutQueueStatus } from "@/components/CheckoutQueueStatus";
+import { OrderTimeline } from "@/components/OrderTimeline";
 import { money, num, useI18n } from "@/lib/i18n";
 import { readOrderSnapshot, type OrderSnapshot } from "@/lib/order-snapshot";
+import { downloadReceipt } from "@/lib/receipt-pdf";
 import { paymentLabel } from "@/lib/checkout-payment";
 import { listQueuedOrders, subscribeQueue, syncQueuedOrders } from "@/lib/delivery-queue";
 
@@ -170,9 +172,26 @@ function OrderConfirmedPage() {
         </Card>
       </section>
 
+      {orderNo && (
+        <div className="mt-4">
+          <OrderTimeline orderNo={orderNo} phone={snap.phone} />
+        </div>
+      )}
+
       <div className="mt-4">
         <CheckoutQueueStatus />
       </div>
+
+      <Button
+        variant="outline"
+        size="lg"
+        className="mt-4 w-full rounded-full"
+        onClick={() => downloadReceipt({ ...snap, orderNo }, bn)}
+      >
+        <Download className="mr-1.5 size-4" />
+        {bn ? "রসিদ ডাউনলোড (PDF)" : "Download PDF receipt"}
+      </Button>
+
 
       <div className="mt-5 flex flex-wrap gap-2">
         <Button asChild size="lg" className="flex-1 rounded-full">
@@ -180,6 +199,9 @@ function OrderConfirmedPage() {
         </Button>
         <Button asChild size="lg" variant="outline" className="flex-1 rounded-full">
           <Link to="/track">{bn ? "অর্ডার ট্র্যাক করুন" : "Track order"}</Link>
+        </Button>
+        <Button asChild size="lg" variant="ghost" className="flex-1 rounded-full">
+          <Link to="/my-orders">{bn ? "আমার অর্ডার" : "Order history"}</Link>
         </Button>
       </div>
     </main>

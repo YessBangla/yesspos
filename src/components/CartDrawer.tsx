@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DeliveryAreaPicker } from "@/components/DeliveryAreaPicker";
+import { SavedAddressPicker } from "@/components/SavedAddressPicker";
 import { DeliverySlotPicker, type SlotChoice } from "@/components/DeliverySlotPicker";
 import { CheckoutQueueStatus } from "@/components/CheckoutQueueStatus";
 import { useDeliveryArea } from "@/lib/delivery-area";
@@ -73,6 +74,7 @@ export function CartDrawer({
   const [placing, setPlacing] = useState(false);
   const [placed, setPlaced] = useState<number | null>(null);
   const [slot, setSlot] = useState<SlotChoice>(null);
+  const [addressId, setAddressId] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null);
   const [couponMsg, setCouponMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -659,6 +661,28 @@ export function CartDrawer({
                 void placeOrder();
               }}
             >
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span className="text-muted-foreground">
+                  {bn ? "ডেলিভারি এরিয়া" : "Delivery area"}
+                </span>
+                <DeliveryAreaPicker className="h-9" />
+              </div>
+              <SavedAddressPicker
+                selectedId={addressId}
+                onSelect={(a) => {
+                  setAddressId(a.id);
+                  setForm((f) => ({
+                    ...f,
+                    name: a.full_name || f.name,
+                    phone: a.phone || f.phone,
+                    address: a.address,
+                    note: a.note ?? f.note,
+                  }));
+                  setAnnounce(
+                    bn ? `ঠিকানা নির্বাচিত: ${a.label}` : `Address selected: ${a.label}`,
+                  );
+                }}
+              />
               <Field
                 id="dc-name"
                 label={bn ? "আপনার নাম" : "Your name"}
