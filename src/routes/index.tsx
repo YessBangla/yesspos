@@ -49,6 +49,7 @@ import { cn } from "@/lib/utils";
 import { checkPackCart } from "@/lib/pack-size";
 import { useCustomerSession, normalizePhone } from "@/lib/customer-auth";
 import { CustomerAccountMenu } from "@/components/CustomerAccountMenu";
+import { StorefrontNav } from "@/components/StorefrontNav";
 import { checkOrderConsistency, formatIssues } from "@/lib/order-check";
 import {
   QUEUE_MAX_ATTEMPTS,
@@ -679,7 +680,6 @@ function ShopPage() {
     toast.success(bn ? "কার্টে যোগ হয়েছে" : "Added to cart");
   };
 
-  const [megaOpen, setMegaOpen] = useState(false);
   const catImage = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of products.data ?? []) {
