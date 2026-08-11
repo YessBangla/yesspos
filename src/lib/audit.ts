@@ -2,7 +2,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type AuditAction =
   | "login"
+  | "login_attempt"
   | "logout"
+  | "system_check_success"
+  | "system_check_failed"
   | "sale"
   | "sale_return"
   | "product_create"

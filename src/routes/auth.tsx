@@ -12,7 +12,8 @@ import { useI18n } from "@/lib/i18n";
 import { logAudit } from "@/lib/audit";
 import { LangToggle } from "@/components/LangToggle";
 import { useServerFn } from "@tanstack/react-start";
-import { resetSuperAdminPassword } from "@/lib/auth-recovery.functions";
+import { resetSuperAdminPassword, logAuthAudit } from "@/lib/auth-recovery.functions";
+import { ClipboardCopy, Loader2, ShieldCheck, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -48,7 +49,15 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [showRecovery, setShowRecovery] = useState(false);
   const resetFn = useServerFn(resetSuperAdminPassword);
-  const [debugInfo, setDebugInfo] = useState<{ status: string; details?: string } | null>(null);
+  const authAuditFn = useServerFn(logAuthAudit);
+  const [debugInfo, setDebugInfo] = useState<{ 
+    status: string; 
+    details?: string; 
+    timestamp?: string;
+    endpoint?: string;
+    roleValue?: string;
+    isError?: boolean;
+  } | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -59,37 +68,66 @@ function AuthPage() {
   async function checkBackend() {
     setBusy(true);
     setDebugInfo(null);
+    const now = new Date().toLocaleTimeString();
     try {
       // 1. Connection check
+      const endpoint = "/rest/v1/business_settings";
       const { data: health, error: healthErr } = await supabase.from("business_settings").select("shop_name").limit(1);
+      
       if (healthErr) {
-        setDebugInfo({ status: "Backend Unreachable", details: healthErr.message });
+        setDebugInfo({ 
+          status: "Backend Unreachable", 
+          details: healthErr.message, 
+          endpoint,
+          timestamp: now,
+          isError: true 
+        });
+        await authAuditFn({ data: { action: "system_check_failed", username: email || "anonymous", reason: `Connection error: ${healthErr.message}` } });
         return;
       }
 
       // 2. Admin account check
-      const targetEmail = toEmail(email || "admin");
-      const { data: userCheck, error: userErr } = await supabase.from("profiles").select("id, username").eq("username", email || "admin").maybeSingle();
+      const username = email || "admin";
+      const { data: userCheck, error: userErr } = await supabase.from("profiles").select("id, username").eq("username", username).maybeSingle();
       
       if (!userCheck) {
-        setDebugInfo({ status: "Account Not Found", details: `No profile for "${email || "admin"}".` });
+        setDebugInfo({ 
+          status: "Account Not Found", 
+          details: `No profile for "${username}".`,
+          timestamp: now,
+          isError: true
+        });
+        await authAuditFn({ data: { action: "system_check_failed", username, reason: "Profile not found" } });
         return;
       }
 
       // 3. Role check
       const { data: roleCheck, error: roleErr } = await supabase.from("user_roles").select("role").eq("user_id", userCheck.id);
-      if (roleErr || !roleCheck?.length) {
-        setDebugInfo({ status: "No Role Assigned", details: "User exists but has no dashboard role." });
-      } else {
-        const roles = roleCheck.map(r => r.role).join(", ");
-        setDebugInfo({ status: "System Ready", details: `User "${userCheck.username}" found with roles: ${roles}` });
-      }
+      const rolesStr = roleCheck?.map(r => r.role).join(", ") || "none";
+      
+      setDebugInfo({ 
+        status: "System Verified", 
+        details: `User "${userCheck.username}" found.`,
+        roleValue: rolesStr,
+        timestamp: now,
+        isError: rolesStr === "none"
+      });
+
+      await authAuditFn({ data: { action: "system_check_success", username: userCheck.username, reason: `Roles: ${rolesStr}` } });
     } catch (err) {
-      setDebugInfo({ status: "Error", details: err instanceof Error ? err.message : String(err) });
+      const msg = err instanceof Error ? err.message : String(err);
+      setDebugInfo({ status: "Error", details: msg, timestamp: now, isError: true });
     } finally {
       setBusy(false);
     }
   }
+
+  const copyDebugInfo = () => {
+    if (!debugInfo) return;
+    const text = `Status: ${debugInfo.status}\nDetails: ${debugInfo.details}\nTimestamp: ${debugInfo.timestamp}\nEndpoint: ${debugInfo.endpoint || "N/A"}\nRole Value: ${debugInfo.roleValue || "N/A"}`;
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  };
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -122,10 +160,22 @@ function AuthPage() {
         });
         if (error) {
           if (error.message.includes("Failed to fetch")) {
-            setDebugInfo({ status: "Connection Failed", details: "The backend is currently paused or unreachable. Please resume it from Lovable Cloud." });
+            setDebugInfo({ 
+              status: "Connection Failed", 
+              details: "The backend is currently paused or unreachable.",
+              endpoint: "auth.signInWithPassword",
+              timestamp: new Date().toLocaleTimeString(),
+              isError: true
+            });
           } else if (error.message.toLowerCase().includes("invalid login credentials")) {
-            setDebugInfo({ status: "Login Failed", details: "Invalid username or password. If you are Super Admin, use 'admin' / '777777'." });
+            setDebugInfo({ 
+              status: "Login Failed", 
+              details: "Invalid username or password.",
+              timestamp: new Date().toLocaleTimeString(),
+              isError: true
+            });
           }
+          await authAuditFn({ data: { action: "login_attempt", username: parsed.data.email, reason: `Failed: ${error.message}` } });
           throw error;
         }
       }
@@ -164,10 +214,13 @@ function AuthPage() {
     setBusy(true);
     try {
       const res = await resetFn({ data: { username: email, newPassword: password } });
+      await authAuditFn({ data: { action: "password_reset", username: email, reason: "Success" } });
       toast.success(res.message);
       setShowRecovery(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Reset failed");
+      const msg = err instanceof Error ? err.message : "Reset failed";
+      await authAuditFn({ data: { action: "password_reset", username: email, reason: `Failed: ${msg}` } });
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -193,9 +246,29 @@ function AuthPage() {
           <p className="mt-1 text-sm text-muted-foreground">{t("tagline")}</p>
 
           {debugInfo && (
-            <div className={`mt-4 rounded-lg border p-3 text-sm ${debugInfo.status === "System Ready" ? "border-green-200 bg-green-50 text-green-800" : "border-destructive/20 bg-destructive/10 text-destructive"}`}>
-              <p className="font-bold">{debugInfo.status}</p>
-              {debugInfo.details && <p className="mt-1 opacity-90">{debugInfo.details}</p>}
+            <div className={`mt-4 rounded-lg border p-4 text-sm shadow-sm ${!debugInfo.isError ? "border-green-200 bg-green-50 text-green-800" : "border-destructive/20 bg-destructive/10 text-destructive"}`}>
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2 font-bold">
+                  {!debugInfo.isError ? <ShieldCheck className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                  {debugInfo.status}
+                </div>
+                <button onClick={copyDebugInfo} className="rounded p-1 hover:bg-black/5" title="Copy report">
+                  <ClipboardCopy className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              
+              <div className="mt-2 space-y-1 opacity-90">
+                {debugInfo.details && <p>{debugInfo.details}</p>}
+                {debugInfo.roleValue && (
+                  <p className="flex items-center gap-1.5 font-medium">
+                    <span className="text-xs uppercase opacity-60">Roles:</span> {debugInfo.roleValue}
+                  </p>
+                )}
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[10px] uppercase tracking-wider opacity-60">
+                  {debugInfo.timestamp && <span>Last Check: {debugInfo.timestamp}</span>}
+                  {debugInfo.endpoint && <span className="truncate max-w-[150px]">URL: {debugInfo.endpoint}</span>}
+                </div>
+              </div>
             </div>
           )}
 
