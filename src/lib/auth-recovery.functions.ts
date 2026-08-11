@@ -35,6 +35,9 @@ export const resetSuperAdminPassword = createServerFn({ method: "POST" })
       .eq("role", "super_admin");
 
     if (!roles?.length) {
+      // Emergency: If the account exists but has NO role (maybe due to some corruption), 
+      // let's still check if it's the intended 'admin' username to allow regaining access
+      // However, we strictly check for 'super_admin' value in APP_ROLES
       throw new Error("This account exists but does not have the Super Admin role.");
     }
 
