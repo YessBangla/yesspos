@@ -39,7 +39,7 @@ function toEmail(value: string) {
 
 
 function AuthPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -163,7 +163,7 @@ function AuthPage() {
     }
     setBusy(true);
     try {
-      const res = await resetFn({ username: email, newPassword: password });
+      const res = await resetFn({ data: { username: email, newPassword: password } });
       toast.success(res.message);
       setShowRecovery(false);
     } catch (err) {
