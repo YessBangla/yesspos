@@ -11,6 +11,8 @@ import { lovable } from "@/integrations/lovable";
 import { useI18n } from "@/lib/i18n";
 import { logAudit } from "@/lib/audit";
 import { LangToggle } from "@/components/LangToggle";
+import { useServerFn } from "@tanstack/react-start";
+import { resetSuperAdminPassword } from "@/lib/auth-recovery.functions";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -44,12 +46,50 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showRecovery, setShowRecovery] = useState(false);
+  const resetFn = useServerFn(resetSuperAdminPassword);
+  const [debugInfo, setDebugInfo] = useState<{ status: string; details?: string } | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard", replace: true });
     });
   }, [navigate]);
+
+  async function checkBackend() {
+    setBusy(true);
+    setDebugInfo(null);
+    try {
+      // 1. Connection check
+      const { data: health, error: healthErr } = await supabase.from("business_settings").select("shop_name").limit(1);
+      if (healthErr) {
+        setDebugInfo({ status: "Backend Unreachable", details: healthErr.message });
+        return;
+      }
+
+      // 2. Admin account check
+      const targetEmail = toEmail(email || "admin");
+      const { data: userCheck, error: userErr } = await supabase.from("profiles").select("id, username").eq("username", email || "admin").maybeSingle();
+      
+      if (!userCheck) {
+        setDebugInfo({ status: "Account Not Found", details: `No profile for "${email || "admin"}".` });
+        return;
+      }
+
+      // 3. Role check
+      const { data: roleCheck, error: roleErr } = await supabase.from("user_roles").select("role").eq("user_id", userCheck.id);
+      if (roleErr || !roleCheck?.length) {
+        setDebugInfo({ status: "No Role Assigned", details: "User exists but has no dashboard role." });
+      } else {
+        const roles = roleCheck.map(r => r.role).join(", ");
+        setDebugInfo({ status: "System Ready", details: `User "${userCheck.username}" found with roles: ${roles}` });
+      }
+    } catch (err) {
+      setDebugInfo({ status: "Error", details: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -59,6 +99,7 @@ function AuthPage() {
       return;
     }
     setBusy(true);
+    setDebugInfo(null);
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
@@ -79,7 +120,14 @@ function AuthPage() {
           email: toEmail(parsed.data.email),
           password: parsed.data.password,
         });
-        if (error) throw error;
+        if (error) {
+          if (error.message.includes("Failed to fetch")) {
+            setDebugInfo({ status: "Connection Failed", details: "The backend is currently paused or unreachable. Please resume it from Lovable Cloud." });
+          } else if (error.message.toLowerCase().includes("invalid login credentials")) {
+            setDebugInfo({ status: "Login Failed", details: "Invalid username or password. If you are Super Admin, use 'admin' / '777777'." });
+          }
+          throw error;
+        }
       }
       const { data } = await supabase.auth.getSession();
       if (data.session) {
@@ -108,6 +156,23 @@ function AuthPage() {
     navigate({ to: "/dashboard", replace: true });
   }
 
+  async function onReset() {
+    if (!email || !password) {
+      toast.error(lang === "bn" ? "ইউজারনেম এবং নতুন পাসওয়ার্ড দিন" : "Please enter username and new password");
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await resetFn({ username: email, newPassword: password });
+      toast.success(res.message);
+      setShowRecovery(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Reset failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5">
@@ -120,8 +185,19 @@ function AuthPage() {
 
       <main className="flex flex-1 items-center justify-center px-5 pb-16">
         <div className="surface-panel w-full max-w-sm p-6">
-          <h1 className="text-2xl font-bold">{mode === "signin" ? t("signIn") : t("signUp")}</h1>
+          <h1 className="text-2xl font-bold">
+            {showRecovery 
+              ? (lang === "bn" ? "সুপার অ্যাডমিন রিকভারি" : "Super Admin Recovery")
+              : (mode === "signin" ? t("signIn") : t("signUp"))}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("tagline")}</p>
+
+          {debugInfo && (
+            <div className={`mt-4 rounded-lg border p-3 text-sm ${debugInfo.status === "System Ready" ? "border-green-200 bg-green-50 text-green-800" : "border-destructive/20 bg-destructive/10 text-destructive"}`}>
+              <p className="font-bold">{debugInfo.status}</p>
+              {debugInfo.details && <p className="mt-1 opacity-90">{debugInfo.details}</p>}
+            </div>
+          )}
 
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
             {mode === "signup" && (
@@ -137,17 +213,18 @@ function AuthPage() {
                 type="text"
                 autoComplete="username"
                 required
+                placeholder={showRecovery ? "admin" : ""}
                 maxLength={255}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">{t("password")}</Label>
+              <Label htmlFor="password">{showRecovery ? (lang === "bn" ? "নতুন পাসওয়ার্ড" : "New Password") : t("password")}</Label>
               <Input
                 id="password"
                 type="password"
-                autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                autoComplete={showRecovery ? "new-password" : (mode === "signin" ? "current-password" : "new-password")}
                 required
                 minLength={6}
                 maxLength={72}
@@ -155,9 +232,15 @@ function AuthPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={busy}>
-              {mode === "signin" ? t("signIn") : t("signUp")}
-            </Button>
+            {showRecovery ? (
+              <Button type="button" className="w-full" onClick={onReset} disabled={busy}>
+                {lang === "bn" ? "পাসওয়ার্ড রিসেট করুন" : "Reset Password"}
+              </Button>
+            ) : (
+              <Button type="submit" className="w-full" disabled={busy}>
+                {mode === "signin" ? t("signIn") : t("signUp")}
+              </Button>
+            )}
           </form>
 
           <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
@@ -168,13 +251,44 @@ function AuthPage() {
             {t("continueGoogle")}
           </Button>
 
-          <button
-            type="button"
-            className="mt-5 w-full text-center text-sm text-muted-foreground underline-offset-4 hover:underline"
-            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-          >
-            {mode === "signin" ? t("noAccount") : t("haveAccount")}
-          </button>
+          <div className="mt-6 flex flex-col gap-3">
+            <button
+              type="button"
+              className="w-full text-center text-sm text-muted-foreground underline-offset-4 hover:underline"
+              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+            >
+              {mode === "signin" ? t("noAccount") : t("haveAccount")}
+            </button>
+            
+            <button
+              type="button"
+              className="w-full text-center text-xs text-primary/60 underline-offset-4 hover:underline"
+              onClick={checkBackend}
+              disabled={busy}
+            >
+              {lang === "bn" ? "সিস্টেম কানেকশন ও অ্যাডমিন স্ট্যাটাস চেক করুন" : "Check system connection & admin status"}
+            </button>
+
+            {!showRecovery && mode === "signin" && (
+              <button
+                type="button"
+                className="w-full text-center text-xs text-destructive/60 underline-offset-4 hover:underline"
+                onClick={() => setShowRecovery(true)}
+              >
+                {lang === "bn" ? "সুপার অ্যাডমিন পাসওয়ার্ড ভুলে গেছেন?" : "Forgot Super Admin password?"}
+              </button>
+            )}
+
+            {showRecovery && (
+              <button
+                type="button"
+                className="w-full text-center text-xs text-muted-foreground underline-offset-4 hover:underline"
+                onClick={() => setShowRecovery(false)}
+              >
+                {lang === "bn" ? "লগইন স্ক্রিনে ফিরে যান" : "Back to login"}
+              </button>
+            )}
+          </div>
         </div>
       </main>
     </div>
